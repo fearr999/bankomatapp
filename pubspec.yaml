@@ -1,0 +1,49 @@
+name: merchandiser_app
+description: Полевой контроль объектов — GPS check-in, чек-листы под любой бизнес (мерчендайзинг, банкоматы и др.), фотоотчеты, offline-sync
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # Сеть
+  http: ^1.2.2
+  connectivity_plus: ^6.0.5
+
+  # Геолокация
+  geolocator: ^13.0.1
+
+  # Камера / фото / водяной знак
+  image_picker: ^1.1.2
+  image: ^4.2.0
+
+  # Локальная offline-БД (очередь синхронизации)
+  sqflite: ^2.3.3+1
+  sqflite_common_ffi: ^2.3.3 # нужен для запуска sqflite на десктопе (Windows/Linux/macOS)
+  path: ^1.9.0
+  path_provider: ^2.1.4
+
+  # Безопасное хранилище сессии (токен, PIN)
+  flutter_secure_storage: ^9.2.2
+
+  # Разрешения
+  permission_handler: ^11.3.1
+
+  # Форматирование дат
+  intl: ^0.19.0
+
+  # Уникальные id для офлайн-очереди
+  uuid: ^4.4.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
