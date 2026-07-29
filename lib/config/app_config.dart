@@ -4,7 +4,7 @@ class AppConfig {
   // URL, который выдаёт Google после деплоя Apps Script как Web App.
   // Пример: https://script.google.com/macros/s/AKfycb.../exec
   static const String apiBaseUrl =
-      'https://script.google.com/macros/s/AKfycbz80IFObtihjGBt_ZJuc1XQQmEJwDySgui9QKXLhrcqJzItUWMQBEBJW4k6oCGzTmCeeg/exec';
+      'https://script.google.com/macros/s/AKfycbz3dO1ohVVJFQ6MFOVlciDjLLtPRQ_7NtwBHZz8MW_gokrFBBOs9hKhF5yXS3dJb2WQFw/exec';
 
   // Секретный ключ — совпадает с API_KEY в Script Properties бэкенда.
   static const String apiKey = 'zBnv0zhEoJwax7moJXgrTyqg_lTAA3LW';
