@@ -6,9 +6,6 @@ import '../services/auth_service.dart';
 import '../services/db_service.dart';
 import 'route_list_screen.dart';
 
-/// Показывается сразу после логина (и доступен повторно из "Мой маршрут"),
-/// чтобы работник выбрал, с каким бизнесом сейчас работает —
-/// у каждого свой набор точек и свой чек-лист.
 class BusinessSelectScreen extends StatefulWidget {
   const BusinessSelectScreen({super.key});
 
@@ -66,12 +63,14 @@ class _BusinessSelectScreenState extends State<BusinessSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Выберите бизнес'),
+        title: const Text('Выбор направления'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Выйти',
             onPressed: () async {
               await AuthService.logout();
               if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
@@ -83,28 +82,67 @@ class _BusinessSelectScreenState extends State<BusinessSelectScreen> {
         onRefresh: _load,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
+            : CustomScrollView(
+                slivers: [
                   if (_error != null)
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(8),
-                      color: Colors.orange.shade50,
-                      child: Text(_error!, textAlign: TextAlign.center),
+                    SliverToBoxAdapter(
+                      child: _Banner(
+                        message: _error!,
+                        color: scheme.tertiaryContainer,
+                        textColor: scheme.onTertiaryContainer,
+                        icon: Icons.cloud_off_rounded,
+                      ),
                     ),
                   if (_businesses.isEmpty && !_loading)
-                    const Padding(
-                      padding: EdgeInsets.all(32),
+                    SliverFillRemaining(
                       child: Center(
-                          child: Text(
-                              'Бизнесы не настроены. Обратитесь к администратору.')),
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.business_center_outlined,
+                                  size: 64,
+                                  color: scheme.onSurfaceVariant
+                                      .withOpacity(0.4)),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Бизнесы не настроены',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(color: scheme.onSurfaceVariant),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Обратитесь к администратору',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                        color: scheme.onSurfaceVariant
+                                            .withOpacity(0.6)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.all(16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (ctx, i) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _BusinessCard(
+                                business: _businesses[i],
+                                onTap: () => _select(_businesses[i])),
+                          ),
+                          childCount: _businesses.length,
+                        ),
+                      ),
                     ),
-                  ..._businesses.map((b) => _BusinessCard(
-                        business: b,
-                        onTap: () => _select(b),
-                      )),
                 ],
               ),
       ),
@@ -121,41 +159,101 @@ class _BusinessCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = business.materialColor;
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: color.withOpacity(0.25)),
-      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: IntrinsicHeight(
           child: Row(
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                alignment: Alignment.center,
-                child: Text(business.icon, style: const TextStyle(fontSize: 28)),
-              ),
-              const SizedBox(width: 16),
+              Container(width: 6, color: color),
               Expanded(
-                child: Text(
-                  business.name,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w600),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 18),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(business.icon,
+                            style: const TextStyle(fontSize: 26)),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              business.name,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            if (business.taskMode == 'cycle') ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.loop_rounded,
+                                      size: 14,
+                                      color: color.withOpacity(0.8)),
+                                  const SizedBox(width: 4),
+                                  Text('Цикловый режим',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: color.withOpacity(0.8))),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant),
+                    ],
+                  ),
                 ),
               ),
-              Icon(Icons.chevron_right, color: color),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _Banner extends StatelessWidget {
+  final String message;
+  final Color color;
+  final Color textColor;
+  final IconData icon;
+  const _Banner(
+      {required this.message,
+      required this.color,
+      required this.textColor,
+      required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: color,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Icon(icon, color: textColor, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+              child: Text(message,
+                  style: TextStyle(color: textColor, fontSize: 13))),
+        ],
       ),
     );
   }

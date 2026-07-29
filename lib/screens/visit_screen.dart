@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import 'package:intl/intl.dart';
 
 import '../models/models.dart';
 import '../services/location_service.dart';
@@ -11,8 +10,6 @@ import 'sku_report_screen.dart';
 import 'checklist_screen.dart';
 import 'photo_screen.dart';
 
-/// Один экран ведёт весь визит по шагам, как описано в ТЗ:
-/// 1. GPS check-in -> 2. Отчёт (SKU для merch / чек-лист для остальных) -> 3. Фото До/После -> 4. Check-out
 class VisitScreen extends StatefulWidget {
   final StoreTask task;
   final Business business;
@@ -46,19 +43,17 @@ class _VisitScreenState extends State<VisitScreen> {
       if (loc.isMocked) {
         setState(() {
           _error =
-              'Обнаружены фейковые GPS-координаты (Mock Location). Отключите их в настройках разработчика, иначе визит будет помечен как нарушение.';
+              'Обнаружены фейковые GPS-координаты. Отключите Mock Location в настройках разработчика.';
         });
       }
 
       if (distance > radius) {
         setState(() {
           _error =
-              'Вы слишком далеко от точки (${distance.toStringAsFixed(0)} м, допустимо ${radius.toStringAsFixed(0)} м). '
-              'Приблизьтесь к магазину, либо сообщите администратору о нарушении геопозиции.';
+              'Слишком далеко от точки (${distance.toStringAsFixed(0)} м, допустимо ${radius.toStringAsFixed(0)} м)';
           _distance = distance;
           _isMocked = loc.isMocked;
         });
-        // По ТЗ — блокировка при превышении радиуса. Не создаём визит.
         return;
       }
 
@@ -90,7 +85,6 @@ class _VisitScreenState extends State<VisitScreen> {
         _step = _Step.checkedIn;
       });
 
-      // Пробуем сразу отправить в фоне — если сети нет, останется в очереди
       SyncService.syncNow();
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
@@ -125,17 +119,19 @@ class _VisitScreenState extends State<VisitScreen> {
     final comment = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Завершить визит'),
         content: TextField(
           controller: commentController,
-          decoration: const InputDecoration(labelText: 'Комментарий (необязательно)'),
+          decoration: const InputDecoration(
+              labelText: 'Комментарий (необязательно)'),
           maxLines: 3,
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Отмена')),
-          ElevatedButton(
+          FilledButton(
               onPressed: () => Navigator.pop(ctx, commentController.text),
               child: const Text('Завершить')),
         ],
@@ -151,8 +147,6 @@ class _VisitScreenState extends State<VisitScreen> {
         'checkOutTime': DateTime.now().toIso8601String(),
         'comment': comment,
         'status': 'Completed',
-        // synced оставляем как есть — sync_service доотправит checkout,
-        // если сам check-in уже был подтверждён сервером (serverLogId != null)
       });
     }
     await SyncService.syncNow();
@@ -165,103 +159,383 @@ class _VisitScreenState extends State<VisitScreen> {
   @override
   Widget build(BuildContext context) {
     final color = widget.business.materialColor;
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.task.storeName),
-        backgroundColor: color,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            Text(widget.task.address,
-                style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: 16),
-            if (_distance != null)
-              Text(
-                'Расстояние до точки: ${_distance!.toStringAsFixed(0)} м'
-                '${_isMocked == true ? "  ⚠ Mock GPS" : ""}',
-                style: TextStyle(
-                  color: _isMocked == true ? Colors.red : Colors.black87,
-                ),
-              ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: Colors.red)),
-            ],
-            const SizedBox(height: 24),
-            _buildStepButton(
-              label: '1. GPS Check-in',
-              enabled: _step == _Step.intro && !_busy,
-              done: _step.index > _Step.intro.index,
-              onPressed: _doCheckIn,
-            ),
-            _buildStepButton(
-              label: widget.business.isMerch
-                  ? '2. Учёт товаров (SKU)'
-                  : '2. Заполнить чек-лист',
-              enabled: _step == _Step.checkedIn && !_busy,
-              done: _step.index > _Step.checkedIn.index,
-              onPressed: _goToReport,
-            ),
-            _buildStepButton(
-              label: '3. Фотоотчёт До/После',
-              enabled: _step == _Step.reportDone && !_busy,
-              done: _step.index > _Step.reportDone.index,
-              onPressed: _goToPhotos,
-            ),
-            _buildStepButton(
-              label: '4. Check-out (завершить визит)',
-              enabled: _step == _Step.photosDone && !_busy,
-              done: _step == _Step.done,
-              onPressed: _doCheckOut,
-            ),
-            if (_step == _Step.done) ...[
-              const SizedBox(height: 24),
-              const Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.green, size: 56),
-                    SizedBox(height: 8),
-                    Text('Визит завершён'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('К маршруту'),
-              ),
-            ],
-            if (_busy) ...[
-              const SizedBox(height: 24),
-              const Center(child: CircularProgressIndicator()),
-            ],
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: scheme.outlineVariant),
         ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+        children: [
+          // Store info card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.location_on_rounded,
+                            color: color, size: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          widget.task.address,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_distance != null) ...[
+                    const SizedBox(height: 10),
+                    Divider(color: scheme.outlineVariant, height: 1),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(
+                          _isMocked == true
+                              ? Icons.warning_amber_rounded
+                              : Icons.my_location_rounded,
+                          size: 16,
+                          color: _isMocked == true
+                              ? scheme.error
+                              : Colors.green.shade600,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'GPS: ${_distance!.toStringAsFixed(0)} м от точки'
+                          '${_isMocked == true ? " · Mock Location!" : ""}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _isMocked == true
+                                ? scheme.error
+                                : Colors.green.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: scheme.errorContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.error_outline_rounded,
+                      color: scheme.onErrorContainer, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(_error!,
+                        style:
+                            TextStyle(color: scheme.onErrorContainer)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 24),
+
+          // Steps
+          Text('Этапы визита',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(color: scheme.onSurfaceVariant)),
+          const SizedBox(height: 12),
+
+          _StepTile(
+            number: 1,
+            label: 'GPS Check-in',
+            sublabel: 'Подтвердите местоположение',
+            icon: Icons.my_location_rounded,
+            state: _step.index > _Step.intro.index
+                ? _StepState.done
+                : _step == _Step.intro
+                    ? _StepState.active
+                    : _StepState.locked,
+            accentColor: color,
+            onTap: _step == _Step.intro && !_busy ? _doCheckIn : null,
+          ),
+          _StepTile(
+            number: 2,
+            label: widget.business.isMerch
+                ? 'Учёт товаров (SKU)'
+                : 'Чек-лист',
+            sublabel: widget.business.isMerch
+                ? 'Заполните данные по SKU'
+                : 'Пройдите по пунктам чек-листа',
+            icon: widget.business.isMerch
+                ? Icons.inventory_2_rounded
+                : Icons.checklist_rounded,
+            state: _step.index > _Step.checkedIn.index
+                ? _StepState.done
+                : _step == _Step.checkedIn
+                    ? _StepState.active
+                    : _StepState.locked,
+            accentColor: color,
+            onTap: _step == _Step.checkedIn && !_busy ? _goToReport : null,
+          ),
+          _StepTile(
+            number: 3,
+            label: 'Фотоотчёт',
+            sublabel: 'Снимки до и после работы',
+            icon: Icons.camera_alt_rounded,
+            state: _step.index > _Step.reportDone.index
+                ? _StepState.done
+                : _step == _Step.reportDone
+                    ? _StepState.active
+                    : _StepState.locked,
+            accentColor: color,
+            onTap: _step == _Step.reportDone && !_busy ? _goToPhotos : null,
+          ),
+          _StepTile(
+            number: 4,
+            label: 'Check-out',
+            sublabel: 'Завершите визит',
+            icon: Icons.flag_rounded,
+            state: _step == _Step.done
+                ? _StepState.done
+                : _step == _Step.photosDone
+                    ? _StepState.active
+                    : _StepState.locked,
+            accentColor: color,
+            onTap:
+                _step == _Step.photosDone && !_busy ? _doCheckOut : null,
+            isLast: true,
+          ),
+
+          if (_step == _Step.done) ...[
+            const SizedBox(height: 28),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.check_circle_rounded,
+                      color: Colors.green.shade600, size: 48),
+                  const SizedBox(height: 12),
+                  Text('Визит завершён!',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade700)),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      label: const Text('К маршруту'),
+                      style: FilledButton.styleFrom(
+                          backgroundColor: Colors.green.shade600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (_busy) ...[
+            const SizedBox(height: 24),
+            const Center(child: CircularProgressIndicator()),
+          ],
+        ],
       ),
     );
   }
+}
 
-  Widget _buildStepButton({
-    required String label,
-    required bool enabled,
-    required bool done,
-    required VoidCallback onPressed,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton.icon(
-          onPressed: enabled ? onPressed : null,
-          icon: Icon(done ? Icons.check : Icons.circle_outlined),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: done ? Colors.green.shade100 : null,
+enum _StepState { locked, active, done }
+
+class _StepTile extends StatelessWidget {
+  final int number;
+  final String label;
+  final String sublabel;
+  final IconData icon;
+  final _StepState state;
+  final Color accentColor;
+  final VoidCallback? onTap;
+  final bool isLast;
+
+  const _StepTile({
+    required this.number,
+    required this.label,
+    required this.sublabel,
+    required this.icon,
+    required this.state,
+    required this.accentColor,
+    this.onTap,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDone = state == _StepState.done;
+    final isActive = state == _StepState.active;
+    final isLocked = state == _StepState.locked;
+
+    final circleColor = isDone
+        ? Colors.green.shade600
+        : isActive
+            ? accentColor
+            : scheme.onSurface.withOpacity(0.2);
+
+    final contentColor = isLocked
+        ? scheme.onSurface.withOpacity(0.35)
+        : scheme.onSurface;
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Timeline column
+          Column(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isDone
+                      ? Colors.green.shade50
+                      : isActive
+                          ? accentColor.withOpacity(0.12)
+                          : scheme.surfaceContainerHighest,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: circleColor, width: 2),
+                ),
+                child: Center(
+                  child: isDone
+                      ? Icon(Icons.check_rounded,
+                          color: Colors.green.shade600, size: 18)
+                      : Text(
+                          '$number',
+                          style: TextStyle(
+                            color: isActive
+                                ? accentColor
+                                : scheme.onSurface.withOpacity(0.4),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                ),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDone
+                          ? Colors.green.shade200
+                          : scheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          label: Text(label),
-        ),
+
+          const SizedBox(width: 14),
+
+          // Content
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
+              child: Card(
+                margin: EdgeInsets.zero,
+                color: isActive
+                    ? accentColor.withOpacity(0.04)
+                    : null,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(
+                    color: isActive
+                        ? accentColor.withOpacity(0.3)
+                        : scheme.outlineVariant,
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Icon(icon, color: contentColor, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(label,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: contentColor,
+                                      fontSize: 15)),
+                              const SizedBox(height: 2),
+                              Text(sublabel,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: contentColor.withOpacity(0.6))),
+                            ],
+                          ),
+                        ),
+                        if (isActive)
+                          FilledButton(
+                            onPressed: onTap,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: accentColor,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
+                              textStyle: const TextStyle(fontSize: 13),
+                            ),
+                            child: const Text('Начать'),
+                          )
+                        else if (isDone)
+                          Icon(Icons.check_circle_rounded,
+                              color: Colors.green.shade600, size: 22)
+                        else
+                          Icon(Icons.lock_outline_rounded,
+                              color: scheme.onSurface.withOpacity(0.25),
+                              size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
