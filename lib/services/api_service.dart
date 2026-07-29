@@ -13,10 +13,7 @@ class ApiService {
   // Стандартный http.post() не следует за редиректами при POST,
   // поэтому используем IOClient с явным followRedirects.
   static http.Client _makeClient() {
-    final inner = HttpClient()
-      ..followRedirects = true
-      ..maxRedirects = 5;
-    return IOClient(inner);
+    return IOClient(HttpClient());
   }
 
   static Future<Map<String, dynamic>> _post(Map<String, dynamic> body) async {

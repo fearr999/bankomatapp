@@ -31,6 +31,7 @@ class Business {
   final String name;
   final String icon; // эмодзи
   final String color; // hex '#RRGGBB'
+  final String taskMode; // 'daily' | 'cycle'
   final List<ChecklistField> checklistSchema;
 
   Business({
@@ -38,6 +39,7 @@ class Business {
     required this.name,
     required this.icon,
     required this.color,
+    this.taskMode = 'daily',
     required this.checklistSchema,
   });
 
@@ -56,6 +58,7 @@ class Business {
         name: json['name']?.toString() ?? '',
         icon: json['icon']?.toString() ?? '📋',
         color: json['color']?.toString() ?? '#3F51B5',
+        taskMode: json['taskMode']?.toString() ?? 'daily',
         checklistSchema: ((json['checklistSchema'] as List?) ?? [])
             .map((e) => ChecklistField.fromJson(e as Map<String, dynamic>))
             .toList(),
@@ -66,6 +69,7 @@ class Business {
         'name': name,
         'icon': icon,
         'color': color,
+        'taskMode': taskMode,
         'checklistSchema': checklistSchema
             .map((f) => {
                   'id': f.id,
