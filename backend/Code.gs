@@ -143,6 +143,7 @@ function handleGetBusinesses_(data) {
       name: b.Name,
       icon: b.Icon || '📋',
       color: b.Color || '#3F51B5',
+      taskMode: b.Task_Mode || 'daily',
       checklistSchema: schema,
     };
   });
