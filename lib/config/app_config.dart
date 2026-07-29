@@ -22,6 +22,6 @@ class AppConfig {
   // Интервал автосинхронизации офлайн-очереди (секунды)
   static const int syncIntervalSeconds = 60;
 
-  // Таймаут HTTP-запросов
-  static const Duration httpTimeout = Duration(seconds: 30);
+  // Таймаут HTTP-запросов (Apps Script cold start может занимать до 40–50 сек)
+  static const Duration httpTimeout = Duration(seconds: 60);
 }
