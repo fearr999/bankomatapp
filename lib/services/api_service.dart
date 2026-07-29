@@ -14,40 +14,35 @@ class ApiService {
       'apiKey': AppConfig.apiKey,
     };
 
-    final client = http.Client();
+    // dart:io HttpClient по умолчанию следует за 302-редиректами (followRedirects=true)
+    // на уровне ОС — в отличие от package:http IOClient, который переопределяет
+    // это поведение. Поэтому используем dart:io напрямую.
+    final ioClient = HttpClient();
     try {
-      // Google Apps Script /exec всегда делает 302-редирект перед ответом.
-      // http.Client на нативных платформах возвращает 302 как есть (не следует
-      // за ним при POST), поэтому вручную делаем GET по Location header.
-      var response = await client
-          .post(
-            Uri.parse(AppConfig.apiBaseUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(payload),
-          )
+      final request = await ioClient
+          .postUrl(Uri.parse(AppConfig.apiBaseUrl))
+          .timeout(AppConfig.httpTimeout);
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode(payload));
+
+      final ioResponse =
+          await request.close().timeout(AppConfig.httpTimeout);
+      final responseBody = await ioResponse
+          .transform(utf8.decoder)
+          .join()
           .timeout(AppConfig.httpTimeout);
 
-      if (response.statusCode == 302 || response.statusCode == 301) {
-        final location = response.headers['location'];
-        if (location == null) {
-          throw Exception('Редирект без Location header');
-        }
-        response = await client
-            .get(Uri.parse(location))
-            .timeout(AppConfig.httpTimeout);
+      if (ioResponse.statusCode != 200) {
+        throw Exception('Сервер вернул ошибку: ${ioResponse.statusCode}');
       }
 
-      if (response.statusCode != 200) {
-        throw Exception('Сервер вернул ошибку: ${response.statusCode}');
-      }
-
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
       if (decoded['status'] == 'error') {
         throw Exception(decoded['message'] ?? 'Неизвестная ошибка сервера');
       }
       return decoded;
     } finally {
-      client.close();
+      ioClient.close(force: false);
     }
   }
 
