@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 
 import '../config/app_config.dart';
 
@@ -8,29 +9,44 @@ import '../config/app_config.dart';
 /// Все запросы — POST на один и тот же URL с полем `action` в теле,
 /// как описано в ТЗ (doPost диспетчер).
 class ApiService {
+  // Google Apps Script /exec всегда делает промежуточный 302-редирект.
+  // Стандартный http.post() не следует за редиректами при POST,
+  // поэтому используем IOClient с явным followRedirects.
+  static http.Client _makeClient() {
+    final inner = HttpClient()
+      ..followRedirects = true
+      ..maxRedirects = 5;
+    return IOClient(inner);
+  }
+
   static Future<Map<String, dynamic>> _post(Map<String, dynamic> body) async {
     final payload = {
       ...body,
       'apiKey': AppConfig.apiKey, // проверяется в Code.gs
     };
 
-    final response = await http
-        .post(
-          Uri.parse(AppConfig.apiBaseUrl),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(payload),
-        )
-        .timeout(AppConfig.httpTimeout);
+    final client = _makeClient();
+    try {
+      final response = await client
+          .post(
+            Uri.parse(AppConfig.apiBaseUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(payload),
+          )
+          .timeout(AppConfig.httpTimeout);
 
-    if (response.statusCode != 200) {
-      throw Exception('Сервер вернул ошибку: ${response.statusCode}');
-    }
+      if (response.statusCode != 200) {
+        throw Exception('Сервер вернул ошибку: ${response.statusCode}');
+      }
 
-    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-    if (decoded['status'] == 'error') {
-      throw Exception(decoded['message'] ?? 'Неизвестная ошибка сервера');
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      if (decoded['status'] == 'error') {
+        throw Exception(decoded['message'] ?? 'Неизвестная ошибка сервера');
+      }
+      return decoded;
+    } finally {
+      client.close();
     }
-    return decoded;
   }
 
   static Future<Map<String, dynamic>> login(String pin) {
