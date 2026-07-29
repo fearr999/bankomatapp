@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
 
 import '../config/app_config.dart';
 
@@ -9,28 +8,34 @@ import '../config/app_config.dart';
 /// Все запросы — POST на один и тот же URL с полем `action` в теле,
 /// как описано в ТЗ (doPost диспетчер).
 class ApiService {
-  // Google Apps Script /exec всегда делает промежуточный 302-редирект.
-  // Стандартный http.post() не следует за редиректами при POST,
-  // поэтому используем IOClient с явным followRedirects.
-  static http.Client _makeClient() {
-    return IOClient(HttpClient());
-  }
-
   static Future<Map<String, dynamic>> _post(Map<String, dynamic> body) async {
     final payload = {
       ...body,
-      'apiKey': AppConfig.apiKey, // проверяется в Code.gs
+      'apiKey': AppConfig.apiKey,
     };
 
-    final client = _makeClient();
+    final client = http.Client();
     try {
-      final response = await client
+      // Google Apps Script /exec всегда делает 302-редирект перед ответом.
+      // http.Client на нативных платформах возвращает 302 как есть (не следует
+      // за ним при POST), поэтому вручную делаем GET по Location header.
+      var response = await client
           .post(
             Uri.parse(AppConfig.apiBaseUrl),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(payload),
           )
           .timeout(AppConfig.httpTimeout);
+
+      if (response.statusCode == 302 || response.statusCode == 301) {
+        final location = response.headers['location'];
+        if (location == null) {
+          throw Exception('Редирект без Location header');
+        }
+        response = await client
+            .get(Uri.parse(location))
+            .timeout(AppConfig.httpTimeout);
+      }
 
       if (response.statusCode != 200) {
         throw Exception('Сервер вернул ошибку: ${response.statusCode}');
