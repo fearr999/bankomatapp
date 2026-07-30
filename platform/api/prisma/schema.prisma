@@ -55,6 +55,7 @@ model User {
   historyEvents  WorkOrderEvent[]
   attachments    Attachment[]
   checklistSubmissions ChecklistSubmission[]
+  stockMovements StockMovement[]
 }
 
 model Team {
@@ -122,6 +123,7 @@ model WorkOrder {
   events      WorkOrderEvent[]
   attachments Attachment[]
   checklistSubmissions ChecklistSubmission[]
+  stockMovements StockMovement[]
 }
 
 /// История изменений заявки (для карточки "история изменений")
@@ -189,4 +191,32 @@ model Equipment {
   createdAt      DateTime  @default(now())
 
   workOrders WorkOrder[]
+}
+
+/// Материалы / запчасти / расходники на складе. quantity — текущий остаток,
+/// пересчитывается при каждом движении (приход/выдача/возврат/списание).
+model InventoryItem {
+  id          String   @id @default(cuid())
+  name        String
+  sku         String?
+  unit        String   @default("шт")
+  quantity    Float    @default(0)
+  minQuantity Float?
+  createdAt   DateTime @default(now())
+
+  movements StockMovement[]
+}
+
+model StockMovement {
+  id          String        @id @default(cuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  type        String // receipt | issue | return | writeoff
+  quantity    Float
+  workOrderId String?
+  workOrder   WorkOrder?    @relation(fields: [workOrderId], references: [id])
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id])
+  comment     String?
+  createdAt   DateTime      @default(now())
 }

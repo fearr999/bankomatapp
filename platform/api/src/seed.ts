@@ -90,6 +90,31 @@ async function main() {
     },
   });
 
+  await prisma.inventoryItem.upsert({
+    where: { id: "seed-item-1" },
+    update: {},
+    create: {
+      id: "seed-item-1",
+      name: "Термобумага для чек-принтера",
+      sku: "TP-80-1",
+      unit: "рулон",
+      quantity: 42,
+      minQuantity: 10,
+    },
+  });
+  await prisma.inventoryItem.upsert({
+    where: { id: "seed-item-2" },
+    update: {},
+    create: {
+      id: "seed-item-2",
+      name: "Чистящая карта для картоприёмника",
+      sku: "CLN-CARD",
+      unit: "шт",
+      quantity: 8,
+      minQuantity: 15,
+    },
+  });
+
   await prisma.equipment.upsert({
     where: { id: "seed-equipment-1" },
     update: {},
