@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
 
@@ -13,27 +12,60 @@ class ApiService {
       ...body,
       'apiKey': AppConfig.apiKey,
     };
+    final bodyBytes = utf8.encode(jsonEncode(payload));
 
-    // dart:io HttpClient по умолчанию следует за 302-редиректами (followRedirects=true)
-    // на уровне ОС — в отличие от package:http IOClient, который переопределяет
-    // это поведение. Поэтому используем dart:io напрямую.
     final ioClient = HttpClient();
     try {
-      final request = await ioClient
+      // Apps Script всегда отвечает на POST /exec редиректом (301/302/303) на
+      // отдельный домен script.googleusercontent.com. Автоматическое следование
+      // за редиректом в разных клиентах вело себя непредсказуемо, поэтому здесь
+      // редирект обрабатывается вручную, шаг за шагом, как это делает браузер:
+      // POST -> читаем Location -> GET по этому адресу (без тела).
+      var request = await ioClient
           .postUrl(Uri.parse(AppConfig.apiBaseUrl))
           .timeout(AppConfig.httpTimeout);
+      request.followRedirects = false;
       request.headers.contentType = ContentType.json;
-      request.write(jsonEncode(payload));
+      request.headers.contentLength = bodyBytes.length;
+      request.add(bodyBytes);
 
-      final ioResponse =
-          await request.close().timeout(AppConfig.httpTimeout);
+      var ioResponse = await request.close().timeout(AppConfig.httpTimeout);
+
+      var redirects = 0;
+      while (_isRedirect(ioResponse.statusCode) && redirects < 5) {
+        final location = ioResponse.headers.value('location');
+        // Обязательно вычитываем тело редиректа, иначе соединение не
+        // освобождается и следующий запрос может зависнуть.
+        await ioResponse.drain();
+
+        if (location == null || location.isEmpty) {
+          throw Exception(
+              'Сервер вернул редирект (${ioResponse.statusCode}) без адреса Location');
+        }
+
+        final nextUri = Uri.parse(location);
+        final HttpClientRequest nextRequest;
+        try {
+          nextRequest =
+              await ioClient.getUrl(nextUri).timeout(AppConfig.httpTimeout);
+        } catch (e) {
+          throw Exception(
+              'Не удалось перейти по редиректу на $nextUri: $e');
+        }
+        nextRequest.followRedirects = false;
+        ioResponse =
+            await nextRequest.close().timeout(AppConfig.httpTimeout);
+        redirects++;
+      }
+
       final responseBody = await ioResponse
           .transform(utf8.decoder)
           .join()
           .timeout(AppConfig.httpTimeout);
 
       if (ioResponse.statusCode != 200) {
-        throw Exception('Сервер вернул ошибку: ${ioResponse.statusCode}');
+        throw Exception(
+            'Сервер вернул ошибку: ${ioResponse.statusCode} (после $redirects редиректов)');
       }
 
       final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
@@ -45,6 +77,9 @@ class ApiService {
       ioClient.close(force: false);
     }
   }
+
+  static bool _isRedirect(int statusCode) =>
+      statusCode == 301 || statusCode == 302 || statusCode == 303;
 
   static Future<Map<String, dynamic>> login(String pin) {
     return _post({'action': 'login', 'pin': pin});
