@@ -90,6 +90,23 @@ async function main() {
     },
   });
 
+  await prisma.checklistTemplate.upsert({
+    where: { id: "seed-template-atm" },
+    update: {},
+    create: {
+      id: "seed-template-atm",
+      name: "Обслуживание банкомата",
+      fields: [
+        { id: "exterior_clean", label: "Внешняя чистка корпуса", type: "checkbox", required: true },
+        { id: "card_reader_clean", label: "Чистка картоприёмника", type: "checkbox", required: true },
+        { id: "cash_dispenser_ok", label: "Купюроприёмник/диспенсер в порядке", type: "checkbox", required: true },
+        { id: "receipt_printer_ok", label: "Принтер чеков в порядке", type: "checkbox", required: true },
+        { id: "cassette_level", label: "Заполненность кассет (%)", type: "number", required: false },
+        { id: "comment", label: "Комментарий / обнаруженные неисправности", type: "text", required: false },
+      ],
+    },
+  });
+
   const existing = await prisma.workOrder.count();
   if (existing === 0) {
     await prisma.workOrder.create({

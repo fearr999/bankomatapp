@@ -7,6 +7,7 @@ import { workOrdersRouter } from "./modules/workorders/workorders.routes.js";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
 import { teamsRouter } from "./modules/teams/teams.routes.js";
 import { attachmentsRouter, UPLOADS_DIR } from "./modules/attachments/attachments.routes.js";
+import { checklistsRouter } from "./modules/checklists/checklists.routes.js";
 
 const app = express();
 app.use(cors());
@@ -21,6 +22,7 @@ app.use("/work-orders", workOrdersRouter);
 app.use("/dashboard", dashboardRouter);
 app.use("/teams", teamsRouter);
 app.use("/attachments", attachmentsRouter);
+app.use("/checklists", checklistsRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {

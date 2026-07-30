@@ -54,6 +54,7 @@ model User {
   createdOrders  WorkOrder[]      @relation("CreatedBy")
   historyEvents  WorkOrderEvent[]
   attachments    Attachment[]
+  checklistSubmissions ChecklistSubmission[]
 }
 
 model Team {
@@ -117,6 +118,7 @@ model WorkOrder {
 
   events      WorkOrderEvent[]
   attachments Attachment[]
+  checklistSubmissions ChecklistSubmission[]
 }
 
 /// История изменений заявки (для карточки "история изменений")
@@ -142,4 +144,28 @@ model Attachment {
   uploadedById  String?
   uploadedBy    User?     @relation(fields: [uploadedById], references: [id])
   createdAt     DateTime  @default(now())
+}
+
+/// Шаблон динамического чек-листа под тип работ (мерч, банкоматы,
+/// клининг, монтаж и т.д. — своя структура полей под каждый).
+model ChecklistTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  fields    Json // [{id,label,type:'checkbox'|'text'|'number',required}]
+  createdAt DateTime @default(now())
+
+  submissions ChecklistSubmission[]
+}
+
+model ChecklistSubmission {
+  id          String            @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder         @relation(fields: [workOrderId], references: [id])
+  templateId  String
+  template    ChecklistTemplate @relation(fields: [templateId], references: [id])
+  answers     Json // {fieldId: значение}
+  score       Float?
+  submittedById String?
+  submittedBy   User?           @relation(fields: [submittedById], references: [id])
+  createdAt   DateTime          @default(now())
 }

@@ -42,6 +42,147 @@ function getBrowserLocation(): Promise<{ lat: number; lng: number } | null> {
 
 const STATUS_FLOW = Object.keys(STATUS_LABELS);
 
+interface ChecklistField {
+  id: string;
+  label: string;
+  type: "checkbox" | "text" | "number";
+  required: boolean;
+}
+interface ChecklistTemplate {
+  id: string;
+  name: string;
+  fields: ChecklistField[];
+}
+interface ChecklistSubmission {
+  id: string;
+  answers: Record<string, unknown>;
+  createdAt: string;
+  template: ChecklistTemplate;
+  submittedBy?: { name: string } | null;
+}
+
+function ChecklistSection({ workOrderId }: { workOrderId: string }) {
+  const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
+  const [submissions, setSubmissions] = useState<ChecklistSubmission[]>([]);
+  const [templateId, setTemplateId] = useState("");
+  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [busy, setBusy] = useState(false);
+
+  async function load() {
+    const [t, s] = await Promise.all([
+      apiFetch<ChecklistTemplate[]>("/checklists/templates"),
+      apiFetch<ChecklistSubmission[]>(`/checklists/work-orders/${workOrderId}/submissions`),
+    ]);
+    setTemplates(t);
+    setSubmissions(s);
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workOrderId]);
+
+  const selected = templates.find((t) => t.id === templateId);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selected) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/checklists/work-orders/${workOrderId}/submissions`, {
+        method: "POST",
+        body: JSON.stringify({ templateId: selected.id, answers }),
+      });
+      setTemplateId("");
+      setAnswers({});
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Чек-лист</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {submissions.map((s) => (
+          <div key={s.id} className="rounded-md border p-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">{s.template.name}</span>
+              <span className="text-xs text-muted-foreground">
+                {s.submittedBy?.name ?? "—"} · {new Date(s.createdAt).toLocaleString("ru-RU")}
+              </span>
+            </div>
+            <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
+              {s.template.fields.map((f) => (
+                <span key={f.id}>
+                  {f.label}: {String(s.answers[f.id] ?? "—")}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {templates.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Шаблонов пока нет — создайте в разделе «Чек-листы».
+          </p>
+        ) : (
+          <form onSubmit={submit} className="flex flex-col gap-3">
+            <select
+              className="h-9 rounded-md border bg-transparent px-2 text-sm"
+              value={templateId}
+              onChange={(e) => {
+                setTemplateId(e.target.value);
+                setAnswers({});
+              }}
+            >
+              <option value="">Выбрать шаблон для заполнения...</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+
+            {selected && (
+              <div className="flex flex-col gap-2 rounded-md border p-3">
+                {selected.fields.map((f) => (
+                  <div key={f.id} className="flex items-center justify-between gap-3 text-sm">
+                    <label>
+                      {f.label}
+                      {f.required && " *"}
+                    </label>
+                    {f.type === "checkbox" ? (
+                      <input
+                        type="checkbox"
+                        checked={answers[f.id] === true}
+                        onChange={(e) => setAnswers((a) => ({ ...a, [f.id]: e.target.checked }))}
+                      />
+                    ) : (
+                      <Input
+                        type={f.type === "number" ? "number" : "text"}
+                        className="w-40"
+                        value={(answers[f.id] as string) ?? ""}
+                        onChange={(e) => setAnswers((a) => ({ ...a, [f.id]: e.target.value }))}
+                      />
+                    )}
+                  </div>
+                ))}
+                <Button type="submit" disabled={busy} className="mt-2 w-fit">
+                  {busy ? "Сохраняем..." : "Сохранить чек-лист"}
+                </Button>
+              </div>
+            )}
+          </form>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function WorkOrderDetailPage() {
   const params = useParams<{ id: string }>();
   const [order, setOrder] = useState<OrderDetail | null>(null);
@@ -174,6 +315,8 @@ export default function WorkOrderDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        <ChecklistSection workOrderId={order.id} />
 
         <Card>
           <CardHeader>
