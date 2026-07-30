@@ -5,6 +5,7 @@ import { authRouter } from "./modules/auth/auth.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
 import { workOrdersRouter } from "./modules/workorders/workorders.routes.js";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
+import { teamsRouter } from "./modules/teams/teams.routes.js";
 
 const app = express();
 app.use(cors());
@@ -16,6 +17,7 @@ app.use("/auth", authRouter);
 app.use("/users", usersRouter);
 app.use("/work-orders", workOrdersRouter);
 app.use("/dashboard", dashboardRouter);
+app.use("/teams", teamsRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {

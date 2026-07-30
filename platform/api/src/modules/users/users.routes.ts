@@ -44,6 +44,44 @@ usersRouter.get("/", async (_req, res) => {
   res.json(users);
 });
 
+usersRouter.get("/:id", async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      phone: true,
+      specialization: true,
+      status: true,
+      rating: true,
+      lat: true,
+      lng: true,
+      locationUpdatedAt: true,
+      createdAt: true,
+      team: { select: { id: true, name: true } },
+      assignedOrders: {
+        select: { id: true, number: true, title: true, status: true, createdAt: true, updatedAt: true },
+        orderBy: { updatedAt: "desc" },
+      },
+    },
+  });
+  if (!user) return res.status(404).json({ error: "Сотрудник не найден" });
+
+  const { assignedOrders, ...rest } = user;
+  const completed = assignedOrders.filter((o) => o.status === "COMPLETED" || o.status === "CLOSED").length;
+  const active = assignedOrders.filter(
+    (o) => !["COMPLETED", "CLOSED", "CANCELLED"].includes(o.status)
+  ).length;
+
+  res.json({
+    ...rest,
+    stats: { totalOrders: assignedOrders.length, completed, active },
+    orderHistory: assignedOrders,
+  });
+});
+
 const locationSchema = z.object({ lat: z.number(), lng: z.number() });
 
 /// Полевой сотрудник сообщает своё текущее местоположение (мобильное приложение,

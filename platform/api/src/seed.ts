@@ -61,6 +61,16 @@ async function main() {
     },
   });
 
+  const team = await prisma.team.upsert({
+    where: { id: "seed-team-1" },
+    update: {},
+    create: { id: "seed-team-1", name: "Бригада №1 — банкоматы/картоматы", leaderId: worker.id },
+  });
+  await prisma.user.updateMany({
+    where: { id: { in: [worker.id, worker2.id] } },
+    data: { teamId: team.id },
+  });
+
   const client = await prisma.client.upsert({
     where: { id: "seed-client-1" },
     update: {},
