@@ -1,0 +1,139 @@
+// FSM-платформа — базовая схема Milestone 1.
+// Покрывает: пользователей/роли, бригады, клиентов, объекты, заявки
+// с полным жизненным циклом статусов и историей изменений.
+// Остальные модули ТЗ (склад, оборудование, чек-листы, AI и т.д.)
+// добавляются следующими миграциями поверх этой основы.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN // руководитель / полный доступ
+  DISPATCHER // диспетчер
+  MANAGER // руководитель бригады
+  WORKER // полевой сотрудник
+}
+
+enum WorkOrderStatus {
+  NEW // Новая
+  ASSIGNED // Назначена
+  EN_ROUTE // В пути
+  ARRIVED // Прибыл
+  IN_PROGRESS // В работе
+  WAITING_MATERIALS // Ожидает материалы
+  WAITING_APPROVAL // Требуется согласование
+  COMPLETED // Завершена
+  CLOSED // Закрыта
+  CANCELLED // Отменена
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         Role     @default(WORKER)
+  specialization String?
+  status       String   @default("offline") // online | offline (позже: on_task и т.д.)
+  rating       Float?
+  teamId       String?
+  team         Team?    @relation(fields: [teamId], references: [id])
+  createdAt    DateTime @default(now())
+
+  assignedOrders WorkOrder[]      @relation("AssignedTo")
+  createdOrders  WorkOrder[]      @relation("CreatedBy")
+  historyEvents  WorkOrderEvent[]
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  leaderId  String?
+  createdAt DateTime @default(now())
+
+  members    User[]
+  workOrders WorkOrder[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+
+  sites      Site[]
+  workOrders WorkOrder[]
+}
+
+/// Объект обслуживания (адрес/точка) — магазин, банкомат, стройплощадка и т.д.
+model Site {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  lat       Float?
+  lng       Float?
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id])
+  createdAt DateTime @default(now())
+
+  workOrders WorkOrder[]
+}
+
+model WorkOrder {
+  id          String          @id @default(cuid())
+  number      String          @unique
+  status      WorkOrderStatus @default(NEW)
+  title       String
+  description String?
+  slaDueAt    DateTime?
+
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id])
+  siteId   String?
+  site     Site?   @relation(fields: [siteId], references: [id])
+
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedTo", fields: [assignedToId], references: [id])
+  teamId       String?
+  team         Team?   @relation(fields: [teamId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events      WorkOrderEvent[]
+  attachments Attachment[]
+}
+
+/// История изменений заявки (для карточки "история изменений")
+model WorkOrderEvent {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  type        String // status_change | comment | assignment | ...
+  message     String
+  createdAt   DateTime  @default(now())
+}
+
+model Attachment {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  url         String
+  kind        String // photo | document | video
+  lat         Float?
+  lng         Float?
+  createdAt   DateTime  @default(now())
+}
