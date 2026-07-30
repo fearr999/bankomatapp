@@ -29,9 +29,13 @@ jobs:
           java-version: 21
 
       - name: Install Android SDK components
-        env:
-          SDKMANAGER: ${{ env.ANDROID_HOME }}/cmdline-tools/latest/bin/sdkmanager
         run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager -type f | head -n1)
+          fi
+          echo "Using sdkmanager at: $SDKMANAGER"
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
 
