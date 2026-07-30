@@ -1,5 +1,13 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getCurrentUser } from "@/lib/api";
 
 export default function RootPage() {
-  redirect("/dashboard");
+  const router = useRouter();
+  useEffect(() => {
+    router.replace(getCurrentUser() ? "/dashboard" : "/login");
+  }, [router]);
+  return null;
 }
