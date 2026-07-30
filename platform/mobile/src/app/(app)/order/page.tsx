@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Camera, WifiOff } from "lucide-react";
 import { apiFetch, API_BASE } from "@/lib/api";
 import { STATUS_LABELS, StatusBadge } from "@/components/ui/badge";
@@ -163,9 +163,10 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
   );
 }
 
-export default function OrderDetailPage() {
-  const params = useParams<{ id: string }>();
+function OrderDetailContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const orderId = searchParams.get("id") ?? "";
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -174,8 +175,9 @@ export default function OrderDetailPage() {
   const hasLoadedRef = useRef(false);
 
   async function load() {
+    if (!orderId) return;
     try {
-      const data = await apiFetch<OrderDetail>(`/work-orders/${params.id}`);
+      const data = await apiFetch<OrderDetail>(`/work-orders/${orderId}`);
       setOrder(data);
       setError(null);
       hasLoadedRef.current = true;
@@ -187,16 +189,16 @@ export default function OrderDetailPage() {
       }
     }
     const q = await listQueuedPhotos();
-    setQueued(q.filter((p) => p.workOrderId === params.id));
+    setQueued(q.filter((p) => p.workOrderId === orderId));
   }
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }, [orderId]);
 
   async function changeStatus(status: string) {
-    await apiFetch(`/work-orders/${params.id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+    await apiFetch(`/work-orders/${orderId}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
     await load();
   }
 
@@ -211,11 +213,11 @@ export default function OrderDetailPage() {
         form.append("lng", String(loc.lng));
       }
       try {
-        await apiFetch(`/attachments/work-orders/${params.id}/photos`, { method: "POST", body: form });
+        await apiFetch(`/attachments/work-orders/${orderId}/photos`, { method: "POST", body: form });
       } catch {
         // Нет сети или бэкенд недоступен — кладём в офлайн-очередь IndexedDB, отправим позже.
         await queuePhoto({
-          workOrderId: params.id,
+          workOrderId: orderId,
           blob: file,
           filename: file.name,
           lat: loc?.lat,
@@ -337,5 +339,13 @@ export default function OrderDetailPage() {
         ))}
       </section>
     </div>
+  );
+}
+
+export default function OrderDetailPage() {
+  return (
+    <Suspense fallback={<p className="p-4 text-sm text-muted-foreground">Загрузка...</p>}>
+      <OrderDetailContent />
+    </Suspense>
   );
 }

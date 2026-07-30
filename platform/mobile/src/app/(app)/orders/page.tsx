@@ -93,7 +93,7 @@ export default function OrdersPage() {
         {filtered.map((order) => (
           <Link
             key={order.id}
-            href={`/orders/${order.id}`}
+            href={`/order?id=${order.id}`}
             className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4"
           >
             <div className="flex items-center justify-between gap-2">

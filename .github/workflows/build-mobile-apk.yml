@@ -1,0 +1,55 @@
+name: Build mobile APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: >
+          Публичный URL backend API (platform/api), который увидит приложение
+          на телефоне. Обязательно с https:// и без слэша на конце.
+        required: true
+        default: "https://api.example.com"
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform/mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Android SDK components
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install web dependencies
+        run: npm ci
+
+      - name: Build static export
+        env:
+          NEXT_PUBLIC_API_URL: ${{ inputs.api_url }}
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: platform/mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: corepi-mobile-debug-apk
+          path: platform/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
