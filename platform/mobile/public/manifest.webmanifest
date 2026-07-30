@@ -1,6 +1,6 @@
 {
-  "name": "Fielda",
-  "short_name": "Fielda",
+  "name": "CorePi",
+  "short_name": "CorePi",
   "description": "Приложение полевого сотрудника: заявки, чек-листы, фотоотчёты, GPS.",
   "start_url": "/orders",
   "scope": "/",
