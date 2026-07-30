@@ -56,6 +56,7 @@ model User {
   attachments    Attachment[]
   checklistSubmissions ChecklistSubmission[]
   stockMovements StockMovement[]
+  interactions   Interaction[]
 }
 
 model Team {
@@ -77,6 +78,8 @@ model Client {
 
   sites      Site[]
   workOrders WorkOrder[]
+  contracts  Contract[]
+  interactions Interaction[]
 }
 
 /// Объект обслуживания (адрес/точка) — магазин, банкомат, стройплощадка и т.д.
@@ -219,4 +222,28 @@ model StockMovement {
   user        User?         @relation(fields: [userId], references: [id])
   comment     String?
   createdAt   DateTime      @default(now())
+}
+
+model Contract {
+  id        String    @id @default(cuid())
+  clientId  String
+  client    Client    @relation(fields: [clientId], references: [id])
+  number    String
+  startDate DateTime?
+  endDate   DateTime?
+  notes     String?
+  createdAt DateTime  @default(now())
+}
+
+/// Свободная запись о контакте с клиентом (звонок, встреча, письмо) —
+/// "история взаимодействий" из ТЗ.
+model Interaction {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  type      String // call | meeting | email | note
+  message   String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }
