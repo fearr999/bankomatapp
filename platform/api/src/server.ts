@@ -14,6 +14,14 @@ import { warehouseRouter } from "./modules/warehouse/warehouse.routes.js";
 import { clientsRouter } from "./modules/clients/clients.routes.js";
 import { analyticsRouter } from "./modules/analytics/analytics.routes.js";
 import { aiRouter } from "./modules/ai/ai.routes.js";
+import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
+import { startTelegramPolling, isTelegramConfigured } from "./lib/telegram.js";
+
+// Один необработанный отказ промиса в асинхронном роуте (например, сбой сети
+// при обращении к внешнему API вроде Telegram) не должен ронять весь сервер.
+process.on("unhandledRejection", (err) => {
+  console.error("Необработанная ошибка промиса:", err);
+});
 
 const app = express();
 app.use(cors());
@@ -35,8 +43,15 @@ app.use("/warehouse", warehouseRouter);
 app.use("/clients", clientsRouter);
 app.use("/analytics", analyticsRouter);
 app.use("/ai", aiRouter);
+app.use("/notifications", notificationsRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {
   console.log(`CorePi API запущен на http://localhost:${port}`);
+  if (isTelegramConfigured()) {
+    startTelegramPolling();
+    console.log("Telegram-бот: опрос обновлений запущен");
+  } else {
+    console.log("Telegram-бот: TELEGRAM_BOT_TOKEN не задан, уведомления в Telegram отключены");
+  }
 });

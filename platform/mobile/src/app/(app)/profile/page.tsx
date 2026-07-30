@@ -3,11 +3,77 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { LogOut, MapPin, Moon, RefreshCw, Sun, WifiOff } from "lucide-react";
-import { getCurrentUser, logout } from "@/lib/api";
+import { LogOut, MapPin, Moon, RefreshCw, Send, Sun, WifiOff } from "lucide-react";
+import { apiFetch, getCurrentUser, logout } from "@/lib/api";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { flushOfflineQueue, listQueuedPhotos } from "@/lib/offline-queue";
 import { Button } from "@/components/ui/button";
+
+interface TelegramStatus {
+  configured: boolean;
+  linked: boolean;
+}
+
+function TelegramSection() {
+  const [status, setStatus] = useState<TelegramStatus | null>(null);
+  const [link, setLink] = useState<{ deepLink: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadStatus() {
+    setStatus(await apiFetch<TelegramStatus>("/notifications/telegram/status"));
+  }
+
+  useEffect(() => {
+    loadStatus();
+  }, []);
+
+  async function requestLink() {
+    setBusy(true);
+    setError(null);
+    try {
+      const data = await apiFetch<{ deepLink: string }>("/notifications/telegram/link-code", {
+        method: "POST",
+      });
+      setLink(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось получить ссылку");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!status || !status.configured) return null;
+
+  return (
+    <div className="rounded-lg border border-border p-4 text-sm">
+      <div className="flex items-center gap-2 font-medium">
+        <Send size={16} />
+        Telegram
+      </div>
+      {status.linked ? (
+        <p className="mt-1 text-muted-foreground">Подключён — уведомления о заявках приходят туда</p>
+      ) : link ? (
+        <div className="mt-2 flex flex-col gap-2">
+          <a href={link.deepLink} className="rounded-lg bg-primary px-3 py-2 text-center text-primary-foreground">
+            Открыть бота
+          </a>
+          <Button variant="outline" onClick={loadStatus}>
+            Я подключил(а) — обновить
+          </Button>
+        </div>
+      ) : (
+        <>
+          <p className="mt-1 text-muted-foreground">Получайте уведомления о заявках в Telegram</p>
+          <Button variant="outline" className="mt-2 w-full" onClick={requestLink} disabled={busy}>
+            {busy ? "Готовим ссылку..." : "Подключить"}
+          </Button>
+          {error && <p className="mt-1 text-red-500">{error}</p>}
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -77,6 +143,8 @@ export default function ProfilePage() {
           </Button>
         )}
       </div>
+
+      <TelegramSection />
 
       {mounted && (
         <div className="flex items-center justify-between rounded-lg border border-border p-4 text-sm">

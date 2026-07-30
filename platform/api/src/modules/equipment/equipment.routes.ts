@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
+import { notifyUser } from "../notifications/notify.js";
 
 export const equipmentRouter = Router();
 equipmentRouter.use(authenticate);
@@ -129,5 +130,21 @@ equipmentRouter.post("/:id/emergency", async (req, res) => {
     },
   });
   await prisma.equipment.update({ where: { id: equipment.id }, data: { status: "broken" } });
+
+  const responders = await prisma.user.findMany({
+    where: { role: { in: ["ADMIN", "DISPATCHER"] } },
+    select: { id: true },
+  });
+  await Promise.all(
+    responders.map((u) =>
+      notifyUser(
+        u.id,
+        "emergency_call",
+        "Аварийный вызов",
+        `${order.title} — заявка ${order.number} создана и требует назначения исполнителя`
+      )
+    )
+  );
+
   res.status(201).json(order);
 });

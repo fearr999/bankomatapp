@@ -11,9 +11,12 @@ export function Topbar() {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const user = getCurrentUser();
+  const [user, setUser] = useState<ReturnType<typeof getCurrentUser>>(null);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    setUser(getCurrentUser());
+  }, []);
 
   return (
     <header className="flex h-14 items-center justify-between border-b px-5">

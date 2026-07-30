@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
+import { notifyUser } from "../notifications/notify.js";
 
 export const workOrdersRouter = Router();
 workOrdersRouter.use(authenticate);
@@ -136,6 +137,16 @@ workOrdersRouter.patch("/:id/assign", async (req, res) => {
       },
     },
   });
+
+  if (parsed.data.assignedToId) {
+    await notifyUser(
+      parsed.data.assignedToId,
+      "work_order_assigned",
+      "Новая заявка",
+      `Вам назначена заявка ${order.number}: ${order.title}`
+    );
+  }
+
   res.json(order);
 });
 
