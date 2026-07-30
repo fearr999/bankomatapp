@@ -22,6 +22,15 @@ export interface MapOrder {
   lng: number;
 }
 
+export interface MapSite {
+  id: string;
+  name: string;
+  address: string | null;
+  clientName?: string | null;
+  lat: number;
+  lng: number;
+}
+
 // Leaflet-иконки строим через divIcon — не тянем внешние картинки маркеров,
 // которые обычно ломаются со сборщиками (Next.js/webpack).
 function dot(color: string, label: string) {
@@ -36,10 +45,19 @@ function dot(color: string, label: string) {
 const EMPLOYEE_ICON_ONLINE = dot("#22c55e", "online");
 const EMPLOYEE_ICON_OFFLINE = dot("#71717a", "offline");
 const ORDER_ICON = dot("#3b82f6", "order");
+const SITE_ICON = dot("#a855f7", "site");
 
 const TASHKENT_CENTER: [number, number] = [41.3111, 69.2797];
 
-export function MapView({ employees, orders }: { employees: MapEmployee[]; orders: MapOrder[] }) {
+export function MapView({
+  employees = [],
+  orders = [],
+  sites = [],
+}: {
+  employees?: MapEmployee[];
+  orders?: MapOrder[];
+  sites?: MapSite[];
+}) {
   return (
     <MapContainer
       center={TASHKENT_CENTER}
@@ -75,6 +93,25 @@ export function MapView({ employees, orders }: { employees: MapEmployee[]; order
             <b>{o.number}</b>
             <br />
             {o.title}
+          </Popup>
+        </Marker>
+      ))}
+      {sites.map((s) => (
+        <Marker key={s.id} position={[s.lat, s.lng]} icon={SITE_ICON}>
+          <Popup>
+            <b>{s.name}</b>
+            {s.clientName && (
+              <>
+                <br />
+                {s.clientName}
+              </>
+            )}
+            {s.address && (
+              <>
+                <br />
+                {s.address}
+              </>
+            )}
           </Popup>
         </Marker>
       ))}
