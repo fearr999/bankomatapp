@@ -32,7 +32,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-lg text-foreground">FSM Platform</CardTitle>
+          <CardTitle className="text-lg text-foreground">Fielda</CardTitle>
           <p className="text-sm text-muted-foreground">Войдите, чтобы продолжить</p>
         </CardHeader>
         <CardContent>

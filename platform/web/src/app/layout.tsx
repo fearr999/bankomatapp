@@ -3,8 +3,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FSM Platform",
-  description: "Field Service Management",
+  title: "Fielda",
+  description: "Fielda — Field Service Management platform",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

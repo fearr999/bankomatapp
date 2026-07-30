@@ -1,6 +1,6 @@
 {
-  "name": "FSM Мобильный",
-  "short_name": "FSM Mobile",
+  "name": "Fielda",
+  "short_name": "Fielda",
   "description": "Приложение полевого сотрудника: заявки, чек-листы, фотоотчёты, GPS.",
   "start_url": "/orders",
   "scope": "/",

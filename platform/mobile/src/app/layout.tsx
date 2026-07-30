@@ -4,10 +4,10 @@ import { SwRegister } from "@/components/sw-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FSM Мобильный",
-  description: "Приложение полевого сотрудника FSM Platform",
+  title: "Fielda",
+  description: "Fielda — приложение полевого сотрудника",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "FSM Mobile" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Fielda" },
 };
 
 export const viewport: Viewport = {

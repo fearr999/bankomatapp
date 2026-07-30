@@ -38,5 +38,5 @@ app.use("/ai", aiRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {
-  console.log(`FSM API запущен на http://localhost:${port}`);
+  console.log(`Fielda API запущен на http://localhost:${port}`);
 });

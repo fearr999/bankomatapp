@@ -33,7 +33,7 @@ export default function LoginPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <Wrench size={22} />
         </div>
-        <h1 className="text-xl font-semibold tracking-tight">FSM Мобильный</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Fielda</h1>
         <p className="text-sm text-muted-foreground">Вход для полевого сотрудника</p>
       </div>
 
