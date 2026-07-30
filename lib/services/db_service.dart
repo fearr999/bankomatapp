@@ -19,7 +19,7 @@ class DbService {
     final path = join(await getDatabasesPath(), 'merchandiser_local.db');
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE visits (
@@ -51,6 +51,7 @@ class DbService {
           CREATE TABLE photo_queue (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             visitLocalId TEXT,
+            businessId TEXT,
             type TEXT,
             filePath TEXT,
             timestamp TEXT,
@@ -82,6 +83,10 @@ class DbService {
         ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 4) {
+          await db.execute(
+              'ALTER TABLE photo_queue ADD COLUMN businessId TEXT DEFAULT ""');
+        }
         if (oldVersion < 3) {
           await db.execute(
               'ALTER TABLE visits ADD COLUMN businessId TEXT DEFAULT ""');
@@ -149,11 +154,12 @@ class DbService {
   }
 
   // ---------- Photo queue ----------
-  Future<void> queuePhoto(
-      String visitLocalId, String type, String filePath, String ts) async {
+  Future<void> queuePhoto(String visitLocalId, String type, String filePath,
+      String ts, {String businessId = ''}) async {
     final d = await db;
     await d.insert('photo_queue', {
       'visitLocalId': visitLocalId,
+      'businessId': businessId,
       'type': type,
       'filePath': filePath,
       'timestamp': ts,

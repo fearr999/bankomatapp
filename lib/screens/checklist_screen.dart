@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/db_service.dart';
+import '../services/photo_service.dart';
+import '../services/location_service.dart';
 
 /// Генерик-чек-лист: набор полей рисуется динамически из
 /// Business.checklistSchema (приходит с сервера, лист Businesses).
@@ -19,12 +22,42 @@ class ChecklistScreen extends StatefulWidget {
 class _ChecklistScreenState extends State<ChecklistScreen> {
   final Map<String, dynamic> _answers = {};
   String? _error;
+  File? _photo;
+  bool _photoBusy = false;
+
+  bool get _isCycle => widget.business.taskMode == 'cycle';
 
   @override
   void initState() {
     super.initState();
     for (final f in widget.business.checklistSchema) {
       _answers[f.id] = f.type == 'checkbox' ? false : '';
+    }
+  }
+
+  Future<void> _capturePhoto() async {
+    setState(() {
+      _photoBusy = true;
+      _error = null;
+    });
+    try {
+      final raw = await PhotoService.takePhoto();
+      if (raw == null) return; // отменено
+      final loc = await LocationService.getCurrentLocation();
+      final watermarked = await PhotoService.watermarkAndCompress(
+        source: raw,
+        lat: loc.lat,
+        lng: loc.lng,
+      );
+      final ts = DateTime.now().toIso8601String();
+      await DbService.instance.queuePhoto(
+          widget.visitLocalId, 'Report', watermarked.path, ts,
+          businessId: widget.business.businessId);
+      setState(() => _photo = watermarked);
+    } catch (e) {
+      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      setState(() => _photoBusy = false);
     }
   }
 
@@ -57,7 +90,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     final schema = widget.business.checklistSchema;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Чек-лист: ${widget.business.name}'),
+        title: Text(
+            '${_isCycle ? "Отчёт" : "Чек-лист"}: ${widget.business.name}'),
         backgroundColor: color,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -87,8 +121,49 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         style: const TextStyle(color: Colors.red)),
                   ),
                 ...schema.map((f) => _buildField(f, color)),
+                if (_isCycle) _buildPhotoSection(color),
               ],
             ),
+    );
+  }
+
+  Widget _buildPhotoSection(Color color) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: _photoBusy ? null : _capturePhoto,
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: _photo == null
+                    ? const Icon(Icons.camera_alt_outlined)
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(_photo!, fit: BoxFit.cover),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _photo == null
+                    ? 'Фото (необязательно)'
+                    : 'Фото приложено',
+                style: TextStyle(color: color),
+              ),
+            ),
+            if (_photoBusy) const CircularProgressIndicator(),
+          ],
+        ),
+      ),
     );
   }
 

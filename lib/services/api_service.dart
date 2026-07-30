@@ -180,6 +180,7 @@ class ApiService {
     required String type, // Before | After
     required File file,
     required String timestamp,
+    String? businessId,
   }) async {
     final bytes = await file.readAsBytes();
     final base64Data = base64Encode(bytes);
@@ -191,6 +192,7 @@ class ApiService {
       'timestamp': timestamp,
       'fileBase64': base64Data,
       'mimeType': 'image/jpeg',
+      'businessId': businessId,
     });
   }
 

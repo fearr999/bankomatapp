@@ -467,6 +467,18 @@ function handleSubmitChecklist_(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
+    const business = getBusinessRow_(ss, data.businessId);
+    const store = findStoreByLogId_(ss, data.logId);
+
+    // Если для бизнеса указана таблица клиента — пишем отчёт напрямую туда,
+    // с защитой от повторной отправки за тот же день по этой точке.
+    if (business && business.Client_Sheet_ID && store) {
+      const dup = writeToClientSheet_(business, store, data.answers || {});
+      if (dup) {
+        return jsonOut_({ status: 'error', message: 'Отчёт по этой точке на сегодня уже отправлен' });
+      }
+    }
+
     let sheet = ss.getSheetByName('Checklist_Reports');
     if (!sheet) {
       sheet = ss.insertSheet('Checklist_Reports');
@@ -486,6 +498,55 @@ function handleSubmitChecklist_(data) {
   }
 }
 
+/** Находит строку Stores по Store_ID, привязанному к данному Log_ID в Visits_Log */
+function findStoreByLogId_(ss, logId) {
+  const logs = sheetToObjects_(ss.getSheetByName('Visits_Log'));
+  const log = logs.find(l => l.Log_ID === logId);
+  if (!log) return null;
+  const stores = sheetToObjects_(ss.getSheetByName('Stores'));
+  return stores.find(s => s.Store_ID === log.Store_ID) || null;
+}
+
+/** ID-строки для таблицы клиента: числовая часть Store_ID + '.' + ДД.ММ (сегодня). Пример: "1074.30.07" */
+function buildClientRowId_(storeId) {
+  const digits = String(storeId).replace(/[^0-9]/g, '') || String(storeId);
+  const now = new Date();
+  const tz = Session.getScriptTimeZone();
+  const dd = Utilities.formatDate(now, tz, 'dd');
+  const mm = Utilities.formatDate(now, tz, 'MM');
+  return digits + '.' + dd + '.' + mm;
+}
+
+/** Пишет строку отчёта в таблицу клиента (Business.Client_Sheet_ID).
+ *  Возвращает true, если сегодняшний отчёт по этой точке уже есть (дубль), иначе false. */
+function writeToClientSheet_(business, store, answers) {
+  const clientSs = SpreadsheetApp.openById(business.Client_Sheet_ID);
+  const tabName = business.Name || 'Отчёты';
+  let sheet = clientSs.getSheetByName(tabName);
+  if (!sheet) {
+    sheet = clientSs.insertSheet(tabName);
+    sheet.appendRow(['ID', 'Store_ID', 'Название', 'Адрес', 'Ответы', 'Время']);
+  }
+
+  const rowId = buildClientRowId_(store.Store_ID);
+
+  // Дедупликация: смотрим, нет ли уже сегодняшнего ID в колонке A
+  const existingIds = sheet.getRange(1, 1, sheet.getLastRow(), 1).getValues().flat();
+  if (existingIds.indexOf(rowId) !== -1) {
+    return true;
+  }
+
+  sheet.appendRow([
+    rowId,
+    store.Store_ID,
+    store.Name || '',
+    store.Address || '',
+    JSON.stringify(answers),
+    new Date().toISOString(),
+  ]);
+  return false;
+}
+
 // ---------------------------------------------------------------
 // PHOTOS
 // ---------------------------------------------------------------
@@ -494,7 +555,12 @@ function handleUploadPhoto_(data) {
   const session = checkSession_(data.token);
   if (!session) return jsonOut_({ status: 'error', message: 'Сессия истекла, войдите заново' });
 
-  const folderId = PropertiesService.getScriptProperties().getProperty('DRIVE_FOLDER_ID');
+  const ssForBusiness = SpreadsheetApp.getActiveSpreadsheet();
+  const business = data.businessId ? getBusinessRow_(ssForBusiness, data.businessId) : null;
+  // Если у бизнеса указана своя папка (Businesses.Drive_Folder_ID) — фото идут туда,
+  // иначе используется общая DRIVE_FOLDER_ID из Script Properties.
+  const folderId = (business && business.Drive_Folder_ID) ||
+    PropertiesService.getScriptProperties().getProperty('DRIVE_FOLDER_ID');
   if (!folderId) {
     return jsonOut_({ status: 'error', message: 'DRIVE_FOLDER_ID не задан в Script Properties' });
   }

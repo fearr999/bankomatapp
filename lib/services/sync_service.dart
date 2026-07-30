@@ -145,6 +145,7 @@ class SyncService {
           type: p['type'],
           file: file,
           timestamp: p['timestamp'],
+          businessId: p['businessId'] as String?,
         );
         await db.markPhotoSynced(p['id']);
         summary.photosSynced++;

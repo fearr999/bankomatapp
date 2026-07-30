@@ -6,7 +6,9 @@ import '../services/db_service.dart';
 
 class PhotoScreen extends StatefulWidget {
   final String visitLocalId;
-  const PhotoScreen({super.key, required this.visitLocalId});
+  final String businessId;
+  const PhotoScreen(
+      {super.key, required this.visitLocalId, required this.businessId});
 
   @override
   State<PhotoScreen> createState() => _PhotoScreenState();
@@ -33,8 +35,9 @@ class _PhotoScreenState extends State<PhotoScreen> {
         lng: loc.lng,
       );
       final ts = DateTime.now().toIso8601String();
-      await DbService.instance
-          .queuePhoto(widget.visitLocalId, type, watermarked.path, ts);
+      await DbService.instance.queuePhoto(
+          widget.visitLocalId, type, watermarked.path, ts,
+          businessId: widget.businessId);
       setState(() {
         if (type == 'Before') {
           _before = watermarked;

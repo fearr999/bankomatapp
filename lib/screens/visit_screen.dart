@@ -36,8 +36,13 @@ class _VisitScreenState extends State<VisitScreen> {
     });
     try {
       final loc = await LocationService.getCurrentLocation();
-      final distance = LocationService.haversineMeters(
-          loc.lat, loc.lng, widget.task.lat, widget.task.lng);
+      // Если координаты точки не заданы (пока не проставлены в Stores) —
+      // проверку расстояния пропускаем, чтобы не блокировать check-in.
+      final hasCoords = widget.task.lat != 0 || widget.task.lng != 0;
+      final distance = hasCoords
+          ? LocationService.haversineMeters(
+              loc.lat, loc.lng, widget.task.lat, widget.task.lng)
+          : 0.0;
       final radius = widget.task.allowedRadiusMeters;
 
       if (loc.isMocked) {
@@ -47,7 +52,7 @@ class _VisitScreenState extends State<VisitScreen> {
         });
       }
 
-      if (distance > radius) {
+      if (hasCoords && distance > radius) {
         setState(() {
           _error =
               'Слишком далеко от точки (${distance.toStringAsFixed(0)} м, допустимо ${radius.toStringAsFixed(0)} м)';
@@ -93,6 +98,8 @@ class _VisitScreenState extends State<VisitScreen> {
     }
   }
 
+  bool get _isCycle => widget.business.taskMode == 'cycle';
+
   Future<void> _goToReport() async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -102,13 +109,18 @@ class _VisitScreenState extends State<VisitScreen> {
                 visitLocalId: _localVisitId!, business: widget.business),
       ),
     );
-    if (result == true) setState(() => _step = _Step.reportDone);
+    if (result != true) return;
+    // Для цикловых бизнесов (банкоматы) отчёт уже включает фото —
+    // отдельный шаг "Фотоотчёт" не нужен, сразу переходим к check-out.
+    setState(() => _step = _isCycle ? _Step.photosDone : _Step.reportDone);
   }
 
   Future<void> _goToPhotos() async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => PhotoScreen(visitLocalId: _localVisitId!),
+        builder: (_) => PhotoScreen(
+            visitLocalId: _localVisitId!,
+            businessId: widget.business.businessId),
       ),
     );
     if (result == true) setState(() => _step = _Step.photosDone);
@@ -284,10 +296,14 @@ class _VisitScreenState extends State<VisitScreen> {
             number: 2,
             label: widget.business.isMerch
                 ? 'Учёт товаров (SKU)'
-                : 'Чек-лист',
+                : _isCycle
+                    ? 'Отчёт'
+                    : 'Чек-лист',
             sublabel: widget.business.isMerch
                 ? 'Заполните данные по SKU'
-                : 'Пройдите по пунктам чек-листа',
+                : _isCycle
+                    ? 'Статус, комментарий и фото'
+                    : 'Пройдите по пунктам чек-листа',
             icon: widget.business.isMerch
                 ? Icons.inventory_2_rounded
                 : Icons.checklist_rounded,
@@ -299,21 +315,22 @@ class _VisitScreenState extends State<VisitScreen> {
             accentColor: color,
             onTap: _step == _Step.checkedIn && !_busy ? _goToReport : null,
           ),
+          if (!_isCycle)
+            _StepTile(
+              number: 3,
+              label: 'Фотоотчёт',
+              sublabel: 'Снимки до и после работы',
+              icon: Icons.camera_alt_rounded,
+              state: _step.index > _Step.reportDone.index
+                  ? _StepState.done
+                  : _step == _Step.reportDone
+                      ? _StepState.active
+                      : _StepState.locked,
+              accentColor: color,
+              onTap: _step == _Step.reportDone && !_busy ? _goToPhotos : null,
+            ),
           _StepTile(
-            number: 3,
-            label: 'Фотоотчёт',
-            sublabel: 'Снимки до и после работы',
-            icon: Icons.camera_alt_rounded,
-            state: _step.index > _Step.reportDone.index
-                ? _StepState.done
-                : _step == _Step.reportDone
-                    ? _StepState.active
-                    : _StepState.locked,
-            accentColor: color,
-            onTap: _step == _Step.reportDone && !_busy ? _goToPhotos : null,
-          ),
-          _StepTile(
-            number: 4,
+            number: _isCycle ? 3 : 4,
             label: 'Check-out',
             sublabel: 'Завершите визит',
             icon: Icons.flag_rounded,
