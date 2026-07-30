@@ -37,6 +37,7 @@ export default function EquipmentPage() {
   const [name, setName] = useState("");
   const [model, setModel] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
+  const [deviceType, setDeviceType] = useState("other");
 
   async function load() {
     try {
@@ -54,7 +55,7 @@ export default function EquipmentPage() {
     e.preventDefault();
     await apiFetch("/equipment", {
       method: "POST",
-      body: JSON.stringify({ name, model, serialNumber }),
+      body: JSON.stringify({ name, model, serialNumber, deviceType }),
     });
     setName("");
     setModel("");
@@ -88,6 +89,18 @@ export default function EquipmentPage() {
               <div className="flex-1">
                 <label className="mb-1 block text-xs text-muted-foreground">Серийный номер</label>
                 <Input value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
+              </div>
+              <div className="w-40">
+                <label className="mb-1 block text-xs text-muted-foreground">Тип</label>
+                <select
+                  className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
+                  value={deviceType}
+                  onChange={(e) => setDeviceType(e.target.value)}
+                >
+                  <option value="other">Другое</option>
+                  <option value="atm">Банкомат</option>
+                  <option value="cardomat">Картомат</option>
+                </select>
               </div>
               <Button type="submit">Добавить</Button>
             </form>

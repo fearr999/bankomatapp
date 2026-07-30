@@ -57,6 +57,8 @@ model User {
   checklistSubmissions ChecklistSubmission[]
   stockMovements StockMovement[]
   interactions   Interaction[]
+  collections    CollectionRecord[]
+  accessLogs     DeviceAccessLog[]
 }
 
 model Team {
@@ -101,6 +103,7 @@ model WorkOrder {
   id          String          @id @default(cuid())
   number      String          @unique
   status      WorkOrderStatus @default(NEW)
+  priority    String          @default("normal") // normal | urgent (аварийный вызов)
   title       String
   description String?
   slaDueAt    DateTime?
@@ -185,15 +188,44 @@ model Equipment {
   model          String?
   serialNumber   String?
   status         String    @default("operational") // operational | broken | maintenance
+  deviceType     String    @default("other") // atm | cardomat | other — для спецмодуля банкоматов
+  cassetteLevelPercent Float? // заполненность кассет, только для atm/cardomat
   siteId         String?
   site           Site?     @relation(fields: [siteId], references: [id])
   warrantyUntil  DateTime?
   lastServiceAt  DateTime?
   nextServiceAt  DateTime?
+  lastCollectionAt DateTime? // последняя инкассация
   notes          String?
   createdAt      DateTime  @default(now())
 
   workOrders WorkOrder[]
+  collections CollectionRecord[]
+  accessLogs  DeviceAccessLog[]
+}
+
+/// Инкассация — изъятие/пересчёт наличности из устройства
+model CollectionRecord {
+  id            String    @id @default(cuid())
+  equipmentId   String
+  equipment     Equipment @relation(fields: [equipmentId], references: [id])
+  amount        Float?
+  performedById String?
+  performedBy   User?     @relation(fields: [performedById], references: [id])
+  notes         String?
+  createdAt     DateTime  @default(now())
+}
+
+/// Контроль открытия/закрытия устройства (сервисная дверца, сейф)
+model DeviceAccessLog {
+  id            String    @id @default(cuid())
+  equipmentId   String
+  equipment     Equipment @relation(fields: [equipmentId], references: [id])
+  action        String // open | close
+  performedById String?
+  performedBy   User?     @relation(fields: [performedById], references: [id])
+  notes         String?
+  createdAt     DateTime  @default(now())
 }
 
 /// Материалы / запчасти / расходники на складе. quantity — текущий остаток,
@@ -246,4 +278,18 @@ model Interaction {
   userId    String?
   user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+}
+
+/// Заготовка под AI-модуль (архитектура из ТЗ): единая точка, куда
+/// в будущем будут складываться результаты анализа моделью — сейчас
+/// /ai/analyze возвращает заглушку с этой же структурой, без реального
+/// подключения модели (нет ключа/провайдера).
+model AiInsight {
+  id         String   @id @default(cuid())
+  type       String // photo_analysis | anomaly | forecast | recommendation | search
+  targetType String? // workOrder | equipment | user | ...
+  targetId   String?
+  summary    String
+  payload    Json?
+  createdAt  DateTime @default(now())
 }

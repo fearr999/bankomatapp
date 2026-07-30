@@ -13,6 +13,7 @@ import { equipmentRouter } from "./modules/equipment/equipment.routes.js";
 import { warehouseRouter } from "./modules/warehouse/warehouse.routes.js";
 import { clientsRouter } from "./modules/clients/clients.routes.js";
 import { analyticsRouter } from "./modules/analytics/analytics.routes.js";
+import { aiRouter } from "./modules/ai/ai.routes.js";
 
 const app = express();
 app.use(cors());
@@ -33,6 +34,7 @@ app.use("/equipment", equipmentRouter);
 app.use("/warehouse", warehouseRouter);
 app.use("/clients", clientsRouter);
 app.use("/analytics", analyticsRouter);
+app.use("/ai", aiRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {

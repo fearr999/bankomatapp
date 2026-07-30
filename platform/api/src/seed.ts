@@ -124,6 +124,8 @@ async function main() {
       model: "NCR SelfServ 34",
       serialNumber: "NCR-2024-00812",
       status: "operational",
+      deviceType: "atm",
+      cassetteLevelPercent: 82,
       siteId: site.id,
       warrantyUntil: new Date("2027-06-01"),
       lastServiceAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
