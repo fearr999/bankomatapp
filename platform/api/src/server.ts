@@ -9,6 +9,7 @@ import { teamsRouter } from "./modules/teams/teams.routes.js";
 import { attachmentsRouter, UPLOADS_DIR } from "./modules/attachments/attachments.routes.js";
 import { checklistsRouter } from "./modules/checklists/checklists.routes.js";
 import { sitesRouter } from "./modules/sites/sites.routes.js";
+import { equipmentRouter } from "./modules/equipment/equipment.routes.js";
 
 const app = express();
 app.use(cors());
@@ -25,6 +26,7 @@ app.use("/teams", teamsRouter);
 app.use("/attachments", attachmentsRouter);
 app.use("/checklists", checklistsRouter);
 app.use("/sites", sitesRouter);
+app.use("/equipment", equipmentRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {

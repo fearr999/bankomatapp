@@ -90,6 +90,22 @@ async function main() {
     },
   });
 
+  await prisma.equipment.upsert({
+    where: { id: "seed-equipment-1" },
+    update: {},
+    create: {
+      id: "seed-equipment-1",
+      name: 'Банкомат NCR SelfServ 34 (ТЦ "Мега")',
+      model: "NCR SelfServ 34",
+      serialNumber: "NCR-2024-00812",
+      status: "operational",
+      siteId: site.id,
+      warrantyUntil: new Date("2027-06-01"),
+      lastServiceAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
+      nextServiceAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10),
+    },
+  });
+
   await prisma.checklistTemplate.upsert({
     where: { id: "seed-template-atm" },
     update: {},

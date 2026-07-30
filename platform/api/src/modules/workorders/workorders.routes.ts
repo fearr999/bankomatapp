@@ -66,6 +66,7 @@ const createSchema = z.object({
   description: z.string().optional(),
   clientId: z.string().optional(),
   siteId: z.string().optional(),
+  equipmentId: z.string().optional(),
   slaDueAt: z.string().datetime().optional(),
 });
 
@@ -81,6 +82,7 @@ workOrdersRouter.post("/", async (req, res) => {
       description: parsed.data.description,
       clientId: parsed.data.clientId,
       siteId: parsed.data.siteId,
+      equipmentId: parsed.data.equipmentId,
       slaDueAt: parsed.data.slaDueAt ? new Date(parsed.data.slaDueAt) : undefined,
       createdById: req.auth!.userId,
       events: {

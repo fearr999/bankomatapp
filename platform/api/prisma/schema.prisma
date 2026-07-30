@@ -90,6 +90,7 @@ model Site {
   createdAt DateTime @default(now())
 
   workOrders WorkOrder[]
+  equipment  Equipment[]
 }
 
 model WorkOrder {
@@ -109,6 +110,8 @@ model WorkOrder {
   assignedTo   User?   @relation("AssignedTo", fields: [assignedToId], references: [id])
   teamId       String?
   team         Team?   @relation(fields: [teamId], references: [id])
+  equipmentId  String?
+  equipment    Equipment? @relation(fields: [equipmentId], references: [id])
 
   createdById String
   createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
@@ -168,4 +171,22 @@ model ChecklistSubmission {
   submittedById String?
   submittedBy   User?           @relation(fields: [submittedById], references: [id])
   createdAt   DateTime          @default(now())
+}
+
+/// Оборудование, закреплённое за объектом (банкомат, картомат, станок и т.д.)
+model Equipment {
+  id             String    @id @default(cuid())
+  name           String
+  model          String?
+  serialNumber   String?
+  status         String    @default("operational") // operational | broken | maintenance
+  siteId         String?
+  site           Site?     @relation(fields: [siteId], references: [id])
+  warrantyUntil  DateTime?
+  lastServiceAt  DateTime?
+  nextServiceAt  DateTime?
+  notes          String?
+  createdAt      DateTime  @default(now())
+
+  workOrders WorkOrder[]
 }
