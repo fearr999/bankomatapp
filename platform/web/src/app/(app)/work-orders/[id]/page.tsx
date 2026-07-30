@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { Camera } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, STATUS_LABELS } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, API_BASE } from "@/lib/api";
 
 interface OrderDetail {
   id: string;
@@ -18,6 +19,7 @@ interface OrderDetail {
   site?: { name: string; address: string | null; lat: number | null; lng: number | null } | null;
   assignedTo?: { name: string } | null;
   createdBy?: { name: string } | null;
+  attachments: Array<{ id: string; url: string; createdAt: string }>;
   events: Array<{
     id: string;
     type: string;
@@ -27,6 +29,17 @@ interface OrderDetail {
   }>;
 }
 
+function getBrowserLocation(): Promise<{ lat: number; lng: number } | null> {
+  return new Promise((resolve) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 4000 }
+    );
+  });
+}
+
 const STATUS_FLOW = Object.keys(STATUS_LABELS);
 
 export default function WorkOrderDetailPage() {
@@ -34,6 +47,8 @@ export default function WorkOrderDetailPage() {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [comment, setComment] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function load() {
     try {
@@ -55,6 +70,28 @@ export default function WorkOrderDetailPage() {
       body: JSON.stringify({ status }),
     });
     await load();
+  }
+
+  async function uploadPhoto(file: File) {
+    setUploading(true);
+    try {
+      const loc = await getBrowserLocation();
+      const form = new FormData();
+      form.append("photo", file);
+      if (loc) {
+        form.append("lat", String(loc.lat));
+        form.append("lng", String(loc.lng));
+      }
+      await apiFetch(`/attachments/work-orders/${params.id}/photos`, {
+        method: "POST",
+        body: form,
+      });
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось загрузить фото");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function addComment(e: React.FormEvent) {
@@ -91,6 +128,50 @@ export default function WorkOrderDetailPage() {
               <span className="text-muted-foreground">Адрес: {order.site?.address ?? "—"}</span>
               <span className="text-muted-foreground">Исполнитель: {order.assignedTo?.name ?? "—"}</span>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Фотографии</CardTitle>
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Camera size={16} /> {uploading ? "Загружаем..." : "Добавить фото"}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadPhoto(file);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {order.attachments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Фотографий пока нет</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {order.attachments.map((a) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={a.id}
+                    src={`${API_BASE}${a.url}`}
+                    alt=""
+                    className="aspect-square rounded-md border object-cover"
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
