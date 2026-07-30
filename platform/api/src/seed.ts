@@ -37,7 +37,26 @@ async function main() {
       name: "Инженер Петров",
       role: "WORKER",
       specialization: "Обслуживание банкоматов",
+      status: "online",
+      lat: 41.311,
+      lng: 69.279,
+      locationUpdatedAt: new Date(),
+      passwordHash,
+    },
+  });
+
+  const worker2 = await prisma.user.upsert({
+    where: { email: "worker2@fsm.local" },
+    update: {},
+    create: {
+      email: "worker2@fsm.local",
+      name: "Инженер Сидоров",
+      role: "WORKER",
+      specialization: "Обслуживание картоматов",
       status: "offline",
+      lat: 41.334,
+      lng: 69.29,
+      locationUpdatedAt: new Date(Date.now() - 1000 * 60 * 90),
       passwordHash,
     },
   });
@@ -81,6 +100,7 @@ async function main() {
   console.log(`  ${admin.email} — ADMIN`);
   console.log(`  ${dispatcher.email} — DISPATCHER`);
   console.log(`  ${worker.email} — WORKER`);
+  console.log(`  ${worker2.email} — WORKER`);
 }
 
 main()

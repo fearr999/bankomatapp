@@ -7,6 +7,15 @@ import { hashPassword } from "../../lib/auth.js";
 export const usersRouter = Router();
 usersRouter.use(authenticate);
 
+const ACTIVE_STATUSES = [
+  "ASSIGNED",
+  "EN_ROUTE",
+  "ARRIVED",
+  "IN_PROGRESS",
+  "WAITING_MATERIALS",
+  "WAITING_APPROVAL",
+] as const;
+
 usersRouter.get("/", async (_req, res) => {
   const users = await prisma.user.findMany({
     select: {
@@ -18,12 +27,36 @@ usersRouter.get("/", async (_req, res) => {
       specialization: true,
       status: true,
       rating: true,
+      lat: true,
+      lng: true,
+      locationUpdatedAt: true,
       teamId: true,
       team: { select: { id: true, name: true } },
+      assignedOrders: {
+        where: { status: { in: [...ACTIVE_STATUSES] } },
+        select: { id: true, number: true, title: true, status: true },
+        orderBy: { updatedAt: "desc" },
+        take: 1,
+      },
     },
     orderBy: { name: "asc" },
   });
   res.json(users);
+});
+
+const locationSchema = z.object({ lat: z.number(), lng: z.number() });
+
+/// Полевой сотрудник сообщает своё текущее местоположение (мобильное приложение,
+/// после перехода с Apps Script на этот API — см. дорожную карту).
+usersRouter.post("/me/location", async (req, res) => {
+  const parsed = locationSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  await prisma.user.update({
+    where: { id: req.auth!.userId },
+    data: { lat: parsed.data.lat, lng: parsed.data.lng, locationUpdatedAt: new Date(), status: "online" },
+  });
+  res.json({ ok: true });
 });
 
 const createUserSchema = z.object({
