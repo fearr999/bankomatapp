@@ -47,7 +47,7 @@ app.use("/notifications", notificationsRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {
-  console.log(`CorePi API запущен на http://localhost:${port}`);
+  console.log(`Corpi API запущен на http://localhost:${port}`);
   if (isTelegramConfigured()) {
     startTelegramPolling();
     console.log("Telegram-бот: опрос обновлений запущен");

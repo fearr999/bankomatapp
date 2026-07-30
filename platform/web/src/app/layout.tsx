@@ -3,8 +3,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CorePi",
-  description: "CorePi — Field Service Management platform",
+  title: "Corpi",
+  description: "Corpi — Field Service Management platform",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -4,10 +4,10 @@ import { SwRegister } from "@/components/sw-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CorePi",
-  description: "CorePi — приложение полевого сотрудника",
+  title: "Corpi",
+  description: "Corpi — приложение полевого сотрудника",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "CorePi" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Corpi" },
 };
 
 export const viewport: Viewport = {

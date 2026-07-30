@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.corepi.app",
-  appName: "CorePi",
+  appName: "Corpi",
   webDir: "out",
   server: {
     androidScheme: "https",
