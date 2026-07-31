@@ -44,7 +44,7 @@ export default function LoginPage() {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="h-12 rounded-lg border border-border bg-transparent px-4 text-base"
+          className="h-12 rounded-md border border-border bg-transparent px-4 text-base"
         />
         <input
           type="password"
@@ -52,10 +52,10 @@ export default function LoginPage() {
           placeholder="Пароль"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-12 rounded-lg border border-border bg-transparent px-4 text-base"
+          className="h-12 rounded-md border border-border bg-transparent px-4 text-base"
         />
         {error && <p className="text-sm text-red-500">{error}</p>}
-        <Button type="submit" disabled={busy} className="h-12 mt-2">
+        <Button type="submit" disabled={busy} className="mt-2 w-full">
           {busy ? "Входим..." : "Войти"}
         </Button>
       </form>

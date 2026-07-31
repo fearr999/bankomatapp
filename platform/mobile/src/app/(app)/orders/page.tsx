@@ -64,7 +64,7 @@ export default function OrdersPage() {
             logout();
             router.replace("/login");
           }}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground"
           aria-label="Выйти"
         >
           <LogOut size={16} />

@@ -112,7 +112,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-3">
           <select
-            className="h-11 rounded-lg border border-border bg-transparent px-3 text-sm"
+            className="h-11 rounded-md border border-border bg-transparent px-3 text-sm"
             value={templateId}
             onChange={(e) => {
               setTemplateId(e.target.value);

@@ -1,13 +1,72 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { LogOut, MapPin, Moon, RefreshCw, Send, Sun, WifiOff } from "lucide-react";
-import { apiFetch, getCurrentUser, logout } from "@/lib/api";
+import { apiFetch, API_BASE, getCurrentUser, logout } from "@/lib/api";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { flushOfflineQueue, listQueuedPhotos } from "@/lib/offline-queue";
 import { Button } from "@/components/ui/button";
+import { APP_VERSION } from "@/lib/version";
+
+const LONG_PRESS_MS = 600;
+
+function DiagnosticsSection({
+  geoStatus,
+  geoError,
+  queuedCount,
+}: {
+  geoStatus: string;
+  geoError: string | null;
+  queuedCount: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [online, setOnline] = useState(true);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setOnline(navigator.onLine);
+    const onOnline = () => setOnline(true);
+    const onOffline = () => setOnline(false);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, []);
+
+  function startPress() {
+    pressTimer.current = setTimeout(() => setOpen((v) => !v), LONG_PRESS_MS);
+  }
+  function cancelPress() {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-2 pb-2">
+      <p
+        onPointerDown={startPress}
+        onPointerUp={cancelPress}
+        onPointerLeave={cancelPress}
+        className="select-none text-xs text-muted-foreground"
+      >
+        Corpi v{APP_VERSION}
+      </p>
+      {open && (
+        <div className="w-full rounded-lg border border-border p-3 text-xs text-muted-foreground">
+          <p className="mb-1 font-medium text-foreground">Диагностика</p>
+          <p>API: {API_BASE}</p>
+          <p>Сеть: {online ? "онлайн" : "офлайн"}</p>
+          <p>GPS: {geoStatus}</p>
+          <p>Фото в очереди: {queuedCount}</p>
+          {geoError && <p className="text-red-500">Ошибка GPS: {geoError}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface TelegramStatus {
   configured: boolean;
@@ -151,7 +210,7 @@ export default function ProfilePage() {
           <span className="font-medium">Тема</span>
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-border"
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -167,6 +226,8 @@ export default function ProfilePage() {
       >
         <LogOut size={16} /> Выйти
       </Button>
+
+      <DiagnosticsSection geoStatus={geo.status} geoError={geo.error} queuedCount={queuedCount} />
     </div>
   );
 }

@@ -17,8 +17,8 @@ const config: Config = {
         accent: "hsl(var(--accent))",
       },
       borderRadius: {
-        lg: "0.75rem",
-        md: "0.5rem",
+        lg: "1.25rem",
+        md: "1rem",
       },
     },
   },
