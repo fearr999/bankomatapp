@@ -28,7 +28,7 @@ const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
 attachmentsRouter.get("/", async (req, res) => {
   const take = Math.min(Number(req.query.take) || 60, 200);
   const attachments = await prisma.attachment.findMany({
-    where: { kind: "photo" },
+    where: { kind: "photo", workOrder: { organizationId: req.auth!.organizationId } },
     orderBy: { createdAt: "desc" },
     take,
     include: {
@@ -48,6 +48,11 @@ attachmentsRouter.get("/", async (req, res) => {
 
 attachmentsRouter.post("/work-orders/:id/photos", upload.single("photo"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Файл не передан" });
+
+  const order = await prisma.workOrder.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!order) return res.status(404).json({ error: "Заявка не найдена" });
 
   const lat = req.body.lat ? Number(req.body.lat) : undefined;
   const lng = req.body.lng ? Number(req.body.lng) : undefined;

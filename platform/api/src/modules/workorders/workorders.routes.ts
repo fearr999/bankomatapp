@@ -20,8 +20,8 @@ const STATUSES = [
   "CANCELLED",
 ] as const;
 
-async function nextOrderNumber() {
-  const count = await prisma.workOrder.count();
+async function nextOrderNumber(organizationId: string) {
+  const count = await prisma.workOrder.count({ where: { organizationId } });
   const year = new Date().getFullYear();
   return `WO-${year}-${String(count + 1).padStart(5, "0")}`;
 }
@@ -31,6 +31,7 @@ workOrdersRouter.get("/", async (req, res) => {
   const assignedToId = req.query.assignedToId as string | undefined;
   const orders = await prisma.workOrder.findMany({
     where: {
+      organizationId: req.auth!.organizationId,
       status: status ? (status as (typeof STATUSES)[number]) : undefined,
       assignedToId: assignedToId || undefined,
     },
@@ -46,8 +47,8 @@ workOrdersRouter.get("/", async (req, res) => {
 });
 
 workOrdersRouter.get("/:id", async (req, res) => {
-  const order = await prisma.workOrder.findUnique({
-    where: { id: req.params.id },
+  const order = await prisma.workOrder.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
     include: {
       client: true,
       site: true,
@@ -75,7 +76,8 @@ workOrdersRouter.post("/", async (req, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
-  const number = await nextOrderNumber();
+  const organizationId = req.auth!.organizationId;
+  const number = await nextOrderNumber(organizationId);
   const order = await prisma.workOrder.create({
     data: {
       number,
@@ -86,6 +88,7 @@ workOrdersRouter.post("/", async (req, res) => {
       equipmentId: parsed.data.equipmentId,
       slaDueAt: parsed.data.slaDueAt ? new Date(parsed.data.slaDueAt) : undefined,
       createdById: req.auth!.userId,
+      organizationId,
       events: {
         create: { type: "created", message: "Заявка создана", userId: req.auth!.userId },
       },
@@ -99,6 +102,11 @@ const statusSchema = z.object({ status: z.enum(STATUSES), comment: z.string().op
 workOrdersRouter.patch("/:id/status", async (req, res) => {
   const parsed = statusSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const existing = await prisma.workOrder.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!existing) return res.status(404).json({ error: "Заявка не найдена" });
 
   const order = await prisma.workOrder.update({
     where: { id: req.params.id },
@@ -121,6 +129,19 @@ const assignSchema = z.object({ assignedToId: z.string().optional(), teamId: z.s
 workOrdersRouter.patch("/:id/assign", async (req, res) => {
   const parsed = assignSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const organizationId = req.auth!.organizationId;
+  const existing = await prisma.workOrder.findFirst({ where: { id: req.params.id, organizationId } });
+  if (!existing) return res.status(404).json({ error: "Заявка не найдена" });
+
+  if (parsed.data.assignedToId) {
+    const assignee = await prisma.user.findFirst({ where: { id: parsed.data.assignedToId, organizationId } });
+    if (!assignee) return res.status(400).json({ error: "Сотрудник не найден" });
+  }
+  if (parsed.data.teamId) {
+    const team = await prisma.team.findFirst({ where: { id: parsed.data.teamId, organizationId } });
+    if (!team) return res.status(400).json({ error: "Бригада не найдена" });
+  }
 
   const order = await prisma.workOrder.update({
     where: { id: req.params.id },
@@ -155,6 +176,11 @@ workOrdersRouter.post("/:id/comments", async (req, res) => {
   if (typeof message !== "string" || !message.trim()) {
     return res.status(400).json({ error: "message обязателен" });
   }
+  const existing = await prisma.workOrder.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!existing) return res.status(404).json({ error: "Заявка не найдена" });
+
   const event = await prisma.workOrderEvent.create({
     data: { workOrderId: req.params.id, type: "comment", message, userId: req.auth!.userId },
   });

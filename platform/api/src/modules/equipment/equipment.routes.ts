@@ -7,8 +7,9 @@ import { notifyUser } from "../notifications/notify.js";
 export const equipmentRouter = Router();
 equipmentRouter.use(authenticate);
 
-equipmentRouter.get("/", async (_req, res) => {
+equipmentRouter.get("/", async (req, res) => {
   const equipment = await prisma.equipment.findMany({
+    where: { organizationId: req.auth!.organizationId },
     include: { site: { select: { id: true, name: true } } },
     orderBy: { name: "asc" },
   });
@@ -16,8 +17,8 @@ equipmentRouter.get("/", async (_req, res) => {
 });
 
 equipmentRouter.get("/:id", async (req, res) => {
-  const item = await prisma.equipment.findUnique({
-    where: { id: req.params.id },
+  const item = await prisma.equipment.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
     include: {
       site: { select: { id: true, name: true, address: true } },
       workOrders: {
@@ -60,13 +61,22 @@ const equipmentSchema = z.object({
 equipmentRouter.post("/", async (req, res) => {
   const parsed = equipmentSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-  const item = await prisma.equipment.create({ data: parsed.data });
+  const organizationId = req.auth!.organizationId;
+  if (parsed.data.siteId) {
+    const site = await prisma.site.findFirst({ where: { id: parsed.data.siteId, organizationId } });
+    if (!site) return res.status(400).json({ error: "Объект не найден" });
+  }
+  const item = await prisma.equipment.create({ data: { ...parsed.data, organizationId } });
   res.status(201).json(item);
 });
 
 equipmentRouter.patch("/:id", async (req, res) => {
   const parsed = equipmentSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const existing = await prisma.equipment.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!existing) return res.status(404).json({ error: "Оборудование не найдено" });
   const item = await prisma.equipment.update({ where: { id: req.params.id }, data: parsed.data });
   res.json(item);
 });
@@ -78,6 +88,10 @@ const collectionSchema = z.object({ amount: z.number().optional(), notes: z.stri
 equipmentRouter.post("/:id/collections", async (req, res) => {
   const parsed = collectionSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const existing = await prisma.equipment.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!existing) return res.status(404).json({ error: "Оборудование не найдено" });
 
   const [record] = await prisma.$transaction([
     prisma.collectionRecord.create({
@@ -101,6 +115,11 @@ const accessLogSchema = z.object({ action: z.enum(["open", "close"]), notes: z.s
 equipmentRouter.post("/:id/access-log", async (req, res) => {
   const parsed = accessLogSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const existing = await prisma.equipment.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!existing) return res.status(404).json({ error: "Оборудование не найдено" });
+
   const log = await prisma.deviceAccessLog.create({
     data: { equipmentId: req.params.id, ...parsed.data, performedById: req.auth!.userId },
   });
@@ -109,10 +128,11 @@ equipmentRouter.post("/:id/access-log", async (req, res) => {
 
 /// Аварийный вызов — создаёт срочную заявку, привязанную к устройству.
 equipmentRouter.post("/:id/emergency", async (req, res) => {
-  const equipment = await prisma.equipment.findUnique({ where: { id: req.params.id } });
+  const organizationId = req.auth!.organizationId;
+  const equipment = await prisma.equipment.findFirst({ where: { id: req.params.id, organizationId } });
   if (!equipment) return res.status(404).json({ error: "Оборудование не найдено" });
 
-  const count = await prisma.workOrder.count();
+  const count = await prisma.workOrder.count({ where: { organizationId } });
   const number = `WO-${new Date().getFullYear()}-${String(count + 1).padStart(5, "0")}`;
 
   const order = await prisma.workOrder.create({
@@ -124,6 +144,7 @@ equipmentRouter.post("/:id/emergency", async (req, res) => {
       equipmentId: equipment.id,
       siteId: equipment.siteId,
       createdById: req.auth!.userId,
+      organizationId,
       events: {
         create: { type: "created", message: "Аварийный вызов создан", userId: req.auth!.userId },
       },
@@ -132,7 +153,7 @@ equipmentRouter.post("/:id/emergency", async (req, res) => {
   await prisma.equipment.update({ where: { id: equipment.id }, data: { status: "broken" } });
 
   const responders = await prisma.user.findMany({
-    where: { role: { in: ["ADMIN", "DISPATCHER"] } },
+    where: { organizationId, role: { in: ["ADMIN", "DISPATCHER"] } },
     select: { id: true },
   });
   await Promise.all(

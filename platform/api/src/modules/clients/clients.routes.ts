@@ -6,8 +6,9 @@ import { authenticate } from "../../middleware/authenticate.js";
 export const clientsRouter = Router();
 clientsRouter.use(authenticate);
 
-clientsRouter.get("/", async (_req, res) => {
+clientsRouter.get("/", async (req, res) => {
   const clients = await prisma.client.findMany({
+    where: { organizationId: req.auth!.organizationId },
     include: { sites: { select: { id: true } }, workOrders: { select: { id: true } } },
     orderBy: { name: "asc" },
   });
@@ -33,14 +34,14 @@ clientsRouter.post("/", async (req, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const client = await prisma.client.create({
-    data: { ...parsed.data, email: parsed.data.email || undefined },
+    data: { ...parsed.data, email: parsed.data.email || undefined, organizationId: req.auth!.organizationId },
   });
   res.status(201).json(client);
 });
 
 clientsRouter.get("/:id", async (req, res) => {
-  const client = await prisma.client.findUnique({
-    where: { id: req.params.id },
+  const client = await prisma.client.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
     include: {
       sites: { include: { equipment: { select: { id: true, name: true, status: true } } } },
       workOrders: {
@@ -68,6 +69,11 @@ const contractSchema = z.object({
 clientsRouter.post("/:id/contracts", async (req, res) => {
   const parsed = contractSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const client = await prisma.client.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!client) return res.status(404).json({ error: "Клиент не найден" });
+
   const contract = await prisma.contract.create({
     data: {
       clientId: req.params.id,
@@ -88,6 +94,11 @@ const interactionSchema = z.object({
 clientsRouter.post("/:id/interactions", async (req, res) => {
   const parsed = interactionSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const client = await prisma.client.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!client) return res.status(404).json({ error: "Клиент не найден" });
+
   const interaction = await prisma.interaction.create({
     data: { clientId: req.params.id, ...parsed.data, userId: req.auth!.userId },
   });

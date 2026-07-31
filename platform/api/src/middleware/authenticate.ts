@@ -5,7 +5,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
-      auth?: { userId: string; role: string };
+      auth?: { userId: string; role: string; organizationId: string };
     }
   }
 }
@@ -17,7 +17,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
   }
   try {
     const payload = verifyToken(header.slice("Bearer ".length));
-    req.auth = { userId: payload.userId, role: payload.role };
+    req.auth = { userId: payload.userId, role: payload.role, organizationId: payload.organizationId };
     next();
   } catch {
     return res.status(401).json({ error: "Токен недействителен или истёк" });

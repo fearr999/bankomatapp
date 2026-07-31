@@ -20,6 +20,24 @@ enum Role {
   WORKER // полевой сотрудник
 }
 
+/// Компания-арендатор. Каждая организация видит только свои данные —
+/// это единственная граница изоляции в системе (проверяется в каждом роуте).
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users              User[]
+  teams              Team[]
+  clients            Client[]
+  sites              Site[]
+  workOrders         WorkOrder[]
+  equipment          Equipment[]
+  inventoryItems     InventoryItem[]
+  checklistTemplates ChecklistTemplate[]
+  aiInsights         AiInsight[]
+}
+
 enum WorkOrderStatus {
   NEW // Новая
   ASSIGNED // Назначена
@@ -48,6 +66,8 @@ model User {
   locationUpdatedAt DateTime?
   teamId       String?
   team         Team?    @relation(fields: [teamId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt    DateTime @default(now())
 
   telegramChatId   String? @unique // заполняется после привязки бота
@@ -84,6 +104,8 @@ model Team {
   id        String   @id @default(cuid())
   name      String
   leaderId  String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt DateTime @default(now())
 
   members    User[]
@@ -95,6 +117,8 @@ model Client {
   name      String
   phone     String?
   email     String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt DateTime @default(now())
 
   sites      Site[]
@@ -112,6 +136,8 @@ model Site {
   lng       Float?
   clientId  String?
   client    Client?  @relation(fields: [clientId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt DateTime @default(now())
 
   workOrders WorkOrder[]
@@ -120,7 +146,7 @@ model Site {
 
 model WorkOrder {
   id          String          @id @default(cuid())
-  number      String          @unique
+  number      String
   status      WorkOrderStatus @default(NEW)
   priority    String          @default("normal") // normal | urgent (аварийный вызов)
   title       String
@@ -141,6 +167,8 @@ model WorkOrder {
 
   createdById String
   createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -149,6 +177,8 @@ model WorkOrder {
   attachments Attachment[]
   checklistSubmissions ChecklistSubmission[]
   stockMovements StockMovement[]
+
+  @@unique([organizationId, number])
 }
 
 /// История изменений заявки (для карточки "история изменений")
@@ -182,6 +212,8 @@ model ChecklistTemplate {
   id        String   @id @default(cuid())
   name      String
   fields    Json // [{id,label,type:'checkbox'|'text'|'number',required}]
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt DateTime @default(now())
 
   submissions ChecklistSubmission[]
@@ -216,6 +248,8 @@ model Equipment {
   nextServiceAt  DateTime?
   lastCollectionAt DateTime? // последняя инкассация
   notes          String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt      DateTime  @default(now())
 
   workOrders WorkOrder[]
@@ -256,6 +290,8 @@ model InventoryItem {
   unit        String   @default("шт")
   quantity    Float    @default(0)
   minQuantity Float?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt   DateTime @default(now())
 
   movements StockMovement[]
@@ -310,5 +346,7 @@ model AiInsight {
   targetId   String?
   summary    String
   payload    Json?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt  DateTime @default(now())
 }

@@ -16,8 +16,9 @@ const ACTIVE_STATUSES = [
   "WAITING_APPROVAL",
 ] as const;
 
-usersRouter.get("/", async (_req, res) => {
+usersRouter.get("/", async (req, res) => {
   const users = await prisma.user.findMany({
+    where: { organizationId: req.auth!.organizationId },
     select: {
       id: true,
       name: true,
@@ -45,8 +46,8 @@ usersRouter.get("/", async (_req, res) => {
 });
 
 usersRouter.get("/:id", async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.params.id },
+  const user = await prisma.user.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
     select: {
       id: true,
       name: true,
@@ -112,9 +113,20 @@ usersRouter.post("/", requireRole("ADMIN"), async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const { password, ...rest } = parsed.data;
+  const { password, teamId, ...rest } = parsed.data;
+  if (teamId) {
+    const team = await prisma.team.findFirst({ where: { id: teamId, organizationId: req.auth!.organizationId } });
+    if (!team) return res.status(400).json({ error: "Бригада не найдена" });
+  }
+  const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+  if (existing) return res.status(409).json({ error: "Email уже используется" });
   const user = await prisma.user.create({
-    data: { ...rest, passwordHash: await hashPassword(password) },
+    data: {
+      ...rest,
+      teamId,
+      passwordHash: await hashPassword(password),
+      organizationId: req.auth!.organizationId,
+    },
   });
   res.status(201).json({ id: user.id });
 });
@@ -124,6 +136,10 @@ usersRouter.patch("/:id/status", async (req, res) => {
   if (typeof status !== "string") {
     return res.status(400).json({ error: "status обязателен" });
   }
+  const existing = await prisma.user.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!existing) return res.status(404).json({ error: "Сотрудник не найден" });
   await prisma.user.update({ where: { id: req.params.id }, data: { status } });
   res.json({ ok: true });
 });

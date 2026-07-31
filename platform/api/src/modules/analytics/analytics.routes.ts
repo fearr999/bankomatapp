@@ -7,8 +7,9 @@ analyticsRouter.use(authenticate);
 
 const DONE_STATUSES = ["COMPLETED", "CLOSED"];
 
-analyticsRouter.get("/summary", async (_req, res) => {
+analyticsRouter.get("/summary", async (req, res) => {
   const orders = await prisma.workOrder.findMany({
+    where: { organizationId: req.auth!.organizationId },
     select: {
       status: true,
       createdAt: true,

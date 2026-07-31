@@ -5,6 +5,12 @@ import { hashPassword } from "./lib/auth.js";
 async function main() {
   const passwordHash = await hashPassword("password123");
 
+  const org = await prisma.organization.upsert({
+    where: { id: "legacy-org" },
+    update: {},
+    create: { id: "legacy-org", name: "Corpi Demo" },
+  });
+
   const admin = await prisma.user.upsert({
     where: { email: "admin@fsm.local" },
     update: {},
@@ -14,6 +20,7 @@ async function main() {
       role: "ADMIN",
       status: "online",
       passwordHash,
+      organizationId: org.id,
     },
   });
 
@@ -26,6 +33,7 @@ async function main() {
       role: "DISPATCHER",
       status: "online",
       passwordHash,
+      organizationId: org.id,
     },
   });
 
@@ -42,6 +50,7 @@ async function main() {
       lng: 69.279,
       locationUpdatedAt: new Date(),
       passwordHash,
+      organizationId: org.id,
     },
   });
 
@@ -58,13 +67,14 @@ async function main() {
       lng: 69.29,
       locationUpdatedAt: new Date(Date.now() - 1000 * 60 * 90),
       passwordHash,
+      organizationId: org.id,
     },
   });
 
   const team = await prisma.team.upsert({
     where: { id: "seed-team-1" },
     update: {},
-    create: { id: "seed-team-1", name: "Бригада №1 — банкоматы/картоматы", leaderId: worker.id },
+    create: { id: "seed-team-1", name: "Бригада №1 — банкоматы/картоматы", leaderId: worker.id, organizationId: org.id },
   });
   await prisma.user.updateMany({
     where: { id: { in: [worker.id, worker2.id] } },
@@ -74,7 +84,7 @@ async function main() {
   const client = await prisma.client.upsert({
     where: { id: "seed-client-1" },
     update: {},
-    create: { id: "seed-client-1", name: "ООО Клиент Плюс", phone: "+998900000000" },
+    create: { id: "seed-client-1", name: "ООО Клиент Плюс", phone: "+998900000000", organizationId: org.id },
   });
 
   const site = await prisma.site.upsert({
@@ -87,6 +97,7 @@ async function main() {
       lat: 41.32,
       lng: 69.25,
       clientId: client.id,
+      organizationId: org.id,
     },
   });
 
@@ -100,6 +111,7 @@ async function main() {
       unit: "рулон",
       quantity: 42,
       minQuantity: 10,
+      organizationId: org.id,
     },
   });
   await prisma.inventoryItem.upsert({
@@ -112,6 +124,7 @@ async function main() {
       unit: "шт",
       quantity: 8,
       minQuantity: 15,
+      organizationId: org.id,
     },
   });
 
@@ -130,6 +143,7 @@ async function main() {
       warrantyUntil: new Date("2027-06-01"),
       lastServiceAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
       nextServiceAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10),
+      organizationId: org.id,
     },
   });
 
@@ -139,6 +153,7 @@ async function main() {
     create: {
       id: "seed-template-atm",
       name: "Обслуживание банкомата",
+      organizationId: org.id,
       fields: [
         { id: "exterior_clean", label: "Внешняя чистка корпуса", type: "checkbox", required: true },
         { id: "card_reader_clean", label: "Чистка картоприёмника", type: "checkbox", required: true },
@@ -150,7 +165,7 @@ async function main() {
     },
   });
 
-  const existing = await prisma.workOrder.count();
+  const existing = await prisma.workOrder.count({ where: { organizationId: org.id } });
   if (existing === 0) {
     await prisma.workOrder.create({
       data: {
@@ -161,12 +176,13 @@ async function main() {
         clientId: client.id,
         siteId: site.id,
         createdById: admin.id,
+        organizationId: org.id,
         events: { create: { type: "created", message: "Заявка создана (seed)", userId: admin.id } },
       },
     });
   }
 
-  console.log("Сид готов. Логины (пароль для всех: password123):");
+  console.log(`Сид готов (организация: ${org.name}). Логины (пароль для всех: password123):`);
   console.log(`  ${admin.email} — ADMIN`);
   console.log(`  ${dispatcher.email} — DISPATCHER`);
   console.log(`  ${worker.email} — WORKER`);

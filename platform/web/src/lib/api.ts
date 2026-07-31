@@ -33,6 +33,20 @@ export async function login(email: string, password: string) {
   return data;
 }
 
+export async function register(organizationName: string, name: string, email: string, password: string) {
+  const data = await apiFetch<{
+    token: string;
+    user: { id: string; name: string; role: string };
+    organization: { id: string; name: string };
+  }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ organizationName, name, email, password }),
+  });
+  localStorage.setItem("fsm_token", data.token);
+  localStorage.setItem("fsm_user", JSON.stringify(data.user));
+  return data;
+}
+
 export function logout() {
   localStorage.removeItem("fsm_token");
   localStorage.removeItem("fsm_user");

@@ -6,8 +6,9 @@ import { authenticate } from "../../middleware/authenticate.js";
 export const teamsRouter = Router();
 teamsRouter.use(authenticate);
 
-teamsRouter.get("/", async (_req, res) => {
+teamsRouter.get("/", async (req, res) => {
   const teams = await prisma.team.findMany({
+    where: { organizationId: req.auth!.organizationId },
     include: {
       members: {
         select: { id: true, name: true, status: true, role: true, specialization: true },
@@ -43,7 +44,12 @@ const createSchema = z.object({ name: z.string().min(1), leaderId: z.string().op
 teamsRouter.post("/", async (req, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-  const team = await prisma.team.create({ data: parsed.data });
+  const organizationId = req.auth!.organizationId;
+  if (parsed.data.leaderId) {
+    const leader = await prisma.user.findFirst({ where: { id: parsed.data.leaderId, organizationId } });
+    if (!leader) return res.status(400).json({ error: "Сотрудник не найден" });
+  }
+  const team = await prisma.team.create({ data: { ...parsed.data, organizationId } });
   res.status(201).json(team);
 });
 
@@ -52,6 +58,10 @@ const updateSchema = z.object({ name: z.string().min(1).optional(), leaderId: z.
 teamsRouter.patch("/:id", async (req, res) => {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const existing = await prisma.team.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!existing) return res.status(404).json({ error: "Бригада не найдена" });
   const team = await prisma.team.update({ where: { id: req.params.id }, data: parsed.data });
   res.json(team);
 });
@@ -61,6 +71,12 @@ const membersSchema = z.object({ userId: z.string(), action: z.enum(["add", "rem
 teamsRouter.post("/:id/members", async (req, res) => {
   const parsed = membersSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const organizationId = req.auth!.organizationId;
+  const team = await prisma.team.findFirst({ where: { id: req.params.id, organizationId } });
+  if (!team) return res.status(404).json({ error: "Бригада не найдена" });
+  const user = await prisma.user.findFirst({ where: { id: parsed.data.userId, organizationId } });
+  if (!user) return res.status(404).json({ error: "Сотрудник не найден" });
+
   await prisma.user.update({
     where: { id: parsed.data.userId },
     data: { teamId: parsed.data.action === "add" ? req.params.id : null },

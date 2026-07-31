@@ -12,6 +12,7 @@ function getSecret(): string {
 export interface JwtPayload {
   userId: string;
   role: string;
+  organizationId: string;
 }
 
 export function hashPassword(password: string) {
