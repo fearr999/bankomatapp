@@ -1,10 +1,16 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../middleware/authenticate.js";
+import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 
 export const checklistsRouter = Router();
 checklistsRouter.use(authenticate);
+
+/// Подрядчик работает только с чек-листами по своим назначенным заявкам —
+/// сами шаблоны (создание/редактирование) остаются зоной ответственности банка.
+function contractorScope(req: import("express").Request) {
+  return req.auth!.contractorOrganizationId ? { assignedOrganizationId: req.auth!.contractorOrganizationId } : {};
+}
 
 const fieldSchema = z.object({
   id: z.string().min(1),
@@ -26,7 +32,7 @@ const createTemplateSchema = z.object({
   fields: z.array(fieldSchema).min(1),
 });
 
-checklistsRouter.post("/templates", async (req, res) => {
+checklistsRouter.post("/templates", blockContractor, async (req, res) => {
   const parsed = createTemplateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const template = await prisma.checklistTemplate.create({
@@ -35,7 +41,7 @@ checklistsRouter.post("/templates", async (req, res) => {
   res.status(201).json(template);
 });
 
-checklistsRouter.patch("/templates/:id", async (req, res) => {
+checklistsRouter.patch("/templates/:id", blockContractor, async (req, res) => {
   const parsed = createTemplateSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const existing = await prisma.checklistTemplate.findFirst({
@@ -49,7 +55,7 @@ checklistsRouter.patch("/templates/:id", async (req, res) => {
   res.json(template);
 });
 
-checklistsRouter.delete("/templates/:id", async (req, res) => {
+checklistsRouter.delete("/templates/:id", blockContractor, async (req, res) => {
   const existing = await prisma.checklistTemplate.findFirst({
     where: { id: req.params.id, organizationId: req.auth!.organizationId },
   });
@@ -69,7 +75,9 @@ checklistsRouter.post("/work-orders/:id/submissions", async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
   const organizationId = req.auth!.organizationId;
-  const order = await prisma.workOrder.findFirst({ where: { id: req.params.id, organizationId } });
+  const order = await prisma.workOrder.findFirst({
+    where: { id: req.params.id, organizationId, ...contractorScope(req) },
+  });
   if (!order) return res.status(404).json({ error: "Заявка не найдена" });
   const template = await prisma.checklistTemplate.findFirst({
     where: { id: parsed.data.templateId, organizationId },
@@ -101,7 +109,7 @@ checklistsRouter.post("/work-orders/:id/submissions", async (req, res) => {
 
 checklistsRouter.get("/work-orders/:id/submissions", async (req, res) => {
   const order = await prisma.workOrder.findFirst({
-    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
   });
   if (!order) return res.status(404).json({ error: "Заявка не найдена" });
 

@@ -15,6 +15,7 @@ import { clientsRouter } from "./modules/clients/clients.routes.js";
 import { analyticsRouter } from "./modules/analytics/analytics.routes.js";
 import { aiRouter } from "./modules/ai/ai.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
+import { organizationsRouter } from "./modules/organizations/organizations.routes.js";
 import { startTelegramPolling, isTelegramConfigured } from "./lib/telegram.js";
 
 // Один необработанный отказ промиса в асинхронном роуте (например, сбой сети
@@ -44,6 +45,7 @@ app.use("/clients", clientsRouter);
 app.use("/analytics", analyticsRouter);
 app.use("/ai", aiRouter);
 app.use("/notifications", notificationsRouter);
+app.use("/organizations", organizationsRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {

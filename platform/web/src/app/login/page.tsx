@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { login } from "@/lib/api";
+import { login, isContractor } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,8 +20,8 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await login(email, password);
-      router.push("/dashboard");
+      const data = await login(email, password);
+      router.push(isContractor(data.user) ? "/work-orders" : "/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка входа");
     } finally {

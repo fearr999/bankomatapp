@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../middleware/authenticate.js";
+import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 
 export const aiRouter = Router();
 aiRouter.use(authenticate);
+aiRouter.use(blockContractor);
 
 /// Архитектурная заготовка под AI-модуль из ТЗ. Реального подключения
 /// модели нет (нет ключа/провайдера) — эндпоинт возвращает предсказуемую

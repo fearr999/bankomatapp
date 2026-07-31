@@ -2,12 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/lib/api";
+import { getCurrentUser, isContractor } from "@/lib/api";
 
 export default function RootPage() {
   const router = useRouter();
   useEffect(() => {
-    router.replace(getCurrentUser() ? "/dashboard" : "/login");
+    const user = getCurrentUser();
+    if (!user) {
+      router.replace("/login");
+    } else {
+      router.replace(isContractor(user) ? "/work-orders" : "/dashboard");
+    }
   }, [router]);
   return null;
 }

@@ -8,6 +8,7 @@ import { Badge, STATUS_LABELS } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch, API_BASE } from "@/lib/api";
+import { REQUEST_TYPE_LABELS } from "@/lib/request-types";
 
 interface OrderDetail {
   id: string;
@@ -15,9 +16,11 @@ interface OrderDetail {
   title: string;
   description: string | null;
   status: string;
+  requestType: string;
   client?: { name: string } | null;
   site?: { name: string; address: string | null; lat: number | null; lng: number | null } | null;
   assignedTo?: { name: string } | null;
+  team?: { name: string } | null;
   createdBy?: { name: string } | null;
   attachments: Array<{ id: string; url: string; createdAt: string }>;
   events: Array<{
@@ -267,7 +270,12 @@ export default function WorkOrderDetailPage() {
               <span className="text-muted-foreground">Клиент: {order.client?.name ?? "—"}</span>
               <span className="text-muted-foreground">Объект: {order.site?.name ?? "—"}</span>
               <span className="text-muted-foreground">Адрес: {order.site?.address ?? "—"}</span>
-              <span className="text-muted-foreground">Исполнитель: {order.assignedTo?.name ?? "—"}</span>
+              <span className="text-muted-foreground">
+                Тип заявки: {REQUEST_TYPE_LABELS[order.requestType] ?? order.requestType}
+              </span>
+              <span className="text-muted-foreground">
+                Исполнитель: {order.assignedTo?.name ?? order.team?.name ?? "—"}
+              </span>
             </div>
           </CardContent>
         </Card>

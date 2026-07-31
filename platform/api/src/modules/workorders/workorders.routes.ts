@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { notifyUser } from "../notifications/notify.js";
+import { eligibleExecutorTypes } from "../../lib/executor-matching.js";
 
 export const workOrdersRouter = Router();
 workOrdersRouter.use(authenticate);
@@ -20,6 +21,26 @@ const STATUSES = [
   "CANCELLED",
 ] as const;
 
+const REQUEST_TYPES = [
+  "REPAIR",
+  "MAINTENANCE",
+  "CLEANING",
+  "CASH_COLLECTION",
+  "DELIVERY",
+  "EQUIPMENT_MOVE",
+  "INSTALLATION",
+  "DECOMMISSION",
+  "INSPECTION",
+  "AUDIT",
+  "OTHER",
+] as const;
+
+/// Подрядчик видит только заявки, назначенные его организации — это
+/// дополнительный, более узкий фильтр поверх обычной изоляции по тенанту.
+function contractorScope(req: import("express").Request) {
+  return req.auth!.contractorOrganizationId ? { assignedOrganizationId: req.auth!.contractorOrganizationId } : {};
+}
+
 async function nextOrderNumber(organizationId: string) {
   const count = await prisma.workOrder.count({ where: { organizationId } });
   const year = new Date().getFullYear();
@@ -32,6 +53,7 @@ workOrdersRouter.get("/", async (req, res) => {
   const orders = await prisma.workOrder.findMany({
     where: {
       organizationId: req.auth!.organizationId,
+      ...contractorScope(req),
       status: status ? (status as (typeof STATUSES)[number]) : undefined,
       assignedToId: assignedToId || undefined,
     },
@@ -46,9 +68,32 @@ workOrdersRouter.get("/", async (req, res) => {
   res.json(orders);
 });
 
+/// Автоподбор исполнителей под тип заявки — сотрудники и бригады банка
+/// (не других подрядчиков), чей executorType допустим для этого requestType.
+workOrdersRouter.get("/eligible-assignees", async (req, res) => {
+  const requestType = (req.query.requestType as string) || "OTHER";
+  const types = eligibleExecutorTypes(requestType);
+  const organizationId = req.auth!.organizationId;
+
+  const users = await prisma.user.findMany({
+    where: {
+      organizationId,
+      ...(types.length ? { executorType: { in: types as never[] } } : {}),
+    },
+    select: { id: true, name: true, executorType: true, contractorOrganizationId: true },
+    orderBy: { name: "asc" },
+  });
+  const teams = await prisma.team.findMany({
+    where: { organizationId },
+    select: { id: true, name: true, contractorOrganizationId: true },
+    orderBy: { name: "asc" },
+  });
+  res.json({ users, teams });
+});
+
 workOrdersRouter.get("/:id", async (req, res) => {
   const order = await prisma.workOrder.findFirst({
-    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
     include: {
       client: true,
       site: true,
@@ -70,6 +115,7 @@ const createSchema = z.object({
   siteId: z.string().optional(),
   equipmentId: z.string().optional(),
   slaDueAt: z.string().datetime().optional(),
+  requestType: z.enum(REQUEST_TYPES).optional(),
 });
 
 workOrdersRouter.post("/", async (req, res) => {
@@ -87,6 +133,7 @@ workOrdersRouter.post("/", async (req, res) => {
       siteId: parsed.data.siteId,
       equipmentId: parsed.data.equipmentId,
       slaDueAt: parsed.data.slaDueAt ? new Date(parsed.data.slaDueAt) : undefined,
+      requestType: parsed.data.requestType,
       createdById: req.auth!.userId,
       organizationId,
       events: {
@@ -104,7 +151,7 @@ workOrdersRouter.patch("/:id/status", async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
   const existing = await prisma.workOrder.findFirst({
-    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
   });
   if (!existing) return res.status(404).json({ error: "Заявка не найдена" });
 
@@ -134,13 +181,18 @@ workOrdersRouter.patch("/:id/assign", async (req, res) => {
   const existing = await prisma.workOrder.findFirst({ where: { id: req.params.id, organizationId } });
   if (!existing) return res.status(404).json({ error: "Заявка не найдена" });
 
+  // assignedOrganizationId зеркалит подрядчика исполнителя — это то, по чему
+  // подрядчик фильтрует "свои" заявки, поэтому считаем его на каждое назначение.
+  let assignedOrganizationId: string | null = null;
   if (parsed.data.assignedToId) {
     const assignee = await prisma.user.findFirst({ where: { id: parsed.data.assignedToId, organizationId } });
     if (!assignee) return res.status(400).json({ error: "Сотрудник не найден" });
+    assignedOrganizationId = assignee.contractorOrganizationId;
   }
   if (parsed.data.teamId) {
     const team = await prisma.team.findFirst({ where: { id: parsed.data.teamId, organizationId } });
     if (!team) return res.status(400).json({ error: "Бригада не найдена" });
+    assignedOrganizationId = team.contractorOrganizationId ?? assignedOrganizationId;
   }
 
   const order = await prisma.workOrder.update({
@@ -148,6 +200,7 @@ workOrdersRouter.patch("/:id/assign", async (req, res) => {
     data: {
       assignedToId: parsed.data.assignedToId,
       teamId: parsed.data.teamId,
+      assignedOrganizationId,
       status: "ASSIGNED",
       events: {
         create: {
@@ -177,7 +230,7 @@ workOrdersRouter.post("/:id/comments", async (req, res) => {
     return res.status(400).json({ error: "message обязателен" });
   }
   const existing = await prisma.workOrder.findFirst({
-    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
   });
   if (!existing) return res.status(404).json({ error: "Заявка не найдена" });
 

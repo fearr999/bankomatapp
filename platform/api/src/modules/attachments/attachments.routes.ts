@@ -27,8 +27,15 @@ const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
 /// исполнителя (uploadedBy) и объект/заявку (workOrder) — как требует ТЗ.
 attachmentsRouter.get("/", async (req, res) => {
   const take = Math.min(Number(req.query.take) || 60, 200);
+  const contractorOrganizationId = req.auth!.contractorOrganizationId;
   const attachments = await prisma.attachment.findMany({
-    where: { kind: "photo", workOrder: { organizationId: req.auth!.organizationId } },
+    where: {
+      kind: "photo",
+      workOrder: {
+        organizationId: req.auth!.organizationId,
+        ...(contractorOrganizationId ? { assignedOrganizationId: contractorOrganizationId } : {}),
+      },
+    },
     orderBy: { createdAt: "desc" },
     take,
     include: {
@@ -49,8 +56,13 @@ attachmentsRouter.get("/", async (req, res) => {
 attachmentsRouter.post("/work-orders/:id/photos", upload.single("photo"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Файл не передан" });
 
+  const contractorOrganizationId = req.auth!.contractorOrganizationId;
   const order = await prisma.workOrder.findFirst({
-    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+    where: {
+      id: req.params.id,
+      organizationId: req.auth!.organizationId,
+      ...(contractorOrganizationId ? { assignedOrganizationId: contractorOrganizationId } : {}),
+    },
   });
   if (!order) return res.status(404).json({ error: "Заявка не найдена" });
 

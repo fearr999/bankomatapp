@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../middleware/authenticate.js";
+import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 
 export const clientsRouter = Router();
 clientsRouter.use(authenticate);
+// CRM клиентов банка — не входит в кабинет подрядчика.
+clientsRouter.use(blockContractor);
 
 clientsRouter.get("/", async (req, res) => {
   const clients = await prisma.client.findMany({

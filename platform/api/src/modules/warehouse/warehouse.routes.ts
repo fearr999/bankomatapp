@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../middleware/authenticate.js";
+import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 
 export const warehouseRouter = Router();
 warehouseRouter.use(authenticate);
+// Склад — ресурс банка, вне списка разделов кабинета подрядчика.
+warehouseRouter.use(blockContractor);
 
 warehouseRouter.get("/items", async (req, res) => {
   const items = await prisma.inventoryItem.findMany({

@@ -8,12 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api";
+import { REQUEST_TYPE_LABELS, REQUEST_TYPES } from "@/lib/request-types";
 
 interface WorkOrder {
   id: string;
   number: string;
   title: string;
   status: string;
+  requestType: string;
   createdAt: string;
   client?: { name: string } | null;
   site?: { name: string; address: string | null } | null;
@@ -26,6 +28,7 @@ export default function WorkOrdersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [requestType, setRequestType] = useState("OTHER");
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -47,10 +50,11 @@ export default function WorkOrdersPage() {
     try {
       await apiFetch("/work-orders", {
         method: "POST",
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({ title, description, requestType }),
       });
       setTitle("");
       setDescription("");
+      setRequestType("OTHER");
       setShowCreate(false);
       await load();
     } catch (e) {
@@ -81,6 +85,20 @@ export default function WorkOrdersPage() {
                 <label className="mb-1 block text-xs text-muted-foreground">Описание</label>
                 <Input value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Тип заявки</label>
+                <select
+                  className="h-9 rounded-md border bg-transparent px-2 text-sm"
+                  value={requestType}
+                  onChange={(e) => setRequestType(e.target.value)}
+                >
+                  {REQUEST_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {REQUEST_TYPE_LABELS[t]}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Button type="submit" disabled={busy}>
                 {busy ? "Создаём..." : "Создать"}
               </Button>
@@ -98,6 +116,7 @@ export default function WorkOrdersPage() {
               <tr className="border-b text-left text-xs text-muted-foreground">
                 <th className="px-4 py-3 font-medium">Номер</th>
                 <th className="px-4 py-3 font-medium">Название</th>
+                <th className="px-4 py-3 font-medium">Тип</th>
                 <th className="px-4 py-3 font-medium">Клиент / Объект</th>
                 <th className="px-4 py-3 font-medium">Исполнитель</th>
                 <th className="px-4 py-3 font-medium">Статус</th>
@@ -113,6 +132,9 @@ export default function WorkOrdersPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3">{o.title}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {REQUEST_TYPE_LABELS[o.requestType] ?? o.requestType}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {o.client?.name ?? "—"} {o.site ? `/ ${o.site.name}` : ""}
                   </td>
@@ -127,7 +149,7 @@ export default function WorkOrdersPage() {
               ))}
               {orders.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                     Заявок пока нет
                   </td>
                 </tr>

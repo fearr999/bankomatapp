@@ -22,7 +22,12 @@ authRouter.post("/login", async (req, res) => {
     return res.status(401).json({ error: "Неверный email или пароль" });
   }
 
-  const token = signToken({ userId: user.id, role: user.role, organizationId: user.organizationId });
+  const token = signToken({
+    userId: user.id,
+    role: user.role,
+    organizationId: user.organizationId,
+    contractorOrganizationId: user.contractorOrganizationId,
+  });
   return res.json({
     token,
     user: {
@@ -30,6 +35,7 @@ authRouter.post("/login", async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      contractorOrganizationId: user.contractorOrganizationId,
     },
   });
 });
@@ -67,10 +73,15 @@ authRouter.post("/register", async (req, res) => {
     return { organization, user };
   });
 
-  const token = signToken({ userId: user.id, role: user.role, organizationId: organization.id });
+  const token = signToken({
+    userId: user.id,
+    role: user.role,
+    organizationId: organization.id,
+    contractorOrganizationId: null,
+  });
   res.status(201).json({
     token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: { id: user.id, name: user.name, email: user.email, role: user.role, contractorOrganizationId: null },
     organization: { id: organization.id, name: organization.name },
   });
 });

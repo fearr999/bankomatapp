@@ -1,11 +1,14 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../middleware/authenticate.js";
+import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 import { notifyUser } from "../notifications/notify.js";
 
 export const equipmentRouter = Router();
 equipmentRouter.use(authenticate);
+// Модуль обслуживания банкоматов (включая суммы инкассации) — банковский,
+// вне списка разделов кабинета подрядчика.
+equipmentRouter.use(blockContractor);
 
 equipmentRouter.get("/", async (req, res) => {
   const equipment = await prisma.equipment.findMany({

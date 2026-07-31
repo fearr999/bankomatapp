@@ -20,22 +20,85 @@ enum Role {
   WORKER // полевой сотрудник
 }
 
-/// Компания-арендатор. Каждая организация видит только свои данные —
-/// это единственная граница изоляции в системе (проверяется в каждом роуте).
-model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
+enum OrganizationType {
+  BANK
+  CONTRACTOR
+  CLEANING
+  SERVICE
+  CASH_COLLECTION
+  LOGISTICS
+  SECURITY
+  OTHER
+}
 
-  users              User[]
-  teams              Team[]
-  clients            Client[]
-  sites              Site[]
-  workOrders         WorkOrder[]
-  equipment          Equipment[]
-  inventoryItems     InventoryItem[]
-  checklistTemplates ChecklistTemplate[]
-  aiInsights         AiInsight[]
+enum ExecutorType {
+  STAFF // штатный сотрудник
+  CONTRACTOR // подрядчик (общий)
+  CLEANING // клининг
+  CASH_COLLECTOR // инкассатор
+  SERVICE_ENGINEER // сервисный инженер
+  LOGISTICIAN // логист
+  SECURITY // охрана
+  OTHER
+}
+
+enum WorkOrderType {
+  REPAIR // ремонт
+  MAINTENANCE // плановое обслуживание
+  CLEANING // уборка
+  CASH_COLLECTION // инкассация
+  DELIVERY // доставка
+  EQUIPMENT_MOVE // перемещение оборудования
+  INSTALLATION // монтаж
+  DECOMMISSION // демонтаж
+  INSPECTION // инспекция
+  AUDIT // проверка
+  OTHER
+}
+
+/// Компания-арендатор (тенант) — единственная граница ИЗОЛЯЦИИ в системе
+/// (проверяется в каждом роуте: organizationId всегда указывает на корневую
+/// организацию тенанта, даже у вложенных подрядчиков).
+///
+/// Внутри одного тенанта организация может иметь дочерние организации
+/// (parentOrganizationId) — банк заводит подрядчиков (клининг, инкассация,
+/// сервис и т.д.), которые работают в том же тенанте, но видят только свою
+/// часть данных (см. User/Team.contractorOrganizationId и
+/// WorkOrder.assignedOrganizationId).
+model Organization {
+  id        String           @id @default(cuid())
+  name      String
+  type      OrganizationType @default(OTHER)
+  createdAt DateTime         @default(now())
+
+  parentOrganizationId String?
+  parentOrganization   Organization?  @relation("OrgHierarchy", fields: [parentOrganizationId], references: [id])
+  childOrganizations   Organization[] @relation("OrgHierarchy")
+
+  // Карточка организации
+  inn             String?
+  contactName     String?
+  contactPhone    String?
+  contactEmail    String?
+  address         String?
+  serviceRegion   String?
+  contractNumber  String?
+  contractStartAt DateTime?
+  contractEndAt   DateTime?
+  status          String    @default("active") // active | inactive
+
+  users                User[]
+  teams                Team[]
+  clients              Client[]
+  sites                Site[]
+  workOrders           WorkOrder[]
+  assignedWorkOrders   WorkOrder[]         @relation("AssignedOrganization")
+  equipment            Equipment[]
+  inventoryItems       InventoryItem[]
+  checklistTemplates   ChecklistTemplate[]
+  aiInsights           AiInsight[]
+  contractorUsers      User[]              @relation("ContractorOrgUsers")
+  contractorTeams      Team[]              @relation("ContractorOrgTeams")
 }
 
 enum WorkOrderStatus {
@@ -68,6 +131,12 @@ model User {
   team         Team?    @relation(fields: [teamId], references: [id])
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+  executorType ExecutorType @default(STAFF)
+  // Если не задано — пользователь на стороне банка (полная видимость тенанта).
+  // Если задано — пользователь работает в конкретном подрядчике внутри
+  // того же тенанта и видит только свои заявки/объекты/отчёты.
+  contractorOrganizationId String?
+  contractorOrganization   Organization? @relation("ContractorOrgUsers", fields: [contractorOrganizationId], references: [id])
   createdAt    DateTime @default(now())
 
   telegramChatId   String? @unique // заполняется после привязки бота
@@ -106,6 +175,10 @@ model Team {
   leaderId  String?
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+  // Бригада конкретного подрядчика (см. User.contractorOrganizationId) —
+  // null означает бригаду на стороне банка.
+  contractorOrganizationId String?
+  contractorOrganization   Organization? @relation("ContractorOrgTeams", fields: [contractorOrganizationId], references: [id])
   createdAt DateTime @default(now())
 
   members    User[]
@@ -149,6 +222,7 @@ model WorkOrder {
   number      String
   status      WorkOrderStatus @default(NEW)
   priority    String          @default("normal") // normal | urgent (аварийный вызов)
+  requestType WorkOrderType   @default(OTHER)
   title       String
   description String?
   slaDueAt    DateTime?
@@ -169,6 +243,10 @@ model WorkOrder {
   createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+  // Зеркалит contractorOrganizationId исполнителя (assignedTo/team) на момент
+  // назначения — быстрый фильтр "заявки моего подрядчика" без join'ов.
+  assignedOrganizationId String?
+  assignedOrganization   Organization? @relation("AssignedOrganization", fields: [assignedOrganizationId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../middleware/authenticate.js";
+import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 
 export const dashboardRouter = Router();
 dashboardRouter.use(authenticate);
+// Дашборд банка — сводная аналитика по всей организации, подрядчикам не видна.
+dashboardRouter.use(blockContractor);
 
 const ACTIVE_STATUSES = [
   "ASSIGNED",

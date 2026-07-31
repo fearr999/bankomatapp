@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api";
+import { REQUEST_TYPE_LABELS } from "@/lib/request-types";
 import type { MapEmployee, MapOrder } from "@/components/dispatch/map-view";
 
 // react-leaflet использует window/document — рендерим только на клиенте.
@@ -33,6 +34,7 @@ interface OrderApi {
   number: string;
   title: string;
   status: string;
+  requestType: string;
   assignedTo?: { id: string; name: string } | null;
   site?: { name: string; lat: number | null; lng: number | null } | null;
 }
@@ -44,6 +46,7 @@ export default function DispatchPage() {
   const [orders, setOrders] = useState<OrderApi[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dragOrderId, setDragOrderId] = useState<string | null>(null);
+  const [eligibleIds, setEligibleIds] = useState<Set<string> | null>(null);
   const [assigning, setAssigning] = useState(false);
 
   const load = useCallback(async () => {
@@ -66,6 +69,10 @@ export default function DispatchPage() {
   }, [load]);
 
   async function assignOrder(orderId: string, employeeId: string) {
+    if (eligibleIds && !eligibleIds.has(employeeId)) {
+      setError("Этот сотрудник не подходит по типу заявки");
+      return;
+    }
     setAssigning(true);
     try {
       await apiFetch(`/work-orders/${orderId}/assign`, {
@@ -77,6 +84,20 @@ export default function DispatchPage() {
       setError(err instanceof Error ? err.message : "Не удалось назначить заявку");
     } finally {
       setAssigning(false);
+    }
+  }
+
+  /// При начале перетаскивания подтягиваем список подходящих исполнителей
+  /// по типу заявки — чтобы не давать назначить, скажем, инкассацию клинеру.
+  async function startDrag(order: OrderApi) {
+    setDragOrderId(order.id);
+    try {
+      const { users } = await apiFetch<{ users: Array<{ id: string }> }>(
+        `/work-orders/eligible-assignees?requestType=${order.requestType}`
+      );
+      setEligibleIds(users.length ? new Set(users.map((u) => u.id)) : null);
+    } catch {
+      setEligibleIds(null);
     }
   }
 
@@ -121,15 +142,24 @@ export default function DispatchPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-1.5">
-              {employees.map((e) => (
+              {employees.map((e) => {
+                const isEligible = !dragOrderId || !eligibleIds || eligibleIds.has(e.id);
+                return (
                 <div
                   key={e.id}
-                  onDragOver={(ev) => ev.preventDefault()}
+                  onDragOver={(ev) => {
+                    if (isEligible) ev.preventDefault();
+                  }}
                   onDrop={() => {
                     if (dragOrderId) assignOrder(dragOrderId, e.id);
                     setDragOrderId(null);
+                    setEligibleIds(null);
                   }}
-                  className="flex items-center justify-between rounded-md border border-dashed px-3 py-2 text-sm transition-colors hover:border-primary"
+                  className={`flex items-center justify-between rounded-md border border-dashed px-3 py-2 text-sm transition-colors ${
+                    dragOrderId && !isEligible
+                      ? "opacity-40"
+                      : "hover:border-primary"
+                  } ${dragOrderId && isEligible ? "border-primary/60" : ""}`}
                 >
                   <div>
                     <div className="flex items-center gap-2">
@@ -148,7 +178,8 @@ export default function DispatchPage() {
                     <span className="text-xs text-muted-foreground">{e.assignedOrders[0].number}</span>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -164,7 +195,11 @@ export default function DispatchPage() {
                 <div
                   key={o.id}
                   draggable
-                  onDragStart={() => setDragOrderId(o.id)}
+                  onDragStart={() => startDrag(o)}
+                  onDragEnd={() => {
+                    setDragOrderId(null);
+                    setEligibleIds(null);
+                  }}
                   className="cursor-grab rounded-md border bg-card px-3 py-2 text-sm active:cursor-grabbing"
                 >
                   <div className="flex items-center justify-between">
@@ -174,6 +209,7 @@ export default function DispatchPage() {
                     <Badge status={o.status} />
                   </div>
                   <p className="text-xs text-muted-foreground">{o.title}</p>
+                  <p className="text-xs text-muted-foreground">{REQUEST_TYPE_LABELS[o.requestType] ?? o.requestType}</p>
                 </div>
               ))}
               {unassigned.length === 0 && (

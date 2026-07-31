@@ -16,9 +16,14 @@ const ACTIVE_STATUSES = [
   "WAITING_APPROVAL",
 ] as const;
 
+/// Подрядчик видит только сотрудников своей организации — не банк и не других подрядчиков.
+function contractorScope(req: import("express").Request) {
+  return req.auth!.contractorOrganizationId ? { contractorOrganizationId: req.auth!.contractorOrganizationId } : {};
+}
+
 usersRouter.get("/", async (req, res) => {
   const users = await prisma.user.findMany({
-    where: { organizationId: req.auth!.organizationId },
+    where: { organizationId: req.auth!.organizationId, ...contractorScope(req) },
     select: {
       id: true,
       name: true,
@@ -32,6 +37,8 @@ usersRouter.get("/", async (req, res) => {
       lng: true,
       locationUpdatedAt: true,
       teamId: true,
+      executorType: true,
+      contractorOrganizationId: true,
       team: { select: { id: true, name: true } },
       assignedOrders: {
         where: { status: { in: [...ACTIVE_STATUSES] } },
@@ -47,7 +54,7 @@ usersRouter.get("/", async (req, res) => {
 
 usersRouter.get("/:id", async (req, res) => {
   const user = await prisma.user.findFirst({
-    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
     select: {
       id: true,
       name: true,
@@ -106,6 +113,10 @@ const createUserSchema = z.object({
   phone: z.string().optional(),
   specialization: z.string().optional(),
   teamId: z.string().optional(),
+  executorType: z
+    .enum(["STAFF", "CONTRACTOR", "CLEANING", "CASH_COLLECTOR", "SERVICE_ENGINEER", "LOGISTICIAN", "SECURITY", "OTHER"])
+    .optional(),
+  contractorOrganizationId: z.string().optional(),
 });
 
 usersRouter.post("/", requireRole("ADMIN"), async (req, res) => {
@@ -113,10 +124,16 @@ usersRouter.post("/", requireRole("ADMIN"), async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const { password, teamId, ...rest } = parsed.data;
+  const { password, teamId, contractorOrganizationId, ...rest } = parsed.data;
   if (teamId) {
     const team = await prisma.team.findFirst({ where: { id: teamId, organizationId: req.auth!.organizationId } });
     if (!team) return res.status(400).json({ error: "Бригада не найдена" });
+  }
+  if (contractorOrganizationId) {
+    const org = await prisma.organization.findFirst({
+      where: { id: contractorOrganizationId, parentOrganizationId: req.auth!.organizationId },
+    });
+    if (!org) return res.status(400).json({ error: "Организация-подрядчик не найдена" });
   }
   const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (existing) return res.status(409).json({ error: "Email уже используется" });
@@ -124,6 +141,7 @@ usersRouter.post("/", requireRole("ADMIN"), async (req, res) => {
     data: {
       ...rest,
       teamId,
+      contractorOrganizationId,
       passwordHash: await hashPassword(password),
       organizationId: req.auth!.organizationId,
     },
@@ -137,7 +155,7 @@ usersRouter.patch("/:id/status", async (req, res) => {
     return res.status(400).json({ error: "status обязателен" });
   }
   const existing = await prisma.user.findFirst({
-    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
   });
   if (!existing) return res.status(404).json({ error: "Сотрудник не найден" });
   await prisma.user.update({ where: { id: req.params.id }, data: { status } });
