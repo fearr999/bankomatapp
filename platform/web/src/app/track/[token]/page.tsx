@@ -38,7 +38,7 @@ export default function PublicTrackPage() {
     <div className="mx-auto flex min-h-screen max-w-lg flex-col gap-6 bg-muted/20 px-4 py-10">
       <div className="flex flex-col items-center gap-2 text-center">
         <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg ring-1 ring-border/50" />
-        <p className="text-sm font-semibold tracking-tight">Corpi</p>
+        <p className="font-display text-sm font-semibold tracking-tight">Corpi</p>
         <p className="text-xs text-muted-foreground">Отслеживание заявки</p>
       </div>
 

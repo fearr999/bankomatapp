@@ -67,8 +67,16 @@ function TelegramCard() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Telegram</CardTitle>
+        <a
+          href="https://t.me/thecorpibot"
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          @thecorpibot
+        </a>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 text-sm">
         {!status ? (

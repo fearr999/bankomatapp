@@ -161,9 +161,14 @@ function TelegramSection() {
 
   return (
     <div className="rounded-lg border border-border p-4 text-sm">
-      <div className="flex items-center gap-2 font-medium">
-        <Send size={16} />
-        Telegram
+      <div className="flex items-center justify-between font-medium">
+        <div className="flex items-center gap-2">
+          <Send size={16} />
+          Telegram
+        </div>
+        <a href="https://t.me/thecorpibot" target="_blank" rel="noreferrer" className="text-xs font-normal text-muted-foreground">
+          @thecorpibot
+        </a>
       </div>
       {status.linked ? (
         <p className="mt-1 text-muted-foreground">Подключён — уведомления о заявках приходят туда</p>

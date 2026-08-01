@@ -31,7 +31,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col justify-center gap-8 px-6">
       <div className="flex animate-slide-up flex-col items-center gap-2">
         <img src="/logo.png" alt="Corpi" className="h-12 w-12 rounded-xl ring-1 ring-border/50" />
-        <h1 className="text-xl font-semibold tracking-tight">Corpi</h1>
+        <h1 className="font-display text-xl font-semibold tracking-tight">Corpi</h1>
         <p className="text-sm text-muted-foreground">Вход для полевого сотрудника</p>
       </div>
 

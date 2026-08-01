@@ -35,7 +35,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm animate-slide-up">
         <CardHeader>
           <img src="/logo.png" alt="Corpi" className="mb-1 h-9 w-9 rounded-lg ring-1 ring-border/50" />
-          <CardTitle className="text-lg text-foreground">Corpi</CardTitle>
+          <CardTitle className="font-display text-lg text-foreground">Corpi</CardTitle>
           <p className="text-sm text-muted-foreground">Войдите, чтобы продолжить</p>
         </CardHeader>
         <CardContent>
