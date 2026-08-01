@@ -1,6 +1,8 @@
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
 import { workOrdersRouter } from "./modules/workorders/workorders.routes.js";
@@ -30,12 +32,40 @@ process.on("unhandledRejection", (err) => {
   console.error("Необработанная ошибка промиса:", err);
 });
 
+// CORS_ORIGINS — необязательный список разрешённых доменов через запятую
+// (например "https://app.corpi.example,https://admin.corpi.example"). Если
+// не задан — поведение как раньше (открыто для всех origin), чтобы ничего
+// не сломать до того, как в проде явно пропишут реальные домены фронтендов.
+const corsOrigins = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean);
+
 const app = express();
-app.use(cors());
+app.use(
+  helmet({
+    // Чистый JSON-API + раздача изображений, HTML не отдаём — CSP тут не
+    // применим и только мешает; остальные заголовки helmet (nosniff,
+    // X-Frame-Options и т.п.) оставляем как есть, это чистый выигрыш.
+    contentSecurityPolicy: false,
+    // Фото/подписи из /uploads встраиваются <img>-тегами с другого origin
+    // (веб- и мобильный фронтенд) — не блокируем кросс-origin встраивание.
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+app.use(cors(corsOrigins ? { origin: corsOrigins } : undefined));
 app.use(express.json({ limit: "10mb" }));
 app.use("/uploads", express.static(UPLOADS_DIR));
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// Брутфорс-защита на вход/регистрацию — не трогает остальной API.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Слишком много попыток. Попробуйте позже." },
+});
+app.use("/auth/login", authLimiter);
+app.use("/auth/register", authLimiter);
 
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);

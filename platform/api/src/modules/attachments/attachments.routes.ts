@@ -14,14 +14,36 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const UPLOADS_DIR = path.join(__dirname, "../../../uploads");
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
+// Расширение сохранённого файла берём из провалидированного MIME-типа, а не из
+// имени файла, присланного клиентом — иначе можно подсунуть исполняемый
+// контент (html/svg со скриптом) под видом фото и получить его обратно по
+// прямой ссылке без авторизации (папка /uploads раздаётся статикой).
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+  "image/heic": ".heic",
+  "image/heif": ".heif",
+};
+
 const storage = multer.diskStorage({
   destination: UPLOADS_DIR,
   filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || ".jpg";
+    const ext = ALLOWED_IMAGE_TYPES[file.mimetype] ?? ".jpg";
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
   },
 });
-const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!ALLOWED_IMAGE_TYPES[file.mimetype]) {
+      return cb(new Error("Разрешены только изображения (jpeg, png, webp, gif, heic)"));
+    }
+    cb(null, true);
+  },
+});
 
 /// Единая лента фото по всем заявкам — для модуля "Фотоотчёты".
 /// Каждая запись уже несёт дату/время (createdAt), координаты (lat/lng),
@@ -54,7 +76,12 @@ attachmentsRouter.get("/", async (req, res) => {
   res.json(attachments);
 });
 
-attachmentsRouter.post("/work-orders/:id/photos", upload.single("photo"), async (req, res) => {
+attachmentsRouter.post("/work-orders/:id/photos", (req, res, next) => {
+  upload.single("photo")(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message || "Не удалось загрузить файл" });
+    next();
+  });
+}, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Файл не передан" });
 
   const contractorOrganizationId = req.auth!.contractorOrganizationId;

@@ -209,7 +209,7 @@ usersRouter.post("/", requireRole("ADMIN"), async (req, res) => {
   res.status(201).json({ id: user.id });
 });
 
-usersRouter.patch("/:id/status", async (req, res) => {
+usersRouter.patch("/:id/status", requireRole("ADMIN", "DISPATCHER", "MANAGER"), async (req, res) => {
   const status = req.body?.status;
   if (typeof status !== "string") {
     return res.status(400).json({ error: "status обязателен" });
