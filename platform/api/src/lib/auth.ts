@@ -25,7 +25,7 @@ export function verifyPassword(password: string, hash: string) {
 }
 
 export function signToken(payload: JwtPayload) {
-  return jwt.sign(payload, getSecret(), { expiresIn: "12h" });
+  return jwt.sign(payload, getSecret(), { expiresIn: "30d" });
 }
 
 export function verifyToken(token: string): JwtPayload {

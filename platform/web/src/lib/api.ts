@@ -17,6 +17,14 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     },
   });
   if (!res.ok) {
+    // Токен истёк/недействителен на уже авторизованном запросе — вместо
+    // зависания на странице с баннером ошибки отправляем обратно на вход.
+    if (res.status === 401 && token) {
+      localStorage.removeItem("fsm_token");
+      localStorage.removeItem("fsm_user");
+      window.location.href = "/login";
+      return new Promise<T>(() => {});
+    }
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ? JSON.stringify(body.error) : `Ошибка запроса: ${res.status}`);
   }
