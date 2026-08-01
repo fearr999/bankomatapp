@@ -44,12 +44,33 @@ function normalizeAddress(addr) {
     .trim();
 }
 
+// Список — не только Ташкент: часть точек в Самарканде, Фергане, Намангане
+// и других областных центрах. КРИТИЧНО подставлять в резервные варианты
+// (poi/district) реальный город адреса, а не хардкодить "Ташкент" — иначе
+// Nominatim радостно находит одноимённое заведение/микрорайон в Ташкенте
+// вместо настоящего города, и точка улетает за сотни километров молча.
+const KNOWN_CITIES = [
+  "Алмалык", "Ангрен", "Андижан", "Асака", "Ахангаран", "Бекабад", "Бука",
+  "Бухара", "Газалкент", "Гулистан", "Гулистон", "Джизак", "Каган", "Карши",
+  "Келес", "Кибрай", "Коканд", "Маргилан", "Навои", "Наманган", "Нукус",
+  "Нурафшан", "Нурафшон", "Самарканд", "Термез", "Ургенч", "Фергана", "Хива",
+  "Чирчик", "Янгиюль",
+].sort((a, b) => b.length - a.length);
+
+function extractCity(address) {
+  for (const city of KNOWN_CITIES) {
+    if (address.includes(city)) return city;
+  }
+  return "Ташкент";
+}
+
 // Возвращает список вариантов запроса от самого точного к самому грубому,
 // вместе с меткой точности результата, если этот вариант сработает.
 function addressVariants(entry) {
   const variants = [];
   const norm = normalizeAddress(entry.address);
   variants.push({ q: norm, precision: "exact" });
+  const city = extractCity(entry.address);
 
   const parts = norm
     .split(",")
@@ -62,12 +83,12 @@ function addressVariants(entry) {
   }
 
   if (entry.place && entry.place.trim()) {
-    variants.push({ q: `${entry.place.trim()}, Ташкент, Узбекистан`, precision: "poi" });
+    variants.push({ q: `${entry.place.trim()}, ${city}, Узбекистан`, precision: "poi" });
   }
 
   const district = parts.find((p) => /район/i.test(p));
   if (district) {
-    variants.push({ q: `${district}, Ташкент, Узбекистан`, precision: "district" });
+    variants.push({ q: `${district}, ${city}, Узбекистан`, precision: "district" });
   }
 
   return variants;
