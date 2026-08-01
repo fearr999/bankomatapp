@@ -68,12 +68,13 @@ attachmentsRouter.post("/work-orders/:id/photos", upload.single("photo"), async 
 
   const lat = req.body.lat ? Number(req.body.lat) : undefined;
   const lng = req.body.lng ? Number(req.body.lng) : undefined;
+  const kind = req.body.kind === "signature" ? "signature" : "photo";
 
   const attachment = await prisma.attachment.create({
     data: {
       workOrderId: req.params.id,
       url: `/uploads/${req.file.filename}`,
-      kind: "photo",
+      kind,
       lat,
       lng,
       uploadedById: req.auth!.userId,
@@ -84,8 +85,8 @@ attachmentsRouter.post("/work-orders/:id/photos", upload.single("photo"), async 
     data: {
       workOrderId: req.params.id,
       userId: req.auth!.userId,
-      type: "photo",
-      message: "Добавлена фотография",
+      type: kind,
+      message: kind === "signature" ? "Клиент подписал акт" : "Добавлена фотография",
     },
   });
 

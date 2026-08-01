@@ -142,6 +142,7 @@ model User {
 
   telegramChatId   String? @unique // заполняется после привязки бота
   telegramLinkCode String? @unique // одноразовый код для команды /start в боте
+  pushSubscription Json? // Web Push подписка браузера (endpoint + ключи), см. lib/webpush.ts
 
   assignedOrders WorkOrder[]      @relation("AssignedTo")
   createdOrders  WorkOrder[]      @relation("CreatedBy")
@@ -249,6 +250,12 @@ model WorkOrder {
   assignedOrganizationId String?
   assignedOrganization   Organization? @relation("AssignedOrganization", fields: [assignedOrganizationId], references: [id])
 
+  // Публичная ссылка отслеживания статуса без логина (см. /public/track/:token)
+  publicTrackingToken String? @unique
+  // Метка, что по этой заявке уже отправлена эскалация просрочки SLA — чтобы
+  // фоновая проверка не слала уведомление повторно на каждом цикле.
+  slaEscalatedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -325,6 +332,7 @@ model Equipment {
   warrantyUntil  DateTime?
   lastServiceAt  DateTime?
   nextServiceAt  DateTime?
+  maintenanceIntervalDays Int? // если задано — nextServiceAt авто-сдвигается на этот интервал
   lastCollectionAt DateTime? // последняя инкассация
   notes          String?
   organizationId String

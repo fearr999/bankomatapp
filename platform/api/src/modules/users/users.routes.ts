@@ -52,6 +52,44 @@ usersRouter.get("/", async (req, res) => {
   res.json(users);
 });
 
+const DONE_STATUSES = ["COMPLETED", "CLOSED"];
+
+/// Рейтинг сотрудников/бригад: кол-во выполненных заявок, SLA%, средняя
+/// оценка. Регистрируем раньше "/:id", иначе "leaderboard" перехватится им.
+usersRouter.get("/leaderboard", async (req, res) => {
+  const users = await prisma.user.findMany({
+    where: { organizationId: req.auth!.organizationId, ...contractorScope(req) },
+    select: {
+      id: true,
+      name: true,
+      rating: true,
+      executorType: true,
+      team: { select: { id: true, name: true } },
+      assignedOrders: {
+        select: { status: true, slaDueAt: true, updatedAt: true },
+      },
+    },
+  });
+
+  const rows = users.map((u) => {
+    const completed = u.assignedOrders.filter((o) => DONE_STATUSES.includes(o.status));
+    const withSla = completed.filter((o) => o.slaDueAt);
+    const metSla = withSla.filter((o) => o.slaDueAt && o.updatedAt <= o.slaDueAt).length;
+    return {
+      id: u.id,
+      name: u.name,
+      rating: u.rating,
+      executorType: u.executorType,
+      team: u.team,
+      completedOrders: completed.length,
+      slaPercent: withSla.length ? Math.round((metSla / withSla.length) * 100) : null,
+    };
+  });
+
+  rows.sort((a, b) => (b.completedOrders !== a.completedOrders ? b.completedOrders - a.completedOrders : (b.rating ?? 0) - (a.rating ?? 0)));
+  res.json(rows);
+});
+
 usersRouter.get("/:id", async (req, res) => {
   const user = await prisma.user.findFirst({
     where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },

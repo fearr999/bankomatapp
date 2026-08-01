@@ -1,6 +1,6 @@
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
-function getToken() {
+export function getToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("fsm_token");
 }

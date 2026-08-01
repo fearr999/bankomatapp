@@ -13,10 +13,17 @@ interface OrderListItem {
   title: string;
   status: string;
   priority: string;
+  slaStatus: string | null;
   client: { name: string } | null;
   site: { name: string; address: string } | null;
   createdAt: string;
 }
+
+const SLA_LABELS: Record<string, string> = { overdue: "SLA просрочен", at_risk: "SLA горит" };
+const SLA_STYLES: Record<string, string> = {
+  overdue: "bg-red-500/15 text-red-500",
+  at_risk: "bg-amber-500/15 text-amber-500",
+};
 
 const OPEN_STATUSES = new Set([
   "NEW",
@@ -106,11 +113,20 @@ export default function OrdersPage() {
                 <MapPin size={12} /> {order.site.address || order.site.name}
               </p>
             )}
-            {order.priority === "urgent" && (
-              <span className="w-fit rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-medium text-red-500">
-                Срочно
-              </span>
-            )}
+            <div className="flex gap-1.5">
+              {order.priority === "urgent" && (
+                <span className="w-fit rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-medium text-red-500">
+                  Срочно
+                </span>
+              )}
+              {order.slaStatus && SLA_LABELS[order.slaStatus] && (
+                <span
+                  className={`w-fit rounded-full px-2 py-0.5 text-[11px] font-medium ${SLA_STYLES[order.slaStatus]}`}
+                >
+                  {SLA_LABELS[order.slaStatus]}
+                </span>
+              )}
+            </div>
           </Link>
         ))}
       </div>

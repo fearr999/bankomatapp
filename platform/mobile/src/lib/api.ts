@@ -1,4 +1,7 @@
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// Веб-дашборд обычно отдельный деплой (другой домен) — публичная ссылка
+// отслеживания живёт там, поэтому адрес настраивается отдельно.
+export const WEB_BASE = process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3000";
 
 export interface CurrentUser {
   id: string;
@@ -8,7 +11,7 @@ export interface CurrentUser {
   executorType?: string;
 }
 
-function getToken() {
+export function getToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("fsm_mobile_token");
 }

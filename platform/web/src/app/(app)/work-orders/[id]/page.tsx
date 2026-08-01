@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Camera } from "lucide-react";
+import { Camera, FileDown, Link2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, STATUS_LABELS } from "@/components/ui/badge";
+import { SlaBadge } from "@/components/ui/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiFetch, API_BASE } from "@/lib/api";
+import { apiFetch, API_BASE, getToken } from "@/lib/api";
 import { REQUEST_TYPE_LABELS } from "@/lib/request-types";
 
 interface OrderDetail {
@@ -17,6 +18,8 @@ interface OrderDetail {
   description: string | null;
   status: string;
   requestType: string;
+  slaStatus: string | null;
+  publicTrackingToken: string | null;
   client?: { name: string } | null;
   site?: { name: string; address: string | null; lat: number | null; lng: number | null } | null;
   assignedTo?: { name: string } | null;
@@ -249,15 +252,46 @@ export default function WorkOrderDetailPage() {
     await load();
   }
 
+  async function downloadReport() {
+    const res = await fetch(`${API_BASE}/work-orders/${params.id}/report.pdf`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${order?.number ?? "report"}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function copyTrackingLink() {
+    if (!order?.publicTrackingToken) return;
+    const url = `${window.location.origin}/track/${order.publicTrackingToken}`;
+    navigator.clipboard.writeText(url);
+  }
+
   if (error) return <p className="text-sm text-red-500">{error}</p>;
   if (!order) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-4 lg:col-span-2">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">{order.number}</h1>
           <Badge status={order.status} />
+          <SlaBadge status={order.slaStatus} />
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" onClick={downloadReport}>
+              <FileDown size={16} /> Скачать акт
+            </Button>
+            {order.publicTrackingToken && (
+              <Button variant="outline" onClick={copyTrackingLink}>
+                <Link2 size={16} /> Ссылка отслеживания
+              </Button>
+            )}
+          </div>
         </div>
 
         <Card>

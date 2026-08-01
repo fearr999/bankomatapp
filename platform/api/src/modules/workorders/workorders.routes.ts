@@ -1,9 +1,28 @@
+import { randomBytes } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { notifyUser } from "../notifications/notify.js";
 import { eligibleExecutorTypes } from "../../lib/executor-matching.js";
+import { generateWorkOrderReportPdf } from "../../lib/work-order-report.js";
+
+const TERMINAL_STATUSES = new Set(["COMPLETED", "CLOSED", "CANCELLED"]);
+const AT_RISK_WINDOW_MS = 2 * 60 * 60 * 1000; // «горит» — до срока меньше 2 часов
+
+/// SLA-статус считается на лету из slaDueAt — ничего не хранится, кроме
+/// самого дедлайна, чтобы бейдж всегда отражал текущее время.
+export function slaStatus(order: { status: string; slaDueAt: Date | null }): "overdue" | "at_risk" | "ok" | null {
+  if (!order.slaDueAt || TERMINAL_STATUSES.has(order.status)) return null;
+  const msLeft = order.slaDueAt.getTime() - Date.now();
+  if (msLeft < 0) return "overdue";
+  if (msLeft < AT_RISK_WINDOW_MS) return "at_risk";
+  return "ok";
+}
+
+function withSlaStatus<T extends { status: string; slaDueAt: Date | null }>(order: T) {
+  return { ...order, slaStatus: slaStatus(order) };
+}
 
 export const workOrdersRouter = Router();
 workOrdersRouter.use(authenticate);
@@ -41,7 +60,7 @@ function contractorScope(req: import("express").Request) {
   return req.auth!.contractorOrganizationId ? { assignedOrganizationId: req.auth!.contractorOrganizationId } : {};
 }
 
-async function nextOrderNumber(organizationId: string) {
+export async function nextOrderNumber(organizationId: string) {
   const count = await prisma.workOrder.count({ where: { organizationId } });
   const year = new Date().getFullYear();
   return `WO-${year}-${String(count + 1).padStart(5, "0")}`;
@@ -65,7 +84,7 @@ workOrdersRouter.get("/", async (req, res) => {
     },
     orderBy: { createdAt: "desc" },
   });
-  res.json(orders);
+  res.json(orders.map(withSlaStatus));
 });
 
 /// Автоподбор исполнителей под тип заявки — сотрудники и бригады банка
@@ -105,7 +124,7 @@ workOrdersRouter.get("/:id", async (req, res) => {
     },
   });
   if (!order) return res.status(404).json({ error: "Заявка не найдена" });
-  res.json(order);
+  res.json(withSlaStatus(order));
 });
 
 const createSchema = z.object({
@@ -136,6 +155,7 @@ workOrdersRouter.post("/", async (req, res) => {
       requestType: parsed.data.requestType,
       createdById: req.auth!.userId,
       organizationId,
+      publicTrackingToken: randomBytes(12).toString("hex"),
       events: {
         create: { type: "created", message: "Заявка создана", userId: req.auth!.userId },
       },
@@ -169,6 +189,58 @@ workOrdersRouter.patch("/:id/status", async (req, res) => {
     },
   });
   res.json(order);
+});
+
+const qrConfirmSchema = z.object({ scannedSiteId: z.string().min(1) });
+
+/// Подтверждение прибытия сканированием QR-кода на объекте — QR кодирует
+/// site.id, сверяем с объектом заявки и переводим статус в ARRIVED.
+workOrdersRouter.post("/:id/confirm-arrival-qr", async (req, res) => {
+  const parsed = qrConfirmSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const existing = await prisma.workOrder.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
+  });
+  if (!existing) return res.status(404).json({ error: "Заявка не найдена" });
+  if (!existing.siteId || existing.siteId !== parsed.data.scannedSiteId) {
+    return res.status(400).json({ error: "QR-код не совпадает с объектом этой заявки" });
+  }
+
+  const order = await prisma.workOrder.update({
+    where: { id: req.params.id },
+    data: {
+      status: TERMINAL_STATUSES.has(existing.status) ? existing.status : "ARRIVED",
+      events: {
+        create: {
+          type: "qr_arrival",
+          message: "Прибытие подтверждено сканированием QR-кода объекта",
+          userId: req.auth!.userId,
+        },
+      },
+    },
+  });
+  res.json(order);
+});
+
+/// PDF-акт по заявке: карточка + чек-листы + история — для банковской отчётности.
+workOrdersRouter.get("/:id/report.pdf", async (req, res) => {
+  const order = await prisma.workOrder.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
+    include: {
+      client: true,
+      site: true,
+      assignedTo: { select: { id: true, name: true } },
+      team: { select: { id: true, name: true } },
+      events: { orderBy: { createdAt: "asc" }, include: { user: { select: { name: true } } } },
+      checklistSubmissions: { include: { template: true, submittedBy: { select: { name: true } } } },
+    },
+  });
+  if (!order) return res.status(404).json({ error: "Заявка не найдена" });
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `inline; filename="${order.number}.pdf"`);
+  generateWorkOrderReportPdf(order).pipe(res);
 });
 
 const assignSchema = z.object({ assignedToId: z.string().optional(), teamId: z.string().optional() });

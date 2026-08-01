@@ -58,6 +58,7 @@ const equipmentSchema = z.object({
   warrantyUntil: dateOrNull,
   lastServiceAt: dateOrNull,
   nextServiceAt: dateOrNull,
+  maintenanceIntervalDays: z.number().int().positive().optional(),
   notes: z.string().optional(),
 });
 

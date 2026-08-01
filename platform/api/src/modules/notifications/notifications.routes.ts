@@ -1,8 +1,10 @@
 import { randomBytes } from "node:crypto";
 import { Router } from "express";
+import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { getBotInfo, isTelegramConfigured } from "../../lib/telegram.js";
+import { isWebPushConfigured } from "../../lib/webpush.js";
 
 export const notificationsRouter = Router();
 notificationsRouter.use(authenticate);
@@ -58,5 +60,37 @@ notificationsRouter.post("/telegram/link-code", async (req, res) => {
 
 notificationsRouter.post("/telegram/unlink", async (req, res) => {
   await prisma.user.update({ where: { id: req.auth!.userId }, data: { telegramChatId: null } });
+  res.json({ ok: true });
+});
+
+notificationsRouter.get("/push/status", async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.auth!.userId },
+    select: { pushSubscription: true },
+  });
+  res.json({
+    configured: isWebPushConfigured,
+    publicKey: process.env.VAPID_PUBLIC_KEY ?? null,
+    subscribed: Boolean(user?.pushSubscription),
+  });
+});
+
+const pushSubscribeSchema = z.object({
+  endpoint: z.string().url(),
+  keys: z.object({ p256dh: z.string(), auth: z.string() }),
+});
+
+notificationsRouter.post("/push/subscribe", async (req, res) => {
+  const parsed = pushSubscribeSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  await prisma.user.update({
+    where: { id: req.auth!.userId },
+    data: { pushSubscription: parsed.data },
+  });
+  res.json({ ok: true });
+});
+
+notificationsRouter.post("/push/unsubscribe", async (req, res) => {
+  await prisma.user.update({ where: { id: req.auth!.userId }, data: { pushSubscription: null as never } });
   res.json({ ok: true });
 });

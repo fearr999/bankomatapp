@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SlaBadge } from "@/components/ui/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api";
@@ -16,6 +17,7 @@ interface WorkOrder {
   title: string;
   status: string;
   requestType: string;
+  slaStatus: string | null;
   createdAt: string;
   client?: { name: string } | null;
   site?: { name: string; address: string | null } | null;
@@ -140,7 +142,10 @@ export default function WorkOrdersPage() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{o.assignedTo?.name ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <Badge status={o.status} />
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge status={o.status} />
+                      <SlaBadge status={o.slaStatus} />
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     {new Date(o.createdAt).toLocaleDateString("ru-RU")}

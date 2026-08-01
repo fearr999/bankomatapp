@@ -16,7 +16,9 @@ import { analyticsRouter } from "./modules/analytics/analytics.routes.js";
 import { aiRouter } from "./modules/ai/ai.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { organizationsRouter } from "./modules/organizations/organizations.routes.js";
+import { publicRouter } from "./modules/public/public.routes.js";
 import { startTelegramPolling, isTelegramConfigured } from "./lib/telegram.js";
+import { startBackgroundJobs } from "./lib/background-jobs.js";
 
 // Один необработанный отказ промиса в асинхронном роуте (например, сбой сети
 // при обращении к внешнему API вроде Telegram) не должен ронять весь сервер.
@@ -46,6 +48,7 @@ app.use("/analytics", analyticsRouter);
 app.use("/ai", aiRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/organizations", organizationsRouter);
+app.use("/public", publicRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {
@@ -56,4 +59,6 @@ app.listen(port, () => {
   } else {
     console.log("Telegram-бот: TELEGRAM_BOT_TOKEN не задан, уведомления в Telegram отключены");
   }
+  startBackgroundJobs();
+  console.log("Фоновые задачи запущены: эскалация SLA, плановое ТО (каждые 5 минут)");
 });

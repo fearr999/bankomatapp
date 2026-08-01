@@ -2,11 +2,14 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Camera, WifiOff } from "lucide-react";
-import { apiFetch, API_BASE } from "@/lib/api";
+import { ArrowLeft, Camera, WifiOff, QrCode, FileDown, Link2, MapPin } from "lucide-react";
+import { apiFetch, API_BASE, WEB_BASE, getToken } from "@/lib/api";
 import { STATUS_LABELS, StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { queuePhoto, listQueuedPhotos, flushOfflineQueue, type QueuedPhoto } from "@/lib/offline-queue";
+import { QrScannerModal } from "@/components/qr-scanner";
+import { SignaturePad } from "@/components/signature-pad";
+import { distanceMeters } from "@/lib/geo";
 
 interface OrderDetail {
   id: string;
@@ -14,11 +17,23 @@ interface OrderDetail {
   title: string;
   description: string | null;
   status: string;
+  slaStatus: string | null;
+  publicTrackingToken: string | null;
   client?: { name: string } | null;
-  site?: { name: string; address: string | null } | null;
+  site?: { id: string; name: string; address: string | null; lat: number | null; lng: number | null } | null;
   attachments: Array<{ id: string; url: string; createdAt: string }>;
   events: Array<{ id: string; type: string; message: string; createdAt: string; user?: { name: string } | null }>;
 }
+
+const SLA_LABELS: Record<string, string> = { overdue: "SLA просрочен", at_risk: "SLA горит", ok: "SLA в норме" };
+const SLA_STYLES: Record<string, string> = {
+  overdue: "bg-red-500/15 text-red-500",
+  at_risk: "bg-amber-500/15 text-amber-500",
+  ok: "bg-emerald-500/15 text-emerald-500",
+};
+
+const ARRIVAL_RADIUS_M = 150;
+const GEOFENCE_CHECK_MS = 20_000;
 
 interface ChecklistField {
   id: string;
@@ -171,6 +186,10 @@ function OrderDetailContent() {
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [queued, setQueued] = useState<QueuedPhoto[]>([]);
+  const [showScanner, setShowScanner] = useState(false);
+  const [qrMessage, setQrMessage] = useState<string | null>(null);
+  const [nearSite, setNearSite] = useState(false);
+  const [savingSignature, setSavingSignature] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const hasLoadedRef = useRef(false);
 
@@ -197,9 +216,79 @@ function OrderDetailContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
+  // Геозона-автоприбытие: пока заявка "в пути"/"назначена" и есть координаты
+  // объекта, периодически сверяем позицию сотрудника — рядом ли он.
+  useEffect(() => {
+    if (!order?.site?.lat || !order?.site?.lng) return;
+    if (!["ASSIGNED", "EN_ROUTE"].includes(order.status)) {
+      setNearSite(false);
+      return;
+    }
+    const siteCoords = { lat: order.site.lat, lng: order.site.lng };
+    function check() {
+      if (typeof navigator === "undefined" || !navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const d = distanceMeters({ lat: pos.coords.latitude, lng: pos.coords.longitude }, siteCoords);
+          setNearSite(d <= ARRIVAL_RADIUS_M);
+        },
+        () => {},
+        { timeout: 5000, maximumAge: 15_000 }
+      );
+    }
+    check();
+    const id = setInterval(check, GEOFENCE_CHECK_MS);
+    return () => clearInterval(id);
+  }, [order?.site?.lat, order?.site?.lng, order?.status]);
+
   async function changeStatus(status: string) {
     await apiFetch(`/work-orders/${orderId}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
     await load();
+  }
+
+  async function confirmArrivalQr(scannedSiteId: string) {
+    setShowScanner(false);
+    try {
+      await apiFetch(`/work-orders/${orderId}/confirm-arrival-qr`, {
+        method: "POST",
+        body: JSON.stringify({ scannedSiteId }),
+      });
+      setQrMessage("Прибытие подтверждено");
+      await load();
+    } catch (e) {
+      setQrMessage(e instanceof Error ? e.message : "QR-код не подошёл");
+    }
+    setTimeout(() => setQrMessage(null), 4000);
+  }
+
+  async function saveSignature(blob: Blob) {
+    setSavingSignature(true);
+    try {
+      const form = new FormData();
+      form.append("photo", blob, "signature.png");
+      form.append("kind", "signature");
+      await apiFetch(`/attachments/work-orders/${orderId}/photos`, { method: "POST", body: form });
+      await load();
+    } finally {
+      setSavingSignature(false);
+    }
+  }
+
+  async function downloadReport() {
+    const res = await fetch(`${API_BASE}/work-orders/${orderId}/report.pdf`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+  }
+
+  function copyTrackingLink() {
+    if (!order?.publicTrackingToken) return;
+    navigator.clipboard?.writeText(`${WEB_BASE}/track/${order.publicTrackingToken}`);
+    setQrMessage("Ссылка скопирована");
+    setTimeout(() => setQrMessage(null), 3000);
   }
 
   async function uploadPhoto(file: File) {
@@ -260,12 +349,47 @@ function OrderDetailContent() {
         </button>
       )}
 
+      {qrMessage && (
+        <div className="bg-blue-500/15 px-4 py-2 text-xs text-blue-500">{qrMessage}</div>
+      )}
+
+      {nearSite && (
+        <button
+          onClick={() => changeStatus("ARRIVED")}
+          className="flex items-center gap-2 bg-emerald-500/15 px-4 py-2 text-xs font-medium text-emerald-600"
+        >
+          <MapPin size={14} /> Вы рядом с объектом — отметить «Прибыл»?
+        </button>
+      )}
+
       <section className="flex flex-col gap-2 border-b border-border p-4 text-sm">
+        <div className="flex items-center gap-2">
+          {order.slaStatus && (
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${SLA_STYLES[order.slaStatus]}`}>
+              {SLA_LABELS[order.slaStatus]}
+            </span>
+          )}
+        </div>
         <p className="text-muted-foreground">{order.description || "Без описания"}</p>
         <p className="text-xs text-muted-foreground">Клиент: {order.client?.name ?? "—"}</p>
         <p className="text-xs text-muted-foreground">
           Адрес: {order.site?.address ?? order.site?.name ?? "—"}
         </p>
+        <div className="flex flex-wrap gap-2 pt-2">
+          {order.site && (
+            <Button variant="outline" onClick={() => setShowScanner(true)}>
+              <QrCode size={16} /> Сканировать QR прибытия
+            </Button>
+          )}
+          <Button variant="outline" onClick={downloadReport}>
+            <FileDown size={16} /> Скачать акт
+          </Button>
+          {order.publicTrackingToken && (
+            <Button variant="outline" onClick={copyTrackingLink}>
+              <Link2 size={16} /> Ссылка для клиента
+            </Button>
+          )}
+        </div>
       </section>
 
       <section className="flex flex-col gap-2 border-b border-border p-4">
@@ -324,6 +448,11 @@ function OrderDetailContent() {
 
       <ChecklistSection workOrderId={order.id} />
 
+      <section className="flex flex-col gap-3 border-b border-border p-4">
+        <h2 className="text-sm font-semibold">Подпись клиента</h2>
+        <SignaturePad onSave={saveSignature} busy={savingSignature} />
+      </section>
+
       <section className="flex flex-col gap-3 p-4">
         <h2 className="text-sm font-semibold">История</h2>
         {order.events.map((e) => (
@@ -338,6 +467,10 @@ function OrderDetailContent() {
           </div>
         ))}
       </section>
+
+      {showScanner && (
+        <QrScannerModal onDetect={confirmArrivalQr} onClose={() => setShowScanner(false)} />
+      )}
     </div>
   );
 }

@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { LogOut, MapPin, Moon, RefreshCw, Send, Sun, WifiOff } from "lucide-react";
+import { Bell, LogOut, MapPin, Moon, RefreshCw, Send, Sun, WifiOff } from "lucide-react";
 import { apiFetch, API_BASE, getCurrentUser, logout } from "@/lib/api";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { flushOfflineQueue, listQueuedPhotos } from "@/lib/offline-queue";
+import { getPushStatus, subscribeToPush, unsubscribeFromPush, type PushStatus } from "@/lib/push";
 import { Button } from "@/components/ui/button";
 import { APP_VERSION } from "@/lib/version";
 
@@ -64,6 +65,60 @@ function DiagnosticsSection({
           {geoError && <p className="text-red-500">Ошибка GPS: {geoError}</p>}
         </div>
       )}
+    </div>
+  );
+}
+
+function PushSection() {
+  const [status, setStatus] = useState<PushStatus | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    try {
+      setStatus(await getPushStatus());
+    } catch {
+      // офлайн — просто не показываем блок
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function toggle() {
+    if (!status?.publicKey) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (status.subscribed) {
+        await unsubscribeFromPush();
+      } else {
+        await subscribeToPush(status.publicKey);
+      }
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось изменить подписку");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!status || !status.configured) return null;
+
+  return (
+    <div className="rounded-lg border border-border p-4 text-sm">
+      <div className="flex items-center gap-2 font-medium">
+        <Bell size={16} />
+        Push-уведомления
+      </div>
+      <p className="mt-1 text-muted-foreground">
+        {status.subscribed ? "Включены на этом устройстве" : "Получайте уведомления о заявках даже когда приложение закрыто"}
+      </p>
+      <Button variant="outline" className="mt-2 w-full" onClick={toggle} disabled={busy}>
+        {busy ? "Секунду..." : status.subscribed ? "Отключить" : "Включить"}
+      </Button>
+      {error && <p className="mt-1 text-red-500">{error}</p>}
     </div>
   );
 }
@@ -203,6 +258,7 @@ export default function ProfilePage() {
         )}
       </div>
 
+      <PushSection />
       <TelegramSection />
 
       {mounted && (
