@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -46,7 +46,8 @@ export default function PublicTrackPage() {
       )}
 
       {!error && !data && (
-        <div className="rounded-lg border bg-card p-6 text-center text-sm text-muted-foreground">
+        <div className="flex animate-fade-in items-center justify-center gap-2 rounded-lg border bg-card p-6 text-center text-sm text-muted-foreground">
+          <Loader2 size={15} className="animate-spin" />
           Загрузка...
         </div>
       )}

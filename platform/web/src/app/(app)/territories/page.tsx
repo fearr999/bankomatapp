@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
+import { PageLoader } from "@/components/ui/spinner";
 import { teamColor } from "@/lib/team-colors";
 import type { TerritorySite } from "@/components/territories/territory-map-view";
 
@@ -240,7 +241,7 @@ export default function TerritoriesPage() {
           </CardHeader>
           <CardContent className="h-[calc(100%-4.5rem)] overflow-y-auto p-0">
             {loading ? (
-              <p className="p-5 text-sm text-muted-foreground">Загрузка...</p>
+              <PageLoader />
             ) : (
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-card">

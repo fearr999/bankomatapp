@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { ClipboardList, CheckCircle2, Clock, Star } from "lucide-react";
@@ -45,7 +46,7 @@ export default function EmployeeDetailPage() {
   }, [params.id]);
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!employee) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!employee) return <PageLoader />;
 
   return (
     <div className="flex flex-col gap-6">

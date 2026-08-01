@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Navigation } from "lucide-react";
+import { Navigation, Loader2 } from "lucide-react";
 import { apiFetch, getCurrentUser } from "@/lib/api";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 const MyRouteMap = dynamic(() => import("@/components/map-view").then((m) => m.MyRouteMap), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+    <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
+      <Loader2 size={15} className="animate-spin" />
       Загрузка карты...
     </div>
   ),

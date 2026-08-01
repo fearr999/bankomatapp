@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Siren, DoorOpen, DoorClosed, Banknote, QrCode } from "lucide-react";
 import QRCode from "qrcode";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,7 +148,7 @@ export default function EquipmentDetailPage() {
   }
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!item) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!item) return <PageLoader />;
 
   const warrantyActive = item.warrantyUntil && new Date(item.warrantyUntil) > new Date();
   const isAtmLike = item.deviceType === "atm" || item.deviceType === "cardomat";

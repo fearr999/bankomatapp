@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ClipboardList, Clock, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { STATUS_LABELS } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api";
@@ -28,7 +29,7 @@ export default function AnalyticsPage() {
   }, []);
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!summary) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!summary) return <PageLoader />;
 
   const maxDay = Math.max(1, ...summary.ordersOverTime.map((d) => d.count));
 

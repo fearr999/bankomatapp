@@ -6,6 +6,7 @@ import Link from "next/link";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Plus, Play, Check, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api";
@@ -345,7 +346,7 @@ export default function ProjectDetailPage() {
   }
 
   if (error && !project) return <p className="text-sm text-red-500">{error}</p>;
-  if (!project) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!project) return <PageLoader />;
 
   return (
     <div className="flex flex-col gap-4">

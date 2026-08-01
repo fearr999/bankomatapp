@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import { Trophy, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api";
 
@@ -69,7 +69,14 @@ function Leaderboard() {
                   {r.slaPercent != null ? `${r.slaPercent}%` : "—"}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {r.rating != null ? `★ ${r.rating.toFixed(1)}` : "—"}
+                  {r.rating != null ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Star size={13} className="fill-amber-400 text-amber-400" />
+                      {r.rating.toFixed(1)}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
                 </td>
               </tr>
             ))}

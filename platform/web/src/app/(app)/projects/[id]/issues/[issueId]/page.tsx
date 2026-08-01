@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Paperclip, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch, API_BASE } from "@/lib/api";
@@ -137,7 +138,7 @@ export default function IssueDetailPage() {
   }
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!issue) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!issue) return <PageLoader />;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">

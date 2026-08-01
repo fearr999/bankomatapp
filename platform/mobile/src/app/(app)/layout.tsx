@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getCurrentUser } from "@/lib/api";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { flushOfflineQueue } from "@/lib/offline-queue";
 import { BottomNav } from "@/components/bottom-nav";
+import { PageLoader } from "@/components/ui/spinner";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -29,11 +31,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("online", flush);
   }, [ready]);
 
-  if (!ready) return null;
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <PageLoader />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-16">
-      {children}
+      <div key={pathname} className="animate-slide-up">
+        {children}
+      </div>
       <BottomNav />
     </div>
   );

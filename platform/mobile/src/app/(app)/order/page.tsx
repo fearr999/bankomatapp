@@ -6,6 +6,7 @@ import { ArrowLeft, Camera, WifiOff, QrCode, FileDown, Link2, MapPin } from "luc
 import { apiFetch, API_BASE, WEB_BASE, getToken } from "@/lib/api";
 import { STATUS_LABELS, StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageLoader } from "@/components/ui/spinner";
 import { queuePhoto, listQueuedPhotos, flushOfflineQueue, type QueuedPhoto } from "@/lib/offline-queue";
 import { QrScannerModal } from "@/components/qr-scanner";
 import { SignaturePad } from "@/components/signature-pad";
@@ -325,7 +326,7 @@ function OrderDetailContent() {
   }
 
   if (error) return <p className="p-4 text-sm text-red-500">{error}</p>;
-  if (!order) return <p className="p-4 text-sm text-muted-foreground">Загрузка...</p>;
+  if (!order) return <PageLoader />;
 
   return (
     <div className="flex flex-col">
@@ -477,7 +478,7 @@ function OrderDetailContent() {
 
 export default function OrderDetailPage() {
   return (
-    <Suspense fallback={<p className="p-4 text-sm text-muted-foreground">Загрузка...</p>}>
+    <Suspense fallback={<PageLoader />}>
       <OrderDetailContent />
     </Suspense>
   );

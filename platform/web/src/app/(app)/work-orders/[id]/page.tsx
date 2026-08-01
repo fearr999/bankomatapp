@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { Camera, FileDown, Link2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { Badge, STATUS_LABELS } from "@/components/ui/badge";
 import { SlaBadge } from "@/components/ui/sla-badge";
 import { Button } from "@/components/ui/button";
@@ -273,7 +274,7 @@ export default function WorkOrderDetailPage() {
   }
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!order) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!order) return <PageLoader />;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">

@@ -83,7 +83,7 @@ export function BottomNav() {
           onClick={toggleShift}
           disabled={busy}
           className={cn(
-            "-mt-5 flex h-16 min-w-[92px] flex-col items-center justify-center gap-0.5 rounded-2xl px-3 text-center shadow-lg transition-colors",
+            "-mt-5 flex h-16 min-w-[92px] flex-col items-center justify-center gap-0.5 rounded-2xl px-3 text-center shadow-lg transition-all duration-150 ease-out active:scale-95",
             active ? "bg-accent text-white" : "bg-primary text-primary-foreground",
             busy && "opacity-70"
           )}
@@ -117,11 +117,11 @@ function NavLink({
     <Link
       href={item.href}
       className={cn(
-        "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs",
+        "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs transition-colors duration-150 active:scale-95",
         active ? "text-foreground" : "text-muted-foreground"
       )}
     >
-      <span className="relative">
+      <span className="relative transition-transform duration-150">
         <Icon size={20} strokeWidth={active ? 2.4 : 2} />
         {unread > 0 && <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent" />}
       </span>

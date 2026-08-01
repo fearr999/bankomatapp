@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bell, Check, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
 
@@ -70,7 +71,7 @@ function TelegramCard() {
       </CardHeader>
       <CardContent className="flex flex-col gap-3 text-sm">
         {!status ? (
-          <p className="text-muted-foreground">Загрузка...</p>
+          <PageLoader className="p-0" />
         ) : !status.configured ? (
           <p className="text-muted-foreground">
             Бот не настроен на сервере (нет <code>TELEGRAM_BOT_TOKEN</code> в <code>.env</code>).
@@ -163,7 +164,7 @@ export default function NotificationsPage() {
           <CardTitle>История</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          {loading && <p className="text-sm text-muted-foreground">Загрузка...</p>}
+          {loading && <PageLoader className="p-0" />}
           {!loading && notifications.length === 0 && (
             <p className="text-sm text-muted-foreground">Уведомлений пока нет</p>
           )}

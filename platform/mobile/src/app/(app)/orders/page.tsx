@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogOut, MapPin, Navigation } from "lucide-react";
 import { apiFetch, getCurrentUser, logout } from "@/lib/api";
 import { StatusBadge } from "@/components/ui/badge";
+import { PageLoader } from "@/components/ui/spinner";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { useRouter } from "next/navigation";
 
@@ -143,7 +144,7 @@ export default function OrdersPage() {
       </div>
 
       <div className="flex flex-col gap-2 p-4">
-        {loading && <p className="text-sm text-muted-foreground">Загрузка...</p>}
+        {loading && <PageLoader className="p-0" />}
         {!loading && filtered.length === 0 && (
           <p className="text-sm text-muted-foreground">Заявок нет</p>
         )}

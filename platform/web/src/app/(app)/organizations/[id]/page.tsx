@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api";
@@ -92,7 +94,7 @@ export default function OrganizationDetailPage() {
   }
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!org) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!org) return <PageLoader />;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -182,8 +184,15 @@ export default function OrganizationDetailPage() {
             {org.staff.map((s) => (
               <div key={s.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
                 <span>{s.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {s.rating != null ? `★ ${s.rating.toFixed(1)}` : "—"}
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  {s.rating != null ? (
+                    <>
+                      <Star size={12} className="fill-amber-400 text-amber-400" />
+                      {s.rating.toFixed(1)}
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </span>
               </div>
             ))}
@@ -208,8 +217,16 @@ export default function OrganizationDetailPage() {
           <span className="text-muted-foreground">
             SLA: {org.stats.slaPercent != null ? `${org.stats.slaPercent}%` : "—"}
           </span>
-          <span className="text-muted-foreground">
-            Средний рейтинг: {org.stats.avgRating != null ? `★ ${org.stats.avgRating}` : "—"}
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
+            Средний рейтинг:
+            {org.stats.avgRating != null ? (
+              <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                <Star size={13} className="fill-amber-400 text-amber-400" />
+                {org.stats.avgRating}
+              </span>
+            ) : (
+              "—"
+            )}
           </span>
         </CardContent>
       </Card>

@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { getCurrentUser, isContractor } from "@/lib/api";
 import { NAV_ITEMS } from "@/components/layout/nav-items";
+import { PageLoader } from "@/components/ui/spinner";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -30,14 +31,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, [router, pathname]);
 
-  if (!ready) return null;
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <PageLoader />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
       <Sidebar />
       <div className="flex flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div key={pathname} className="animate-slide-up">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

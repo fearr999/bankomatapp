@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 
 interface CycleDetailApi {
@@ -46,7 +47,7 @@ export default function CleaningCycleDetailPage() {
   }, [params.id]);
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!cycle) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!cycle) return <PageLoader />;
 
   const pct = cycle.progress.total > 0 ? Math.round((cycle.progress.done / cycle.progress.total) * 100) : 0;
 
