@@ -13,6 +13,10 @@
 - **API**: Node.js + TypeScript + Express + Prisma + PostgreSQL, JWT-авторизация с ролями.
 - **Web**: Next.js (App Router) + TypeScript + Tailwind, тёмная/светлая тема, компоненты в духе shadcn/ui.
 - **Mobile**: Next.js PWA (устанавливается на телефон, работает офлайн) поверх того же API — для полевых сотрудников.
+- **Landing**: отдельное Next.js-приложение (`platform/landing`) — маркетинговая
+  страница на thecorpi.com, ссылки "Войти"/"Создать компанию" ведут на
+  app.thecorpi.com (сама панель — это `platform/web`). Деплоится отдельно от
+  приложения, к API/базе не обращается.
 
 ## Мультитенантность (разделение по компаниям)
 
