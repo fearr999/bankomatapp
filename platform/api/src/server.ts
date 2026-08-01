@@ -17,6 +17,9 @@ import { aiRouter } from "./modules/ai/ai.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { organizationsRouter } from "./modules/organizations/organizations.routes.js";
 import { publicRouter } from "./modules/public/public.routes.js";
+import { projectsRouter } from "./modules/projects/projects.routes.js";
+import { issuesRouter } from "./modules/projects/issues.routes.js";
+import { sprintsRouter } from "./modules/projects/sprints.routes.js";
 import { startTelegramPolling, isTelegramConfigured } from "./lib/telegram.js";
 import { startBackgroundJobs } from "./lib/background-jobs.js";
 
@@ -49,6 +52,9 @@ app.use("/ai", aiRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/organizations", organizationsRouter);
 app.use("/public", publicRouter);
+app.use("/projects", projectsRouter);
+app.use("/issues", issuesRouter);
+app.use("/sprints", sprintsRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {

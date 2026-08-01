@@ -87,18 +87,20 @@ model Organization {
   contractEndAt   DateTime?
   status          String    @default("active") // active | inactive
 
-  users                User[]
-  teams                Team[]
-  clients              Client[]
-  sites                Site[]
-  workOrders           WorkOrder[]
-  assignedWorkOrders   WorkOrder[]         @relation("AssignedOrganization")
-  equipment            Equipment[]
-  inventoryItems       InventoryItem[]
-  checklistTemplates   ChecklistTemplate[]
-  aiInsights           AiInsight[]
-  contractorUsers      User[]              @relation("ContractorOrgUsers")
-  contractorTeams      Team[]              @relation("ContractorOrgTeams")
+  users              User[]
+  teams              Team[]
+  clients            Client[]
+  sites              Site[]
+  workOrders         WorkOrder[]
+  assignedWorkOrders WorkOrder[]         @relation("AssignedOrganization")
+  equipment          Equipment[]
+  inventoryItems     InventoryItem[]
+  checklistTemplates ChecklistTemplate[]
+  aiInsights         AiInsight[]
+  contractorUsers    User[]              @relation("ContractorOrgUsers")
+  contractorTeams    Team[]              @relation("ContractorOrgTeams")
+  projects           Project[]
+  issues             Issue[]
 }
 
 enum WorkOrderStatus {
@@ -115,45 +117,50 @@ enum WorkOrderStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  phone        String?
-  role         Role     @default(WORKER)
-  specialization String?
-  status       String   @default("offline") // online | offline (позже: on_task и т.д.)
-  rating       Float?
-  lat              Float?
-  lng              Float?
-  locationUpdatedAt DateTime?
-  shiftStartedAt   DateTime? // рабочий день начат ("Начать рабочий день" в мобильном приложении)
-  teamId       String?
-  team         Team?    @relation(fields: [teamId], references: [id])
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  executorType ExecutorType @default(STAFF)
+  id                       String        @id @default(cuid())
+  email                    String        @unique
+  passwordHash             String
+  name                     String
+  phone                    String?
+  role                     Role          @default(WORKER)
+  specialization           String?
+  status                   String        @default("offline") // online | offline (позже: on_task и т.д.)
+  rating                   Float?
+  lat                      Float?
+  lng                      Float?
+  locationUpdatedAt        DateTime?
+  shiftStartedAt           DateTime? // рабочий день начат ("Начать рабочий день" в мобильном приложении)
+  teamId                   String?
+  team                     Team?         @relation(fields: [teamId], references: [id])
+  organizationId           String
+  organization             Organization  @relation(fields: [organizationId], references: [id])
+  executorType             ExecutorType  @default(STAFF)
   // Если не задано — пользователь на стороне банка (полная видимость тенанта).
   // Если задано — пользователь работает в конкретном подрядчике внутри
   // того же тенанта и видит только свои заявки/объекты/отчёты.
   contractorOrganizationId String?
   contractorOrganization   Organization? @relation("ContractorOrgUsers", fields: [contractorOrganizationId], references: [id])
-  createdAt    DateTime @default(now())
+  createdAt                DateTime      @default(now())
 
   telegramChatId   String? @unique // заполняется после привязки бота
   telegramLinkCode String? @unique // одноразовый код для команды /start в боте
   pushSubscription Json? // Web Push подписка браузера (endpoint + ключи), см. lib/webpush.ts
 
-  assignedOrders WorkOrder[]      @relation("AssignedTo")
-  createdOrders  WorkOrder[]      @relation("CreatedBy")
-  historyEvents  WorkOrderEvent[]
-  attachments    Attachment[]
+  assignedOrders       WorkOrder[]           @relation("AssignedTo")
+  createdOrders        WorkOrder[]           @relation("CreatedBy")
+  historyEvents        WorkOrderEvent[]
+  attachments          Attachment[]
   checklistSubmissions ChecklistSubmission[]
-  stockMovements StockMovement[]
-  interactions   Interaction[]
-  collections    CollectionRecord[]
-  accessLogs     DeviceAccessLog[]
-  notifications  Notification[]
+  stockMovements       StockMovement[]
+  interactions         Interaction[]
+  collections          CollectionRecord[]
+  accessLogs           DeviceAccessLog[]
+  notifications        Notification[]
+
+  assignedIssues   Issue[]           @relation("IssueAssignee")
+  reportedIssues   Issue[]           @relation("IssueReporter")
+  issueEvents      IssueEvent[]
+  issueAttachments IssueAttachment[]
 }
 
 /// Внутренний центр уведомлений — карточка на каждое отправленное
@@ -172,48 +179,48 @@ model Notification {
 }
 
 model Team {
-  id        String   @id @default(cuid())
-  name      String
-  leaderId  String?
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  id                       String        @id @default(cuid())
+  name                     String
+  leaderId                 String?
+  organizationId           String
+  organization             Organization  @relation(fields: [organizationId], references: [id])
   // Бригада конкретного подрядчика (см. User.contractorOrganizationId) —
   // null означает бригаду на стороне банка.
   contractorOrganizationId String?
   contractorOrganization   Organization? @relation("ContractorOrgTeams", fields: [contractorOrganizationId], references: [id])
-  createdAt DateTime @default(now())
+  createdAt                DateTime      @default(now())
 
   members    User[]
   workOrders WorkOrder[]
 }
 
 model Client {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String?
-  email     String?
+  id             String       @id @default(cuid())
+  name           String
+  phone          String?
+  email          String?
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt DateTime @default(now())
+  createdAt      DateTime     @default(now())
 
-  sites      Site[]
-  workOrders WorkOrder[]
-  contracts  Contract[]
+  sites        Site[]
+  workOrders   WorkOrder[]
+  contracts    Contract[]
   interactions Interaction[]
 }
 
 /// Объект обслуживания (адрес/точка) — магазин, банкомат, стройплощадка и т.д.
 model Site {
-  id        String   @id @default(cuid())
-  name      String
-  address   String?
-  lat       Float?
-  lng       Float?
-  clientId  String?
-  client    Client?  @relation(fields: [clientId], references: [id])
+  id             String       @id @default(cuid())
+  name           String
+  address        String?
+  lat            Float?
+  lng            Float?
+  clientId       String?
+  client         Client?      @relation(fields: [clientId], references: [id])
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt DateTime @default(now())
+  createdAt      DateTime     @default(now())
 
   workOrders WorkOrder[]
   equipment  Equipment[]
@@ -235,34 +242,34 @@ model WorkOrder {
   site     Site?   @relation(fields: [siteId], references: [id])
 
   assignedToId String?
-  assignedTo   User?   @relation("AssignedTo", fields: [assignedToId], references: [id])
+  assignedTo   User?      @relation("AssignedTo", fields: [assignedToId], references: [id])
   teamId       String?
-  team         Team?   @relation(fields: [teamId], references: [id])
+  team         Team?      @relation(fields: [teamId], references: [id])
   equipmentId  String?
   equipment    Equipment? @relation(fields: [equipmentId], references: [id])
 
-  createdById String
-  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdById            String
+  createdBy              User          @relation("CreatedBy", fields: [createdById], references: [id])
+  organizationId         String
+  organization           Organization  @relation(fields: [organizationId], references: [id])
   // Зеркалит contractorOrganizationId исполнителя (assignedTo/team) на момент
   // назначения — быстрый фильтр "заявки моего подрядчика" без join'ов.
   assignedOrganizationId String?
   assignedOrganization   Organization? @relation("AssignedOrganization", fields: [assignedOrganizationId], references: [id])
 
   // Публичная ссылка отслеживания статуса без логина (см. /public/track/:token)
-  publicTrackingToken String? @unique
+  publicTrackingToken String?   @unique
   // Метка, что по этой заявке уже отправлена эскалация просрочки SLA — чтобы
   // фоновая проверка не слала уведомление повторно на каждом цикле.
-  slaEscalatedAt DateTime?
+  slaEscalatedAt      DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  events      WorkOrderEvent[]
-  attachments Attachment[]
+  events               WorkOrderEvent[]
+  attachments          Attachment[]
   checklistSubmissions ChecklistSubmission[]
-  stockMovements StockMovement[]
+  stockMovements       StockMovement[]
 
   @@unique([organizationId, number])
 }
@@ -280,66 +287,66 @@ model WorkOrderEvent {
 }
 
 model Attachment {
-  id            String    @id @default(cuid())
-  workOrderId   String
-  workOrder     WorkOrder @relation(fields: [workOrderId], references: [id])
-  url           String
-  kind          String // photo | document | video
-  lat           Float?
-  lng           Float?
-  uploadedById  String?
-  uploadedBy    User?     @relation(fields: [uploadedById], references: [id])
-  createdAt     DateTime  @default(now())
+  id           String    @id @default(cuid())
+  workOrderId  String
+  workOrder    WorkOrder @relation(fields: [workOrderId], references: [id])
+  url          String
+  kind         String // photo | document | video
+  lat          Float?
+  lng          Float?
+  uploadedById String?
+  uploadedBy   User?     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime  @default(now())
 }
 
 /// Шаблон динамического чек-листа под тип работ (мерч, банкоматы,
 /// клининг, монтаж и т.д. — своя структура полей под каждый).
 model ChecklistTemplate {
-  id        String   @id @default(cuid())
-  name      String
-  fields    Json // [{id,label,type:'checkbox'|'text'|'number',required}]
+  id             String       @id @default(cuid())
+  name           String
+  fields         Json // [{id,label,type:'checkbox'|'text'|'number',required}]
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt DateTime @default(now())
+  createdAt      DateTime     @default(now())
 
   submissions ChecklistSubmission[]
 }
 
 model ChecklistSubmission {
-  id          String            @id @default(cuid())
-  workOrderId String
-  workOrder   WorkOrder         @relation(fields: [workOrderId], references: [id])
-  templateId  String
-  template    ChecklistTemplate @relation(fields: [templateId], references: [id])
-  answers     Json // {fieldId: значение}
-  score       Float?
+  id            String            @id @default(cuid())
+  workOrderId   String
+  workOrder     WorkOrder         @relation(fields: [workOrderId], references: [id])
+  templateId    String
+  template      ChecklistTemplate @relation(fields: [templateId], references: [id])
+  answers       Json // {fieldId: значение}
+  score         Float?
   submittedById String?
-  submittedBy   User?           @relation(fields: [submittedById], references: [id])
-  createdAt   DateTime          @default(now())
+  submittedBy   User?             @relation(fields: [submittedById], references: [id])
+  createdAt     DateTime          @default(now())
 }
 
 /// Оборудование, закреплённое за объектом (банкомат, картомат, станок и т.д.)
 model Equipment {
-  id             String    @id @default(cuid())
-  name           String
-  model          String?
-  serialNumber   String?
-  status         String    @default("operational") // operational | broken | maintenance
-  deviceType     String    @default("other") // atm | cardomat | other — для спецмодуля банкоматов
-  cassetteLevelPercent Float? // заполненность кассет, только для atm/cardomat
-  siteId         String?
-  site           Site?     @relation(fields: [siteId], references: [id])
-  warrantyUntil  DateTime?
-  lastServiceAt  DateTime?
-  nextServiceAt  DateTime?
+  id                      String       @id @default(cuid())
+  name                    String
+  model                   String?
+  serialNumber            String?
+  status                  String       @default("operational") // operational | broken | maintenance
+  deviceType              String       @default("other") // atm | cardomat | other — для спецмодуля банкоматов
+  cassetteLevelPercent    Float? // заполненность кассет, только для atm/cardomat
+  siteId                  String?
+  site                    Site?        @relation(fields: [siteId], references: [id])
+  warrantyUntil           DateTime?
+  lastServiceAt           DateTime?
+  nextServiceAt           DateTime?
   maintenanceIntervalDays Int? // если задано — nextServiceAt авто-сдвигается на этот интервал
-  lastCollectionAt DateTime? // последняя инкассация
-  notes          String?
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime  @default(now())
+  lastCollectionAt        DateTime? // последняя инкассация
+  notes                   String?
+  organizationId          String
+  organization            Organization @relation(fields: [organizationId], references: [id])
+  createdAt               DateTime     @default(now())
 
-  workOrders WorkOrder[]
+  workOrders  WorkOrder[]
   collections CollectionRecord[]
   accessLogs  DeviceAccessLog[]
 }
@@ -371,15 +378,15 @@ model DeviceAccessLog {
 /// Материалы / запчасти / расходники на складе. quantity — текущий остаток,
 /// пересчитывается при каждом движении (приход/выдача/возврат/списание).
 model InventoryItem {
-  id          String   @id @default(cuid())
-  name        String
-  sku         String?
-  unit        String   @default("шт")
-  quantity    Float    @default(0)
-  minQuantity Float?
+  id             String       @id @default(cuid())
+  name           String
+  sku            String?
+  unit           String       @default("шт")
+  quantity       Float        @default(0)
+  minQuantity    Float?
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt   DateTime @default(now())
+  createdAt      DateTime     @default(now())
 
   movements StockMovement[]
 }
@@ -427,13 +434,147 @@ model Interaction {
 /// /ai/analyze возвращает заглушку с этой же структурой, без реального
 /// подключения модели (нет ключа/провайдера).
 model AiInsight {
-  id         String   @id @default(cuid())
-  type       String // photo_analysis | anomaly | forecast | recommendation | search
-  targetType String? // workOrder | equipment | user | ...
-  targetId   String?
-  summary    String
-  payload    Json?
+  id             String       @id @default(cuid())
+  type           String // photo_analysis | anomaly | forecast | recommendation | search
+  targetType     String? // workOrder | equipment | user | ...
+  targetId       String?
+  summary        String
+  payload        Json?
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt  DateTime @default(now())
+  createdAt      DateTime     @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Модуль "Проекты" — отдельный Jira-подобный трекер задач для внутренней
+// работы команды (IT/разработка/администрирование), не связан с полевыми
+// заявками (WorkOrder). Виден только банку-тенанту (не подрядчикам).
+// ---------------------------------------------------------------------------
+
+enum IssueType {
+  EPIC
+  STORY
+  TASK
+  BUG
+  SUBTASK
+}
+
+enum IssueStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum IssuePriority {
+  LOWEST
+  LOW
+  MEDIUM
+  HIGH
+  HIGHEST
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+}
+
+model Project {
+  id             String       @id @default(cuid())
+  name           String
+  key            String // короткий префикс для номеров issue, напр. "COR" -> COR-1, COR-2
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  issues  Issue[]
+  sprints Sprint[]
+
+  @@unique([organizationId, key])
+}
+
+model Sprint {
+  id        String       @id @default(cuid())
+  projectId String
+  project   Project      @relation(fields: [projectId], references: [id])
+  name      String
+  goal      String?
+  status    SprintStatus @default(PLANNED)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime     @default(now())
+
+  issues Issue[]
+}
+
+/// Единая сущность под все типы задач (эпик/история/таск/баг/подзадача) —
+/// как в Jira: "подзадача" и "эпик" это тот же Issue со связями epicId/parentId,
+/// а не отдельные таблицы.
+model Issue {
+  id          String        @id @default(cuid())
+  number      Int // порядковый номер в рамках проекта -> "KEY-number"
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id])
+  type        IssueType     @default(TASK)
+  title       String
+  description String?
+  status      IssueStatus   @default(BACKLOG)
+  priority    IssuePriority @default(MEDIUM)
+  labels      String[]      @default([])
+  storyPoints Int?
+  dueDate     DateTime?
+
+  assigneeId String?
+  assignee   User?   @relation("IssueAssignee", fields: [assigneeId], references: [id])
+  reporterId String
+  reporter   User    @relation("IssueReporter", fields: [reporterId], references: [id])
+
+  // Эпик, к которому привязана история/таск/баг (сам эпик epicId не имеет)
+  epicId       String?
+  epic         Issue?  @relation("EpicChildren", fields: [epicId], references: [id])
+  epicChildren Issue[] @relation("EpicChildren")
+
+  // Родительская задача для подзадачи (SUBTASK)
+  parentId String?
+  parent   Issue?  @relation("Subtasks", fields: [parentId], references: [id])
+  subtasks Issue[] @relation("Subtasks")
+
+  sprintId String?
+  sprint   Sprint? @relation(fields: [sprintId], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events      IssueEvent[]
+  attachments IssueAttachment[]
+
+  @@unique([projectId, number])
+}
+
+/// История изменений + комментарии по issue (тот же паттерн, что WorkOrderEvent).
+model IssueEvent {
+  id        String   @id @default(cuid())
+  issueId   String
+  issue     Issue    @relation(fields: [issueId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  type      String // created | status_change | comment | assignment | attachment
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model IssueAttachment {
+  id           String   @id @default(cuid())
+  issueId      String
+  issue        Issue    @relation(fields: [issueId], references: [id])
+  url          String
+  uploadedById String?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
 }

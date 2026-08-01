@@ -16,6 +16,7 @@ import {
   Plug,
   Landmark,
   Sparkles,
+  Kanban,
 } from "lucide-react";
 
 export interface NavItem {
@@ -32,6 +33,7 @@ export interface NavItem {
 // модуль ещё не реализован (следующие этапы), но уже виден в архитектуре.
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, live: true },
+  { href: "/projects", label: "Проекты", icon: Kanban, live: true },
   { href: "/work-orders", label: "Заявки", icon: ClipboardList, live: true, contractorVisible: true },
   { href: "/dispatch", label: "Диспетчерский центр", icon: Map, live: true },
   { href: "/employees", label: "Сотрудники", icon: Users, live: true },
