@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 
 type FieldType = "checkbox" | "text" | "number";
@@ -34,6 +35,7 @@ function emptyField(): Field {
 
 export default function ChecklistsPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -44,6 +46,8 @@ export default function ChecklistsPage() {
       setTemplates(await apiFetch<Template[]>("/checklists/templates"));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -134,7 +138,7 @@ export default function ChecklistsPage() {
                     <button
                       type="button"
                       onClick={() => setFields((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="text-muted-foreground hover:text-red-500"
+                      className="text-muted-foreground transition-colors hover:text-red-500"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -157,15 +161,16 @@ export default function ChecklistsPage() {
         </Card>
       )}
 
+      {loading && <PageLoader />}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {templates.map((t) => (
+        {!loading && templates.map((t) => (
           <Card key={t.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base text-foreground">{t.name}</CardTitle>
                 <button
                   onClick={() => removeTemplate(t.id)}
-                  className="text-muted-foreground hover:text-red-500"
+                  className="text-muted-foreground transition-colors hover:text-red-500"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -184,7 +189,7 @@ export default function ChecklistsPage() {
             </CardContent>
           </Card>
         ))}
-        {templates.length === 0 && (
+        {!loading && templates.length === 0 && (
           <p className="text-sm text-muted-foreground">Шаблонов пока нет — создайте первый.</p>
         )}
       </div>

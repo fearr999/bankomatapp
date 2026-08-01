@@ -11,7 +11,7 @@ export function PlaceholderModule({
   description: string;
 }) {
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full animate-fade-in flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
       <Card className="flex flex-1 items-center justify-center">
         <CardContent className="flex flex-col items-center gap-3 py-16 text-center">

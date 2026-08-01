@@ -172,7 +172,7 @@ export default function NotificationsPage() {
             <button
               key={n.id}
               onClick={() => !n.readAt && markRead(n.id)}
-              className={`flex flex-col gap-1 rounded-md border p-3 text-left text-sm ${
+              className={`flex flex-col gap-1 rounded-md border p-3 text-left text-sm transition-colors hover:bg-muted/40 ${
                 n.readAt ? "opacity-60" : ""
               }`}
             >

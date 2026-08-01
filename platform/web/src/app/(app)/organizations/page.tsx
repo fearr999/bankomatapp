@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 
 const ORG_TYPE_LABELS: Record<string, string> = {
@@ -37,6 +38,7 @@ interface OrgRow {
 
 export default function OrganizationsPage() {
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -49,6 +51,8 @@ export default function OrganizationsPage() {
       setOrgs(await apiFetch<OrgRow[]>("/organizations"));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -121,31 +125,35 @@ export default function OrganizationsPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {orgs.map((o) => (
-          <Link key={o.id} href={`/organizations/${o.id}`}>
-            <Card className="h-full transition-colors hover:border-primary">
-              <CardContent className="flex flex-col gap-1.5 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{o.name}</span>
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {ORG_TYPE_LABELS[o.type] ?? o.type}
+      {loading ? (
+        <PageLoader />
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {orgs.map((o) => (
+            <Link key={o.id} href={`/organizations/${o.id}`}>
+              <Card className="h-full transition-colors hover:border-primary">
+                <CardContent className="flex flex-col gap-1.5 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{o.name}</span>
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      {ORG_TYPE_LABELS[o.type] ?? o.type}
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{o.serviceRegion ?? "Регион не указан"}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {o.stats.staffCount} сотрудник(ов) · {o.stats.teamCount} бригад(ы)
                   </span>
-                </div>
-                <span className="text-xs text-muted-foreground">{o.serviceRegion ?? "Регион не указан"}</span>
-                <span className="text-xs text-muted-foreground">
-                  {o.stats.staffCount} сотрудник(ов) · {o.stats.teamCount} бригад(ы)
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {o.stats.activeOrders} активных заявок · SLA{" "}
-                  {o.stats.slaPercent != null ? `${o.stats.slaPercent}%` : "—"}
-                </span>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-        {orgs.length === 0 && <p className="text-sm text-muted-foreground">Подрядных организаций пока нет.</p>}
-      </div>
+                  <span className="text-xs text-muted-foreground">
+                    {o.stats.activeOrders} активных заявок · SLA{" "}
+                    {o.stats.slaPercent != null ? `${o.stats.slaPercent}%` : "—"}
+                  </span>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+          {orgs.length === 0 && <p className="text-sm text-muted-foreground">Подрядных организаций пока нет.</p>}
+        </div>
+      )}
     </div>
   );
 }

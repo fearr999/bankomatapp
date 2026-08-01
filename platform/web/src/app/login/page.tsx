@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,8 +32,11 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-sm animate-slide-up">
         <CardHeader>
+          <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
+            C
+          </div>
           <CardTitle className="text-lg text-foreground">Corpi</CardTitle>
           <p className="text-sm text-muted-foreground">Войдите, чтобы продолжить</p>
         </CardHeader>
@@ -52,14 +56,15 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <p className="animate-fade-in text-sm text-red-500">{error}</p>}
             <Button type="submit" disabled={busy}>
+              {busy && <Loader2 size={15} className="animate-spin" />}
               {busy ? "Входим..." : "Войти"}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Нет аккаунта?{" "}
-            <Link href="/register" className="text-foreground underline">
+            <Link href="/register" className="text-foreground underline underline-offset-2 transition-colors hover:text-primary">
               Создать компанию
             </Link>
           </p>

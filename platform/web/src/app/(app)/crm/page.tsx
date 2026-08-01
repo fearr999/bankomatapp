@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 
 interface ClientRow {
@@ -19,6 +20,7 @@ interface ClientRow {
 
 export default function CrmPage() {
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -30,6 +32,8 @@ export default function CrmPage() {
       setClients(await apiFetch<ClientRow[]>("/clients"));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -79,23 +83,27 @@ export default function CrmPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {clients.map((c) => (
-          <Link key={c.id} href={`/crm/${c.id}`}>
-            <Card className="h-full transition-colors hover:border-primary">
-              <CardContent className="flex flex-col gap-1.5 p-4">
-                <span className="font-medium">{c.name}</span>
-                <span className="text-xs text-muted-foreground">{c.phone ?? "—"}</span>
-                <span className="text-xs text-muted-foreground">{c.email ?? "—"}</span>
-                <span className="text-xs text-muted-foreground">
-                  {c.sitesCount} объект(ов) · {c.workOrdersCount} заявок
-                </span>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-        {clients.length === 0 && <p className="text-sm text-muted-foreground">Клиентов пока нет.</p>}
-      </div>
+      {loading ? (
+        <PageLoader />
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {clients.map((c) => (
+            <Link key={c.id} href={`/crm/${c.id}`}>
+              <Card className="h-full transition-colors hover:border-primary">
+                <CardContent className="flex flex-col gap-1.5 p-4">
+                  <span className="font-medium">{c.name}</span>
+                  <span className="text-xs text-muted-foreground">{c.phone ?? "—"}</span>
+                  <span className="text-xs text-muted-foreground">{c.email ?? "—"}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {c.sitesCount} объект(ов) · {c.workOrdersCount} заявок
+                  </span>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+          {clients.length === 0 && <p className="text-sm text-muted-foreground">Клиентов пока нет.</p>}
+        </div>
+      )}
     </div>
   );
 }

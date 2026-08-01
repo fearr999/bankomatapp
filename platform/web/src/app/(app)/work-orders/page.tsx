@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SlaBadge } from "@/components/ui/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 import { REQUEST_TYPE_LABELS, REQUEST_TYPES } from "@/lib/request-types";
 
@@ -26,6 +27,7 @@ interface WorkOrder {
 
 export default function WorkOrdersPage() {
   const [orders, setOrders] = useState<WorkOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
@@ -39,6 +41,8 @@ export default function WorkOrdersPage() {
       setOrders(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -112,8 +116,8 @@ export default function WorkOrdersPage() {
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       <Card>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
+        <CardContent className="overflow-x-auto p-0">
+          <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
                 <th className="px-4 py-3 font-medium">Номер</th>
@@ -126,7 +130,14 @@ export default function WorkOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((o) => (
+              {loading && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8">
+                    <PageLoader className="p-0" />
+                  </td>
+                </tr>
+              )}
+              {!loading && orders.map((o) => (
                 <tr key={o.id} className="border-b last:border-0 hover:bg-muted/40">
                   <td className="px-4 py-3">
                     <Link href={`/work-orders/${o.id}`} className="font-medium hover:underline">
@@ -152,7 +163,7 @@ export default function WorkOrdersPage() {
                   </td>
                 </tr>
               ))}
-              {orders.length === 0 && (
+              {!loading && orders.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                     Заявок пока нет

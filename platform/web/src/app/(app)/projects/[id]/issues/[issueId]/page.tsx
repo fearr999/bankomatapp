@@ -429,7 +429,11 @@ export default function IssueDetailPage() {
               {issue.labels.map((l) => (
                 <span key={l} className="flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs">
                   {l}
-                  <button onClick={() => removeLabel(l)} aria-label="Удалить метку">
+                  <button
+                    onClick={() => removeLabel(l)}
+                    aria-label="Удалить метку"
+                    className="transition-colors hover:text-red-500"
+                  >
                     <X size={10} />
                   </button>
                 </span>

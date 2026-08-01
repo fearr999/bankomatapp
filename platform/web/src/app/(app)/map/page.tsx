@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api";
 import type { MapEmployee, MapOrder, MapSite } from "@/components/dispatch/map-view";
@@ -9,7 +10,8 @@ import type { MapEmployee, MapOrder, MapSite } from "@/components/dispatch/map-v
 const MapView = dynamic(() => import("@/components/dispatch/map-view").then((m) => m.MapView), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+    <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
+      <Loader2 size={15} className="animate-spin" />
       Загрузка карты...
     </div>
   ),

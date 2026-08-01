@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, isContractor } from "@/lib/api";
+import { PageLoader } from "@/components/ui/spinner";
 
 export default function RootPage() {
   const router = useRouter();
@@ -14,5 +15,9 @@ export default function RootPage() {
       router.replace(isContractor(user) ? "/work-orders" : "/dashboard");
     }
   }, [router]);
-  return null;
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <PageLoader />
+    </div>
+  );
 }

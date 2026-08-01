@@ -360,8 +360,8 @@ export default function ProjectDetailPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`h-9 rounded-full px-4 text-sm ${
-                tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              className={`h-9 rounded-full px-4 text-sm transition-all duration-150 active:scale-95 ${
+                tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
               }`}
             >
               {t === "board" ? "Доска" : "Бэклог"}

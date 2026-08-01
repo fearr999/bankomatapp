@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Play, Square } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 
 interface TeamApi {
@@ -38,6 +39,7 @@ const STATUS_STYLES: Record<CycleApi["status"], string> = {
 export default function CleaningCyclesPage() {
   const [teams, setTeams] = useState<TeamApi[]>([]);
   const [cycles, setCycles] = useState<CycleApi[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyTeamId, setBusyTeamId] = useState<string | null>(null);
 
@@ -47,7 +49,8 @@ export default function CleaningCyclesPage() {
         setTeams(t);
         setCycles(c);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка загрузки"));
+      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка загрузки"))
+      .finally(() => setLoading(false));
   }
 
   useEffect(load, []);
@@ -96,9 +99,10 @@ export default function CleaningCyclesPage() {
         </p>
       </div>
       {error && <p className="text-sm text-red-500">{error}</p>}
+      {loading && <PageLoader />}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {teams.map((team) => {
+        {!loading && teams.map((team) => {
           const active = activeCycleFor(team.id);
           const last = lastCycleFor(team.id);
           const shown = active ?? last;
@@ -154,7 +158,7 @@ export default function CleaningCyclesPage() {
             </Card>
           );
         })}
-        {teams.length === 0 && <p className="text-sm text-muted-foreground">Бригад пока нет.</p>}
+        {!loading && teams.length === 0 && <p className="text-sm text-muted-foreground">Бригад пока нет.</p>}
       </div>
     </div>
   );

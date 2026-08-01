@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 
 const LocationPicker = dynamic(
@@ -14,7 +15,8 @@ const LocationPicker = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 size={15} className="animate-spin" />
         Загрузка карты...
       </div>
     ),
@@ -45,6 +47,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function EquipmentPage() {
   const [items, setItems] = useState<EquipmentRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -62,6 +65,8 @@ export default function EquipmentPage() {
       setItems(await apiFetch<EquipmentRow[]>("/equipment"));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -184,34 +189,38 @@ export default function EquipmentPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((it) => (
-          <Link key={it.id} href={`/equipment/${it.id}`}>
-            <Card className="h-full transition-colors hover:border-primary">
-              <CardContent className="flex flex-col gap-1.5 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{it.name}</span>
-                  <span className={`rounded px-2 py-0.5 text-xs ${STATUS_STYLES[it.status]}`}>
-                    {STATUS_LABELS[it.status] ?? it.status}
-                  </span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {it.model ?? "—"} {it.serialNumber ? `· S/N ${it.serialNumber}` : ""}
-                </span>
-                <span className="text-xs text-muted-foreground">{it.site?.name ?? "Без объекта"}</span>
-                {it.nextServiceAt && (
+      {loading ? (
+        <PageLoader />
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((it) => (
+            <Link key={it.id} href={`/equipment/${it.id}`}>
+              <Card className="h-full transition-colors hover:border-primary">
+                <CardContent className="flex flex-col gap-1.5 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{it.name}</span>
+                    <span className={`rounded px-2 py-0.5 text-xs ${STATUS_STYLES[it.status]}`}>
+                      {STATUS_LABELS[it.status] ?? it.status}
+                    </span>
+                  </div>
                   <span className="text-xs text-muted-foreground">
-                    Следующее ТО: {new Date(it.nextServiceAt).toLocaleDateString("ru-RU")}
+                    {it.model ?? "—"} {it.serialNumber ? `· S/N ${it.serialNumber}` : ""}
                   </span>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-        {items.length === 0 && (
-          <p className="text-sm text-muted-foreground">Оборудования пока нет.</p>
-        )}
-      </div>
+                  <span className="text-xs text-muted-foreground">{it.site?.name ?? "Без объекта"}</span>
+                  {it.nextServiceAt && (
+                    <span className="text-xs text-muted-foreground">
+                      Следующее ТО: {new Date(it.nextServiceAt).toLocaleDateString("ru-RU")}
+                    </span>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+          {items.length === 0 && (
+            <p className="text-sm text-muted-foreground">Оборудования пока нет.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

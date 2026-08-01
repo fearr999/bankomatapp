@@ -120,7 +120,7 @@ export default function OrdersPage() {
             logout();
             router.replace("/login");
           }}
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-all duration-150 active:scale-95"
           aria-label="Выйти"
         >
           <LogOut size={16} />
@@ -134,7 +134,7 @@ export default function OrdersPage() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`h-9 rounded-full px-4 text-sm ${
+            className={`h-9 rounded-full px-4 text-sm transition-all duration-150 active:scale-95 ${
               tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             }`}
           >

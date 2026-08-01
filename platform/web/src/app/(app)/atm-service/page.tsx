@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 
 interface DeviceRow {
@@ -37,12 +38,14 @@ function cassetteColor(pct: number) {
 
 export default function AtmServicePage() {
   const [devices, setDevices] = useState<DeviceRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     apiFetch<DeviceRow[]>("/equipment")
       .then((all) => setDevices(all.filter((d) => d.deviceType === "atm" || d.deviceType === "cardomat")))
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -56,8 +59,9 @@ export default function AtmServicePage() {
       </div>
       {error && <p className="text-sm text-red-500">{error}</p>}
 
+      {loading && <PageLoader />}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {devices.map((d) => (
+        {!loading && devices.map((d) => (
           <Link key={d.id} href={`/equipment/${d.id}`}>
             <Card className="h-full transition-colors hover:border-primary">
               <CardContent className="flex flex-col gap-2 p-4">
@@ -82,7 +86,7 @@ export default function AtmServicePage() {
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-muted">
                       <div
-                        className={`h-1.5 rounded-full ${cassetteColor(d.cassetteLevelPercent)}`}
+                        className={`h-1.5 rounded-full transition-all duration-500 ${cassetteColor(d.cassetteLevelPercent)}`}
                         style={{ width: `${d.cassetteLevelPercent}%` }}
                       />
                     </div>
@@ -97,7 +101,7 @@ export default function AtmServicePage() {
             </Card>
           </Link>
         ))}
-        {devices.length === 0 && (
+        {!loading && devices.length === 0 && (
           <p className="text-sm text-muted-foreground">Банкоматов/картоматов пока не заведено.</p>
         )}
       </div>

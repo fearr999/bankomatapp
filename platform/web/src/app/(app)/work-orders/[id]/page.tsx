@@ -351,7 +351,9 @@ export default function WorkOrderDetailPage() {
                     key={a.id}
                     src={`${API_BASE}${a.url}`}
                     alt=""
-                    className="aspect-square rounded-md border object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    className="aspect-square rounded-md border bg-muted object-cover"
                   />
                 ))}
               </div>

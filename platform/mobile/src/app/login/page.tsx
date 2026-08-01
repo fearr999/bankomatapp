@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wrench } from "lucide-react";
+import { Wrench, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { login } from "@/lib/api";
 
@@ -29,7 +29,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col justify-center gap-8 px-6">
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex animate-slide-up flex-col items-center gap-2">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <Wrench size={22} />
         </div>
@@ -37,14 +37,14 @@ export default function LoginPage() {
         <p className="text-sm text-muted-foreground">Вход для полевого сотрудника</p>
       </div>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+      <form onSubmit={onSubmit} className="flex animate-slide-up flex-col gap-3">
         <input
           type="email"
           required
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="h-12 rounded-md border border-border bg-transparent px-4 text-base"
+          className="h-12 rounded-md border border-border bg-transparent px-4 text-base outline-none transition-shadow duration-150 focus:ring-2 focus:ring-primary/40"
         />
         <input
           type="password"
@@ -52,10 +52,11 @@ export default function LoginPage() {
           placeholder="Пароль"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-12 rounded-md border border-border bg-transparent px-4 text-base"
+          className="h-12 rounded-md border border-border bg-transparent px-4 text-base outline-none transition-shadow duration-150 focus:ring-2 focus:ring-primary/40"
         />
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="animate-fade-in text-sm text-red-500">{error}</p>}
         <Button type="submit" disabled={busy} className="mt-2 w-full">
+          {busy && <Loader2 size={15} className="animate-spin" />}
           {busy ? "Входим..." : "Войти"}
         </Button>
       </form>

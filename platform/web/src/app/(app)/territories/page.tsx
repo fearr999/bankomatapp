@@ -188,13 +188,13 @@ export default function TerritoriesPage() {
         <div className="flex gap-2 rounded-md border p-1">
           <button
             onClick={() => setTab("list")}
-            className={`rounded px-3 py-1.5 text-sm ${tab === "list" ? "bg-primary text-primary-foreground" : ""}`}
+            className={`rounded px-3 py-1.5 text-sm transition-colors ${tab === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
           >
             Список
           </button>
           <button
             onClick={() => setTab("map")}
-            className={`rounded px-3 py-1.5 text-sm ${tab === "map" ? "bg-primary text-primary-foreground" : ""}`}
+            className={`rounded px-3 py-1.5 text-sm transition-colors ${tab === "map" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
           >
             Карта
           </button>
@@ -239,11 +239,11 @@ export default function TerritoriesPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="h-[calc(100%-4.5rem)] overflow-y-auto p-0">
+          <CardContent className="h-[calc(100%-4.5rem)] overflow-auto p-0">
             {loading ? (
               <PageLoader />
             ) : (
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[640px] text-sm">
                 <thead className="sticky top-0 bg-card">
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="w-10 p-3">

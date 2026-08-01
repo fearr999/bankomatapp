@@ -6,6 +6,7 @@ import { Plus, Kanban } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 
 interface ProjectRow {
@@ -18,6 +19,7 @@ interface ProjectRow {
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -30,6 +32,8 @@ export default function ProjectsPage() {
       setProjects(await apiFetch<ProjectRow[]>("/projects"));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -96,28 +100,32 @@ export default function ProjectsPage() {
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {projects.map((p) => (
-          <Link key={p.id} href={`/projects/${p.id}`}>
-            <Card className="h-full transition-colors hover:border-primary">
-              <CardContent className="flex flex-col gap-2 p-4">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <Kanban size={16} />
-                  </span>
-                  <div>
-                    <p className="font-medium leading-tight">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{p.key}</p>
+      {loading ? (
+        <PageLoader />
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((p) => (
+            <Link key={p.id} href={`/projects/${p.id}`}>
+              <Card className="h-full transition-colors hover:border-primary">
+                <CardContent className="flex flex-col gap-2 p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <Kanban size={16} />
+                    </span>
+                    <div>
+                      <p className="font-medium leading-tight">{p.name}</p>
+                      <p className="text-xs text-muted-foreground">{p.key}</p>
+                    </div>
                   </div>
-                </div>
-                {p.description && <p className="text-xs text-muted-foreground">{p.description}</p>}
-                <p className="text-xs text-muted-foreground">{p._count.issues} задач</p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-        {projects.length === 0 && <p className="text-sm text-muted-foreground">Проектов пока нет.</p>}
-      </div>
+                  {p.description && <p className="text-xs text-muted-foreground">{p.description}</p>}
+                  <p className="text-xs text-muted-foreground">{p._count.issues} задач</p>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+          {projects.length === 0 && <p className="text-sm text-muted-foreground">Проектов пока нет.</p>}
+        </div>
+      )}
     </div>
   );
 }

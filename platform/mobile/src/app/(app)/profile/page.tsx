@@ -253,7 +253,7 @@ export default function ProfilePage() {
         </p>
         {queuedCount > 0 && (
           <Button variant="outline" className="mt-2 w-full" onClick={syncNow} disabled={busy}>
-            <RefreshCw size={14} /> {busy ? "Отправляем..." : "Отправить сейчас"}
+            <RefreshCw size={14} className={busy ? "animate-spin" : ""} /> {busy ? "Отправляем..." : "Отправить сейчас"}
           </Button>
         )}
       </div>
@@ -266,7 +266,7 @@ export default function ProfilePage() {
           <span className="font-medium">Тема</span>
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-border"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-border transition-all duration-150 active:scale-95"
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>

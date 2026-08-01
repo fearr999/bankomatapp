@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Trophy, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 
 interface EmployeeRow {
@@ -46,8 +47,8 @@ function Leaderboard() {
 
   return (
     <Card>
-      <CardContent className="p-0">
-        <table className="w-full text-sm">
+      <CardContent className="overflow-x-auto p-0">
+        <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b text-left text-xs text-muted-foreground">
               <th className="px-4 py-3 font-medium">#</th>
@@ -96,13 +97,15 @@ function Leaderboard() {
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"list" | "leaderboard">("list");
 
   useEffect(() => {
     apiFetch<EmployeeRow[]>("/users")
       .then(setEmployees)
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -114,8 +117,8 @@ export default function EmployeesPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex h-9 items-center gap-1.5 rounded-full px-4 text-sm ${
-                tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              className={`flex h-9 items-center gap-1.5 rounded-full px-4 text-sm transition-all duration-150 active:scale-95 ${
+                tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
               }`}
             >
               {t === "leaderboard" && <Trophy size={14} />}
@@ -128,6 +131,8 @@ export default function EmployeesPage() {
 
       {tab === "leaderboard" ? (
         <Leaderboard />
+      ) : loading ? (
+        <PageLoader />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {employees.map((e) => (
