@@ -22,6 +22,28 @@ sitesRouter.get("/", async (req, res) => {
   res.json(sites);
 });
 
+const createSiteSchema = z.object({
+  name: z.string().min(1),
+  address: z.string().optional(),
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
+  clientId: z.string().optional(),
+});
+
+sitesRouter.post("/", blockContractor, async (req, res) => {
+  const parsed = createSiteSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const organizationId = req.auth!.organizationId;
+  if (parsed.data.clientId) {
+    const client = await prisma.client.findFirst({ where: { id: parsed.data.clientId, organizationId } });
+    if (!client) return res.status(400).json({ error: "Клиент не найден" });
+  }
+
+  const site = await prisma.site.create({ data: { ...parsed.data, organizationId } });
+  res.status(201).json(site);
+});
+
 // -----------------------------------------------------------------------
 // "Территории" — постоянная привязка объектов к бригадам, отдельно от
 // разового назначения заявок. Доступно только банку (не подрядчику).
