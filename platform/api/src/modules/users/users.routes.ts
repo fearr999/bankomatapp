@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate, requireRole } from "../../middleware/authenticate.js";
 import { hashPassword } from "../../lib/auth.js";
+import { passwordSchema } from "../../lib/password.js";
 
 export const usersRouter = Router();
 usersRouter.use(authenticate);
@@ -168,7 +169,7 @@ usersRouter.post("/me/shift", async (req, res) => {
 const createUserSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  password: z.string().min(6),
+  password: passwordSchema,
   role: z.enum(["ADMIN", "DISPATCHER", "MANAGER", "WORKER"]),
   phone: z.string().optional(),
   specialization: z.string().optional(),
@@ -219,5 +220,19 @@ usersRouter.patch("/:id/status", requireRole("ADMIN", "DISPATCHER", "MANAGER"), 
   });
   if (!existing) return res.status(404).json({ error: "Сотрудник не найден" });
   await prisma.user.update({ where: { id: req.params.id }, data: { status } });
+  res.json({ ok: true });
+});
+
+/// Отозвать все ранее выданные токены сотрудника (потерял устройство,
+/// увольнение и т.п.) — не трогая доступ остальных сотрудников организации.
+usersRouter.post("/:id/revoke-sessions", requireRole("ADMIN"), async (req, res) => {
+  const existing = await prisma.user.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
+  });
+  if (!existing) return res.status(404).json({ error: "Сотрудник не найден" });
+  await prisma.user.update({
+    where: { id: req.params.id },
+    data: { tokenVersion: { increment: 1 } },
+  });
   res.json({ ok: true });
 });

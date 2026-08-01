@@ -14,6 +14,7 @@ export interface JwtPayload {
   role: string;
   organizationId: string;
   contractorOrganizationId: string | null;
+  tokenVersion: number;
 }
 
 export function hashPassword(password: string) {

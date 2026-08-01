@@ -69,10 +69,10 @@ export default function RegisterPage() {
             />
             <Input
               type="password"
-              placeholder="Пароль (мин. 6 символов)"
+              placeholder="Пароль (мин. 8 символов, буквы и цифры)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
+              minLength={8}
               required
             />
             {error && <p className="animate-fade-in text-sm text-red-500">{error}</p>}

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { hashPassword, signToken, verifyPassword } from "../../lib/auth.js";
+import { passwordSchema } from "../../lib/password.js";
 
 export const authRouter = Router();
 
@@ -27,6 +28,7 @@ authRouter.post("/login", async (req, res) => {
     role: user.role,
     organizationId: user.organizationId,
     contractorOrganizationId: user.contractorOrganizationId,
+    tokenVersion: user.tokenVersion,
   });
   return res.json({
     token,
@@ -45,7 +47,7 @@ const registerSchema = z.object({
   organizationName: z.string().min(1),
   name: z.string().min(1),
   email: z.string().email(),
-  password: z.string().min(6),
+  password: passwordSchema,
 });
 
 /// Самостоятельная регистрация новой компании — создаёт Organization и
@@ -79,6 +81,7 @@ authRouter.post("/register", async (req, res) => {
     role: user.role,
     organizationId: organization.id,
     contractorOrganizationId: null,
+    tokenVersion: user.tokenVersion,
   });
   res.status(201).json({
     token,
