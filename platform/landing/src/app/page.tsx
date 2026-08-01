@@ -15,6 +15,7 @@ import {
   Sun,
   ArrowRight,
   Check,
+  Send,
 } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { Counter } from "@/components/counter";
@@ -114,13 +115,22 @@ export default function LandingPage() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg ring-1 ring-border/50" />
-            <span className="text-sm font-semibold tracking-tight">Corpi</span>
+            <span className="font-display text-sm font-semibold tracking-tight">Corpi</span>
           </div>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground sm:flex">
             <a href="#features" className="hover:text-foreground">Возможности</a>
             <a href="#audience" className="hover:text-foreground">Для кого</a>
           </nav>
           <div className="flex items-center gap-2">
+            <a
+              href="https://t.me/thecorpi"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Telegram-канал Corpi"
+              className="flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95"
+            >
+              <Send size={15} />
+            </a>
             <ThemeToggle />
             <a
               href={`${APP_URL}/login`}
@@ -146,7 +156,7 @@ export default function LandingPage() {
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
               Field Service Management нового поколения
             </span>
-            <h1 className="animate-slide-up text-4xl font-semibold tracking-tight sm:text-6xl">
+            <h1 className="font-display animate-slide-up text-4xl font-semibold tracking-tight sm:text-6xl">
               Всё выездное обслуживание —
               <br />
               <span className="text-muted-foreground">в одной системе</span>
@@ -179,7 +189,7 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 px-5 py-10 sm:grid-cols-4">
             {STATS.map((s, i) => (
               <Reveal key={s.label} delay={i * 80} className="text-center">
-                <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                <p className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
                   <Counter target={s.value} suffix={s.suffix} />
                 </p>
                 <p className="mt-1 text-xs leading-tight text-muted-foreground sm:text-sm">{s.label}</p>
@@ -190,7 +200,7 @@ export default function LandingPage() {
 
         <section id="features" className="mx-auto max-w-6xl px-5 py-20">
           <Reveal className="mb-12 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Что внутри</h2>
+            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Что внутри</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Модули, которые реально используются в поле, а не пылятся в демо
             </p>
@@ -213,7 +223,7 @@ export default function LandingPage() {
         <section id="audience" className="border-t bg-muted/20">
           <div className="mx-auto max-w-6xl px-5 py-20">
             <Reveal className="mb-12 text-center">
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Для кого</h2>
+              <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Для кого</h2>
             </Reveal>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {AUDIENCE.map((a, i) => (
@@ -238,7 +248,7 @@ export default function LandingPage() {
 
         <section className="hero-glow relative overflow-hidden">
           <Reveal className="relative mx-auto max-w-4xl px-5 py-24 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Готовы попробовать?</h2>
+            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Готовы попробовать?</h2>
             <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
               Создайте компанию за минуту — своя изолированная организация, без карты и без ожидания.
             </p>
@@ -255,6 +265,15 @@ export default function LandingPage() {
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 py-8 text-xs text-muted-foreground sm:flex-row">
           <span>© {new Date().getFullYear()} Corpi</span>
+          <a
+            href="https://t.me/thecorpi"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 hover:text-foreground"
+          >
+            <Send size={13} />
+            t.me/thecorpi
+          </a>
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="" className="h-5 w-5 rounded ring-1 ring-border/50" />
             <span>thecorpi.com</span>

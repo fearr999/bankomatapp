@@ -54,7 +54,7 @@ export function MobileNav() {
         <div className="flex h-14 items-center justify-between border-b px-5">
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="" className="h-6 w-6 rounded-md ring-1 ring-border/50" />
-            <span className="text-sm font-semibold tracking-tight">Corpi</span>
+            <span className="font-display text-sm font-semibold tracking-tight">Corpi</span>
           </div>
           <button
             aria-label="Закрыть меню"
