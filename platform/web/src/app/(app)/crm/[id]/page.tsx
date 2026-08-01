@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MapPin, ClipboardList, FileText } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 interface ClientDetail {
@@ -82,7 +85,7 @@ export default function ClientDetailPage() {
   }
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!client) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!client) return <PageLoader />;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -124,7 +127,7 @@ export default function ClientDetailPage() {
               </div>
             ))}
             {client.sites.length === 0 && (
-              <p className="text-sm text-muted-foreground">Объектов пока нет</p>
+              <EmptyState icon={MapPin} title="Объектов пока нет" size="sm" bordered={false} />
             )}
           </CardContent>
         </Card>
@@ -148,7 +151,7 @@ export default function ClientDetailPage() {
               </Link>
             ))}
             {client.workOrders.length === 0 && (
-              <p className="text-sm text-muted-foreground">Заявок пока нет</p>
+              <EmptyState icon={ClipboardList} title="Заявок пока нет" size="sm" bordered={false} />
             )}
           </CardContent>
         </Card>
@@ -210,7 +213,7 @@ export default function ClientDetailPage() {
             </div>
           ))}
           {client.contracts.length === 0 && (
-            <p className="text-sm text-muted-foreground">Договоров пока нет</p>
+            <EmptyState icon={FileText} title="Договоров пока нет" size="sm" bordered={false} />
           )}
           <form onSubmit={addContract} className="flex gap-2 pt-2">
             <Input

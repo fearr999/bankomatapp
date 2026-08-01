@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate, requireRole } from "../../middleware/authenticate.js";
 import { hashPassword } from "../../lib/auth.js";
+import { passwordSchema } from "../../lib/password.js";
 
 export const usersRouter = Router();
 usersRouter.use(authenticate);
@@ -16,8 +17,14 @@ const ACTIVE_STATUSES = [
   "WAITING_APPROVAL",
 ] as const;
 
-usersRouter.get("/", async (_req, res) => {
+/// Подрядчик видит только сотрудников своей организации — не банк и не других подрядчиков.
+function contractorScope(req: import("express").Request) {
+  return req.auth!.contractorOrganizationId ? { contractorOrganizationId: req.auth!.contractorOrganizationId } : {};
+}
+
+usersRouter.get("/", async (req, res) => {
   const users = await prisma.user.findMany({
+    where: { organizationId: req.auth!.organizationId, ...contractorScope(req) },
     select: {
       id: true,
       name: true,
@@ -31,6 +38,8 @@ usersRouter.get("/", async (_req, res) => {
       lng: true,
       locationUpdatedAt: true,
       teamId: true,
+      executorType: true,
+      contractorOrganizationId: true,
       team: { select: { id: true, name: true } },
       assignedOrders: {
         where: { status: { in: [...ACTIVE_STATUSES] } },
@@ -44,9 +53,47 @@ usersRouter.get("/", async (_req, res) => {
   res.json(users);
 });
 
+const DONE_STATUSES = ["COMPLETED", "CLOSED"];
+
+/// Рейтинг сотрудников/бригад: кол-во выполненных заявок, SLA%, средняя
+/// оценка. Регистрируем раньше "/:id", иначе "leaderboard" перехватится им.
+usersRouter.get("/leaderboard", async (req, res) => {
+  const users = await prisma.user.findMany({
+    where: { organizationId: req.auth!.organizationId, ...contractorScope(req) },
+    select: {
+      id: true,
+      name: true,
+      rating: true,
+      executorType: true,
+      team: { select: { id: true, name: true } },
+      assignedOrders: {
+        select: { status: true, slaDueAt: true, updatedAt: true },
+      },
+    },
+  });
+
+  const rows = users.map((u) => {
+    const completed = u.assignedOrders.filter((o) => DONE_STATUSES.includes(o.status));
+    const withSla = completed.filter((o) => o.slaDueAt);
+    const metSla = withSla.filter((o) => o.slaDueAt && o.updatedAt <= o.slaDueAt).length;
+    return {
+      id: u.id,
+      name: u.name,
+      rating: u.rating,
+      executorType: u.executorType,
+      team: u.team,
+      completedOrders: completed.length,
+      slaPercent: withSla.length ? Math.round((metSla / withSla.length) * 100) : null,
+    };
+  });
+
+  rows.sort((a, b) => (b.completedOrders !== a.completedOrders ? b.completedOrders - a.completedOrders : (b.rating ?? 0) - (a.rating ?? 0)));
+  res.json(rows);
+});
+
 usersRouter.get("/:id", async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.params.id },
+  const user = await prisma.user.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
     select: {
       id: true,
       name: true,
@@ -59,6 +106,8 @@ usersRouter.get("/:id", async (req, res) => {
       lat: true,
       lng: true,
       locationUpdatedAt: true,
+      shiftStartedAt: true,
+      executorType: true,
       createdAt: true,
       team: { select: { id: true, name: true } },
       assignedOrders: {
@@ -97,14 +146,38 @@ usersRouter.post("/me/location", async (req, res) => {
   res.json({ ok: true });
 });
 
+const shiftSchema = z.object({ action: z.enum(["start", "end"]) });
+
+/// Кнопка "Начать рабочий день" в мобильном приложении — начало/конец смены
+/// сотрудника. Подпись кнопки на клиенте зависит от executorType, сама же
+/// смена — это просто отметка времени + статус online/offline.
+usersRouter.post("/me/shift", async (req, res) => {
+  const parsed = shiftSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const user = await prisma.user.update({
+    where: { id: req.auth!.userId },
+    data:
+      parsed.data.action === "start"
+        ? { shiftStartedAt: new Date(), status: "online" }
+        : { shiftStartedAt: null, status: "offline" },
+    select: { shiftStartedAt: true, status: true },
+  });
+  res.json(user);
+});
+
 const createUserSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  password: z.string().min(6),
+  password: passwordSchema,
   role: z.enum(["ADMIN", "DISPATCHER", "MANAGER", "WORKER"]),
   phone: z.string().optional(),
   specialization: z.string().optional(),
   teamId: z.string().optional(),
+  executorType: z
+    .enum(["STAFF", "CONTRACTOR", "CLEANING", "CASH_COLLECTOR", "SERVICE_ENGINEER", "LOGISTICIAN", "SECURITY", "OTHER"])
+    .optional(),
+  contractorOrganizationId: z.string().optional(),
 });
 
 usersRouter.post("/", requireRole("ADMIN"), async (req, res) => {
@@ -112,18 +185,54 @@ usersRouter.post("/", requireRole("ADMIN"), async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const { password, ...rest } = parsed.data;
+  const { password, teamId, contractorOrganizationId, ...rest } = parsed.data;
+  if (teamId) {
+    const team = await prisma.team.findFirst({ where: { id: teamId, organizationId: req.auth!.organizationId } });
+    if (!team) return res.status(400).json({ error: "Бригада не найдена" });
+  }
+  if (contractorOrganizationId) {
+    const org = await prisma.organization.findFirst({
+      where: { id: contractorOrganizationId, parentOrganizationId: req.auth!.organizationId },
+    });
+    if (!org) return res.status(400).json({ error: "Организация-подрядчик не найдена" });
+  }
+  const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+  if (existing) return res.status(409).json({ error: "Email уже используется" });
   const user = await prisma.user.create({
-    data: { ...rest, passwordHash: await hashPassword(password) },
+    data: {
+      ...rest,
+      teamId,
+      contractorOrganizationId,
+      passwordHash: await hashPassword(password),
+      organizationId: req.auth!.organizationId,
+    },
   });
   res.status(201).json({ id: user.id });
 });
 
-usersRouter.patch("/:id/status", async (req, res) => {
+usersRouter.patch("/:id/status", requireRole("ADMIN", "DISPATCHER", "MANAGER"), async (req, res) => {
   const status = req.body?.status;
   if (typeof status !== "string") {
     return res.status(400).json({ error: "status обязателен" });
   }
+  const existing = await prisma.user.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
+  });
+  if (!existing) return res.status(404).json({ error: "Сотрудник не найден" });
   await prisma.user.update({ where: { id: req.params.id }, data: { status } });
+  res.json({ ok: true });
+});
+
+/// Отозвать все ранее выданные токены сотрудника (потерял устройство,
+/// увольнение и т.п.) — не трогая доступ остальных сотрудников организации.
+usersRouter.post("/:id/revoke-sessions", requireRole("ADMIN"), async (req, res) => {
+  const existing = await prisma.user.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId, ...contractorScope(req) },
+  });
+  if (!existing) return res.status(404).json({ error: "Сотрудник не найден" });
+  await prisma.user.update({
+    where: { id: req.params.id },
+    data: { tokenVersion: { increment: 1 } },
+  });
   res.json({ ok: true });
 });

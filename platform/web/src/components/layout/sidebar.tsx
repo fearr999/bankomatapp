@@ -3,18 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { isContractor } from "@/lib/api";
 import { NAV_ITEMS } from "./nav-items";
 
 export function Sidebar() {
   const pathname = usePathname();
+  // AppLayout defers rendering children until after its auth-check effect
+  // has run, so by the time Sidebar mounts localStorage is already settled —
+  // safe to read synchronously and avoid a full-nav flash for contractors.
+  const items = isContractor() ? NAV_ITEMS.filter((item) => item.contractorVisible) : NAV_ITEMS;
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r bg-card/40 md:flex">
       <div className="flex h-14 items-center border-b px-5">
-        <span className="text-sm font-semibold tracking-tight">FSM Platform</span>
+        <span className="text-sm font-semibold tracking-tight">Corpi</span>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = pathname?.startsWith(item.href);
           return (
             <Link

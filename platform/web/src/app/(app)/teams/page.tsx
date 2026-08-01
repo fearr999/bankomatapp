@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, UsersRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface Member {
@@ -34,6 +36,7 @@ interface UserRow {
 export default function TeamsPage() {
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -48,6 +51,8 @@ export default function TeamsPage() {
       setUsers(u);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -105,8 +110,12 @@ export default function TeamsPage() {
         </Card>
       )}
 
+      {loading && <PageLoader />}
+      {!loading && teams.length === 0 && (
+        <EmptyState icon={UsersRound} title="Бригад пока нет" description="Создайте первую кнопкой выше" />
+      )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {teams.map((t) => {
+        {!loading && teams.map((t) => {
           const availableUsers = users.filter((u) => u.teamId !== t.id);
           return (
             <Card key={t.id}>
@@ -140,7 +149,7 @@ export default function TeamsPage() {
                     </div>
                     <button
                       onClick={() => removeMember(t.id, m.id)}
-                      className="text-muted-foreground hover:text-red-500"
+                      className="text-muted-foreground transition-colors hover:text-red-500"
                       title="Убрать из бригады"
                     >
                       <X size={14} />
@@ -169,9 +178,6 @@ export default function TeamsPage() {
             </Card>
           );
         })}
-        {teams.length === 0 && (
-          <p className="text-sm text-muted-foreground">Бригад пока нет — создайте первую.</p>
-        )}
       </div>
     </div>
   );

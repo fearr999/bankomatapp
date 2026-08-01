@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, AlertTriangle, Warehouse as WarehouseIcon, History } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface Item {
@@ -35,6 +37,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function WarehousePage() {
   const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -48,6 +51,8 @@ export default function WarehousePage() {
       setItems(await apiFetch<Item[]>("/warehouse/items"));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -108,8 +113,12 @@ export default function WarehousePage() {
         </Card>
       )}
 
+      {loading && <PageLoader />}
+      {!loading && items.length === 0 && (
+        <EmptyState icon={WarehouseIcon} title="Товаров на складе пока нет" description="Добавьте первую позицию кнопкой выше" />
+      )}
       <div className="flex flex-col gap-2">
-        {items.map((it) => (
+        {!loading && items.map((it) => (
           <ItemRow
             key={it.id}
             item={it}
@@ -163,7 +172,7 @@ function ItemRow({
 
   return (
     <Card>
-      <button onClick={onToggle} className="flex w-full items-center justify-between p-4 text-left">
+      <button onClick={onToggle} className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted/30">
         <div className="flex items-center gap-2">
           <span className="font-medium">{item.name}</span>
           {item.sku && <span className="text-xs text-muted-foreground">({item.sku})</span>}
@@ -223,7 +232,7 @@ function ItemRow({
               </div>
             ))}
             {movements.length === 0 && (
-              <p className="text-xs text-muted-foreground">Движений пока нет</p>
+              <EmptyState icon={History} title="Движений пока нет" size="sm" bordered={false} />
             )}
           </div>
         </CardContent>

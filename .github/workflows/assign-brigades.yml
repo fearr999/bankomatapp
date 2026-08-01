@@ -1,0 +1,29 @@
+name: Assign brigades (Tashkent)
+
+# Одноразовая задача: разносит устройства (банкоматы/картоматы) по бригадам
+# А/B/C на основе scripts/data/brigades-tashkent.json — присваивает Site.teamId
+# через прямое подключение к боевой Postgres (секрет RAILWAY_DATABASE_URL).
+# Запускается только вручную.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pg
+        run: npm install pg
+
+      - name: Assign brigades
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+        run: node scripts/assign-brigades.mjs

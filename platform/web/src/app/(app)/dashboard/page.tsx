@@ -9,9 +9,12 @@ import {
   WifiOff,
   AlertTriangle,
   PlusCircle,
+  History,
 } from "lucide-react";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface Summary {
@@ -55,14 +58,14 @@ export default function DashboardPage() {
       <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        <KpiCard label="Новые заявки" value={summary?.newCount ?? "—"} icon={PlusCircle} />
-        <KpiCard label="Активные" value={summary?.active ?? "—"} icon={ClipboardList} />
-        <KpiCard label="В работе" value={summary?.inProgress ?? "—"} icon={Clock} />
-        <KpiCard label="Завершено" value={summary?.completed ?? "—"} icon={CheckCircle2} tone="success" />
-        <KpiCard label="Сотрудники онлайн" value={summary?.onlineStaff ?? "—"} icon={Wifi} tone="success" />
-        <KpiCard label="Сотрудники офлайн" value={summary?.offlineStaff ?? "—"} icon={WifiOff} />
-        <KpiCard label="Просрочено (SLA)" value={summary?.overdue ?? "—"} icon={AlertTriangle} tone="danger" />
-        <KpiCard label="Отменено" value={summary?.cancelled ?? "—"} icon={ClipboardList} />
+        <KpiCard label="Новые заявки" value={summary?.newCount} icon={PlusCircle} />
+        <KpiCard label="Активные" value={summary?.active} icon={ClipboardList} />
+        <KpiCard label="В работе" value={summary?.inProgress} icon={Clock} />
+        <KpiCard label="Завершено" value={summary?.completed} icon={CheckCircle2} tone="success" />
+        <KpiCard label="Сотрудники онлайн" value={summary?.onlineStaff} icon={Wifi} tone="success" />
+        <KpiCard label="Сотрудники офлайн" value={summary?.offlineStaff} icon={WifiOff} />
+        <KpiCard label="Просрочено (SLA)" value={summary?.overdue} icon={AlertTriangle} tone="danger" />
+        <KpiCard label="Отменено" value={summary?.cancelled} icon={ClipboardList} />
       </div>
 
       <Card>
@@ -70,11 +73,15 @@ export default function DashboardPage() {
           <CardTitle>Последние события</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
+          {!summary && <PageLoader className="p-0" />}
           {summary?.recentEvents.length === 0 && (
-            <p className="text-sm text-muted-foreground">Пока нет событий.</p>
+            <EmptyState icon={History} title="Пока нет событий" size="sm" bordered={false} />
           )}
           {summary?.recentEvents.map((e) => (
-            <div key={e.id} className="flex items-start justify-between border-b pb-2 text-sm last:border-0">
+            <div
+              key={e.id}
+              className="flex items-start justify-between rounded-md border-b px-2 -mx-2 pb-2 text-sm transition-colors last:border-0 hover:bg-muted/30"
+            >
               <div>
                 <span className="font-medium">{e.workOrder.number}</span>{" "}
                 <span className="text-muted-foreground">{e.message}</span>

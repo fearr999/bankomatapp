@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/ui/kpi-card";
-import { ClipboardList, CheckCircle2, Clock, Star } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import { ClipboardList, CheckCircle2, Clock, Star, ShieldOff } from "lucide-react";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 
 interface EmployeeDetail {
   id: string;
@@ -37,6 +40,9 @@ export default function EmployeeDetailPage() {
   const params = useParams<{ id: string }>();
   const [employee, setEmployee] = useState<EmployeeDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState(false);
+  const [revoked, setRevoked] = useState(false);
+  const isAdmin = getCurrentUser()?.role === "ADMIN";
 
   useEffect(() => {
     apiFetch<EmployeeDetail>(`/users/${params.id}`)
@@ -44,8 +50,21 @@ export default function EmployeeDetailPage() {
       .catch((e) => setError(e.message));
   }, [params.id]);
 
+  async function revokeSessions() {
+    if (!employee) return;
+    setRevoking(true);
+    try {
+      await apiFetch(`/users/${employee.id}/revoke-sessions`, { method: "POST" });
+      setRevoked(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось отозвать доступ");
+    } finally {
+      setRevoking(false);
+    }
+  }
+
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!employee) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!employee) return <PageLoader />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -94,6 +113,20 @@ export default function EmployeeDetailPage() {
             В команде с: {new Date(employee.createdAt).toLocaleDateString("ru-RU")}
           </span>
         </CardContent>
+        {isAdmin && (
+          <CardContent className="flex items-center justify-between gap-3 border-t pt-4">
+            <div>
+              <p className="text-sm font-medium">Отозвать доступ</p>
+              <p className="text-xs text-muted-foreground">
+                Все текущие сессии сотрудника (веб и мобильное приложение) сразу перестанут работать —
+                потребуется войти заново.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" disabled={revoking || revoked} onClick={revokeSessions}>
+              <ShieldOff size={14} /> {revoked ? "Отозвано" : revoking ? "Отзываем..." : "Отозвать"}
+            </Button>
+          </CardContent>
+        )}
       </Card>
 
       <Card>
@@ -102,7 +135,7 @@ export default function EmployeeDetailPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {employee.orderHistory.length === 0 && (
-            <p className="text-sm text-muted-foreground">Пока нет назначенных заявок</p>
+            <EmptyState icon={ClipboardList} title="Пока нет назначенных заявок" size="sm" bordered={false} />
           )}
           {employee.orderHistory.map((o) => (
             <Link

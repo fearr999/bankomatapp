@@ -95,7 +95,7 @@ export default function AiPage() {
               ))}
             </select>
             <input
-              className="h-9 flex-1 min-w-[200px] rounded-md border bg-transparent px-3 text-sm"
+              className="h-9 min-w-[200px] flex-1 rounded-md border bg-transparent px-3 text-sm outline-none transition-shadow duration-150 placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/40"
               placeholder="Запрос (для интеллектуального поиска)..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}

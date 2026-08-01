@@ -2,18 +2,24 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SlaBadge } from "@/components/ui/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
+import { REQUEST_TYPE_LABELS, REQUEST_TYPES } from "@/lib/request-types";
 
 interface WorkOrder {
   id: string;
   number: string;
   title: string;
   status: string;
+  requestType: string;
+  slaStatus: string | null;
   createdAt: string;
   client?: { name: string } | null;
   site?: { name: string; address: string | null } | null;
@@ -22,10 +28,12 @@ interface WorkOrder {
 
 export default function WorkOrdersPage() {
   const [orders, setOrders] = useState<WorkOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [requestType, setRequestType] = useState("OTHER");
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -34,6 +42,8 @@ export default function WorkOrdersPage() {
       setOrders(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -47,10 +57,11 @@ export default function WorkOrdersPage() {
     try {
       await apiFetch("/work-orders", {
         method: "POST",
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({ title, description, requestType }),
       });
       setTitle("");
       setDescription("");
+      setRequestType("OTHER");
       setShowCreate(false);
       await load();
     } catch (e) {
@@ -81,6 +92,20 @@ export default function WorkOrdersPage() {
                 <label className="mb-1 block text-xs text-muted-foreground">Описание</label>
                 <Input value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Тип заявки</label>
+                <select
+                  className="h-9 rounded-md border bg-transparent px-2 text-sm"
+                  value={requestType}
+                  onChange={(e) => setRequestType(e.target.value)}
+                >
+                  {REQUEST_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {REQUEST_TYPE_LABELS[t]}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Button type="submit" disabled={busy}>
                 {busy ? "Создаём..." : "Создать"}
               </Button>
@@ -92,12 +117,13 @@ export default function WorkOrdersPage() {
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       <Card>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
+        <CardContent className="overflow-x-auto p-0">
+          <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
                 <th className="px-4 py-3 font-medium">Номер</th>
                 <th className="px-4 py-3 font-medium">Название</th>
+                <th className="px-4 py-3 font-medium">Тип</th>
                 <th className="px-4 py-3 font-medium">Клиент / Объект</th>
                 <th className="px-4 py-3 font-medium">Исполнитель</th>
                 <th className="px-4 py-3 font-medium">Статус</th>
@@ -105,7 +131,14 @@ export default function WorkOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((o) => (
+              {loading && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8">
+                    <PageLoader className="p-0" />
+                  </td>
+                </tr>
+              )}
+              {!loading && orders.map((o) => (
                 <tr key={o.id} className="border-b last:border-0 hover:bg-muted/40">
                   <td className="px-4 py-3">
                     <Link href={`/work-orders/${o.id}`} className="font-medium hover:underline">
@@ -113,22 +146,28 @@ export default function WorkOrdersPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3">{o.title}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {REQUEST_TYPE_LABELS[o.requestType] ?? o.requestType}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {o.client?.name ?? "—"} {o.site ? `/ ${o.site.name}` : ""}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{o.assignedTo?.name ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <Badge status={o.status} />
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge status={o.status} />
+                      <SlaBadge status={o.slaStatus} />
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     {new Date(o.createdAt).toLocaleDateString("ru-RU")}
                   </td>
                 </tr>
               ))}
-              {orders.length === 0 && (
+              {!loading && orders.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                    Заявок пока нет
+                  <td colSpan={7} className="px-4 py-6">
+                    <EmptyState icon={ClipboardList} title="Заявок пока нет" bordered={false} />
                   </td>
                 </tr>
               )}

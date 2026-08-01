@@ -1,6 +1,8 @@
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
 import { workOrdersRouter } from "./modules/workorders/workorders.routes.js";
@@ -14,13 +16,56 @@ import { warehouseRouter } from "./modules/warehouse/warehouse.routes.js";
 import { clientsRouter } from "./modules/clients/clients.routes.js";
 import { analyticsRouter } from "./modules/analytics/analytics.routes.js";
 import { aiRouter } from "./modules/ai/ai.routes.js";
+import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
+import { organizationsRouter } from "./modules/organizations/organizations.routes.js";
+import { publicRouter } from "./modules/public/public.routes.js";
+import { projectsRouter } from "./modules/projects/projects.routes.js";
+import { issuesRouter } from "./modules/projects/issues.routes.js";
+import { sprintsRouter } from "./modules/projects/sprints.routes.js";
+import { cleaningCyclesRouter } from "./modules/cleaning-cycles/cleaning-cycles.routes.js";
+import { startTelegramPolling, isTelegramConfigured } from "./lib/telegram.js";
+import { startBackgroundJobs } from "./lib/background-jobs.js";
+
+// Один необработанный отказ промиса в асинхронном роуте (например, сбой сети
+// при обращении к внешнему API вроде Telegram) не должен ронять весь сервер.
+process.on("unhandledRejection", (err) => {
+  console.error("Необработанная ошибка промиса:", err);
+});
+
+// CORS_ORIGINS — необязательный список разрешённых доменов через запятую
+// (например "https://app.corpi.example,https://admin.corpi.example"). Если
+// не задан — поведение как раньше (открыто для всех origin), чтобы ничего
+// не сломать до того, как в проде явно пропишут реальные домены фронтендов.
+const corsOrigins = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean);
 
 const app = express();
-app.use(cors());
+app.use(
+  helmet({
+    // Чистый JSON-API + раздача изображений, HTML не отдаём — CSP тут не
+    // применим и только мешает; остальные заголовки helmet (nosniff,
+    // X-Frame-Options и т.п.) оставляем как есть, это чистый выигрыш.
+    contentSecurityPolicy: false,
+    // Фото/подписи из /uploads встраиваются <img>-тегами с другого origin
+    // (веб- и мобильный фронтенд) — не блокируем кросс-origin встраивание.
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+app.use(cors(corsOrigins ? { origin: corsOrigins } : undefined));
 app.use(express.json({ limit: "10mb" }));
 app.use("/uploads", express.static(UPLOADS_DIR));
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// Брутфорс-защита на вход/регистрацию — не трогает остальной API.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Слишком много попыток. Попробуйте позже." },
+});
+app.use("/auth/login", authLimiter);
+app.use("/auth/register", authLimiter);
 
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
@@ -35,8 +80,23 @@ app.use("/warehouse", warehouseRouter);
 app.use("/clients", clientsRouter);
 app.use("/analytics", analyticsRouter);
 app.use("/ai", aiRouter);
+app.use("/notifications", notificationsRouter);
+app.use("/organizations", organizationsRouter);
+app.use("/public", publicRouter);
+app.use("/projects", projectsRouter);
+app.use("/issues", issuesRouter);
+app.use("/sprints", sprintsRouter);
+app.use("/cleaning-cycles", cleaningCyclesRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {
-  console.log(`FSM API запущен на http://localhost:${port}`);
+  console.log(`Corpi API запущен на http://localhost:${port}`);
+  if (isTelegramConfigured()) {
+    startTelegramPolling();
+    console.log("Telegram-бот: опрос обновлений запущен");
+  } else {
+    console.log("Telegram-бот: TELEGRAM_BOT_TOKEN не задан, уведомления в Telegram отключены");
+  }
+  startBackgroundJobs();
+  console.log("Фоновые задачи запущены: эскалация SLA, плановое ТО (каждые 5 минут)");
 });

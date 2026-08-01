@@ -1,14 +1,17 @@
 import { Router } from "express";
 import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../middleware/authenticate.js";
+import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 
 export const analyticsRouter = Router();
 analyticsRouter.use(authenticate);
+// Финансовая/операционная аналитика банка — подрядчикам недоступна (см. ТЗ).
+analyticsRouter.use(blockContractor);
 
 const DONE_STATUSES = ["COMPLETED", "CLOSED"];
 
-analyticsRouter.get("/summary", async (_req, res) => {
+analyticsRouter.get("/summary", async (req, res) => {
   const orders = await prisma.workOrder.findMany({
+    where: { organizationId: req.auth!.organizationId },
     select: {
       status: true,
       createdAt: true,

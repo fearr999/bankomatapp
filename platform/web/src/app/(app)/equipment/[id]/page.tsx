@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Siren, DoorOpen, DoorClosed, Banknote } from "lucide-react";
+import { Siren, DoorOpen, DoorClosed, Banknote, QrCode, History, ClipboardList } from "lucide-react";
+import QRCode from "qrcode";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,9 +24,10 @@ interface EquipmentDetail {
   warrantyUntil: string | null;
   lastServiceAt: string | null;
   nextServiceAt: string | null;
+  maintenanceIntervalDays: number | null;
   lastCollectionAt: string | null;
   notes: string | null;
-  site?: { name: string; address: string | null } | null;
+  site?: { id: string; name: string; address: string | null } | null;
   workOrders: Array<{
     id: string;
     number: string;
@@ -61,13 +65,41 @@ export default function EquipmentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [collectionAmount, setCollectionAmount] = useState("");
   const [busy, setBusy] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [nextServiceAt, setNextServiceAt] = useState("");
+  const [intervalDays, setIntervalDays] = useState("");
+  const [savingSchedule, setSavingSchedule] = useState(false);
 
   async function load() {
     try {
-      setItem(await apiFetch<EquipmentDetail>(`/equipment/${params.id}`));
+      const data = await apiFetch<EquipmentDetail>(`/equipment/${params.id}`);
+      setItem(data);
+      setNextServiceAt(data.nextServiceAt ? data.nextServiceAt.slice(0, 10) : "");
+      setIntervalDays(data.maintenanceIntervalDays ? String(data.maintenanceIntervalDays) : "");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
     }
+  }
+
+  async function saveSchedule(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingSchedule(true);
+    try {
+      await apiFetch(`/equipment/${params.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          nextServiceAt: nextServiceAt ? new Date(nextServiceAt).toISOString() : undefined,
+          maintenanceIntervalDays: intervalDays ? Number(intervalDays) : undefined,
+        }),
+      });
+      await load();
+    } finally {
+      setSavingSchedule(false);
+    }
+  }
+
+  async function showQr(siteId: string) {
+    setQrDataUrl(await QRCode.toDataURL(siteId, { width: 220, margin: 1 }));
   }
 
   useEffect(() => {
@@ -117,7 +149,7 @@ export default function EquipmentDetailPage() {
   }
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!item) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!item) return <PageLoader />;
 
   const warrantyActive = item.warrantyUntil && new Date(item.warrantyUntil) > new Date();
   const isAtmLike = item.deviceType === "atm" || item.deviceType === "cardomat";
@@ -157,6 +189,59 @@ export default function EquipmentDetailPage() {
             {item.nextServiceAt ? new Date(item.nextServiceAt).toLocaleDateString("ru-RU") : "—"}
           </span>
           {item.notes && <span className="col-span-2 text-muted-foreground">Заметки: {item.notes}</span>}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Плановое обслуживание и QR-код объекта</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <form onSubmit={saveSchedule} className="flex flex-wrap items-end gap-3">
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Следующее ТО</label>
+              <Input
+                type="date"
+                value={nextServiceAt}
+                onChange={(e) => setNextServiceAt(e.target.value)}
+                className="w-40"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Интервал ТО, дней</label>
+              <Input
+                type="number"
+                value={intervalDays}
+                onChange={(e) => setIntervalDays(e.target.value)}
+                className="w-32"
+                placeholder="например, 30"
+              />
+            </div>
+            <Button type="submit" disabled={savingSchedule}>
+              {savingSchedule ? "Сохраняем..." : "Сохранить график"}
+            </Button>
+          </form>
+          <p className="text-xs text-muted-foreground">
+            Если указаны оба поля — заявка на ТО будет создаваться автоматически, когда наступит дата,
+            и следующая дата сдвинется сама на этот интервал.
+          </p>
+
+          {item.site && (
+            <div className="flex items-center gap-4 border-t pt-4">
+              <Button variant="outline" onClick={() => showQr(item.site!.id)}>
+                <QrCode size={16} /> Показать QR объекта
+              </Button>
+              {qrDataUrl && (
+                <div className="flex flex-col items-center gap-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qrDataUrl} alt="QR объекта" className="rounded-md border" />
+                  <span className="text-xs text-muted-foreground">
+                    Наклейте на устройство — сотрудник сканирует при прибытии
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -240,7 +325,7 @@ export default function EquipmentDetailPage() {
                     </div>
                   ))}
                   {item.accessLogs.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Записей пока нет</p>
+                    <EmptyState icon={History} title="Записей пока нет" size="sm" bordered={false} />
                   )}
                 </div>
               </div>
@@ -255,7 +340,7 @@ export default function EquipmentDetailPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {item.workOrders.length === 0 && (
-            <p className="text-sm text-muted-foreground">Заявок по этому оборудованию пока нет</p>
+            <EmptyState icon={ClipboardList} title="Заявок по этому оборудованию пока нет" size="sm" bordered={false} />
           )}
           {item.workOrders.map((o) => (
             <Link

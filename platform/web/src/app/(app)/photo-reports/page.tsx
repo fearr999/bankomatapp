@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MapPin, User } from "lucide-react";
+import { MapPin, User, Camera } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch, API_BASE } from "@/lib/api";
 
 interface PhotoAttachment {
@@ -23,12 +25,14 @@ interface PhotoAttachment {
 
 export default function PhotoReportsPage() {
   const [photos, setPhotos] = useState<PhotoAttachment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     apiFetch<PhotoAttachment[]>("/attachments")
       .then(setPhotos)
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -36,11 +40,18 @@ export default function PhotoReportsPage() {
       <h1 className="text-2xl font-semibold tracking-tight">Фотоотчёты</h1>
       {error && <p className="text-sm text-red-500">{error}</p>}
 
+      {loading && <PageLoader />}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {photos.map((p) => (
+        {!loading && photos.map((p) => (
           <Card key={p.id} className="overflow-hidden p-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${API_BASE}${p.url}`} alt="" className="aspect-square w-full object-cover" />
+            <img
+              src={`${API_BASE}${p.url}`}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="aspect-square w-full bg-muted object-cover"
+            />
             <CardContent className="flex flex-col gap-1 p-3 text-xs">
               <Link href={`/work-orders/${p.workOrder.id}`} className="font-medium hover:underline">
                 {p.workOrder.number}
@@ -60,12 +71,10 @@ export default function PhotoReportsPage() {
             </CardContent>
           </Card>
         ))}
-        {photos.length === 0 && (
-          <p className="col-span-full text-sm text-muted-foreground">
-            Пока нет фотографий — добавьте на странице заявки.
-          </p>
-        )}
       </div>
+      {!loading && photos.length === 0 && (
+        <EmptyState icon={Camera} title="Пока нет фотографий" description="Добавьте на странице заявки" />
+      )}
     </div>
   );
 }

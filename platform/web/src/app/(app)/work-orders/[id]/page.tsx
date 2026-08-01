@@ -2,12 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Camera } from "lucide-react";
+import { Camera, FileDown, Link2, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge, STATUS_LABELS } from "@/components/ui/badge";
+import { SlaBadge } from "@/components/ui/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiFetch, API_BASE } from "@/lib/api";
+import { apiFetch, API_BASE, getToken } from "@/lib/api";
+import { REQUEST_TYPE_LABELS } from "@/lib/request-types";
 
 interface OrderDetail {
   id: string;
@@ -15,9 +19,13 @@ interface OrderDetail {
   title: string;
   description: string | null;
   status: string;
+  requestType: string;
+  slaStatus: string | null;
+  publicTrackingToken: string | null;
   client?: { name: string } | null;
   site?: { name: string; address: string | null; lat: number | null; lng: number | null } | null;
   assignedTo?: { name: string } | null;
+  team?: { name: string } | null;
   createdBy?: { name: string } | null;
   attachments: Array<{ id: string; url: string; createdAt: string }>;
   events: Array<{
@@ -126,9 +134,13 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
         ))}
 
         {templates.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Шаблонов пока нет — создайте в разделе «Чек-листы».
-          </p>
+          <EmptyState
+            icon={ListChecks}
+            title="Шаблонов пока нет"
+            description="Создайте в разделе «Чек-листы»"
+            size="sm"
+            bordered={false}
+          />
         ) : (
           <form onSubmit={submit} className="flex flex-col gap-3">
             <select
@@ -246,15 +258,46 @@ export default function WorkOrderDetailPage() {
     await load();
   }
 
+  async function downloadReport() {
+    const res = await fetch(`${API_BASE}/work-orders/${params.id}/report.pdf`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${order?.number ?? "report"}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function copyTrackingLink() {
+    if (!order?.publicTrackingToken) return;
+    const url = `${window.location.origin}/track/${order.publicTrackingToken}`;
+    navigator.clipboard.writeText(url);
+  }
+
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!order) return <p className="text-sm text-muted-foreground">Загрузка...</p>;
+  if (!order) return <PageLoader />;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-4 lg:col-span-2">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">{order.number}</h1>
           <Badge status={order.status} />
+          <SlaBadge status={order.slaStatus} />
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" onClick={downloadReport}>
+              <FileDown size={16} /> Скачать акт
+            </Button>
+            {order.publicTrackingToken && (
+              <Button variant="outline" onClick={copyTrackingLink}>
+                <Link2 size={16} /> Ссылка отслеживания
+              </Button>
+            )}
+          </div>
         </div>
 
         <Card>
@@ -267,7 +310,12 @@ export default function WorkOrderDetailPage() {
               <span className="text-muted-foreground">Клиент: {order.client?.name ?? "—"}</span>
               <span className="text-muted-foreground">Объект: {order.site?.name ?? "—"}</span>
               <span className="text-muted-foreground">Адрес: {order.site?.address ?? "—"}</span>
-              <span className="text-muted-foreground">Исполнитель: {order.assignedTo?.name ?? "—"}</span>
+              <span className="text-muted-foreground">
+                Тип заявки: {REQUEST_TYPE_LABELS[order.requestType] ?? order.requestType}
+              </span>
+              <span className="text-muted-foreground">
+                Исполнитель: {order.assignedTo?.name ?? order.team?.name ?? "—"}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -299,7 +347,7 @@ export default function WorkOrderDetailPage() {
           </CardHeader>
           <CardContent>
             {order.attachments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Фотографий пока нет</p>
+              <EmptyState icon={Camera} title="Фотографий пока нет" size="sm" bordered={false} />
             ) : (
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {order.attachments.map((a) => (
@@ -308,7 +356,9 @@ export default function WorkOrderDetailPage() {
                     key={a.id}
                     src={`${API_BASE}${a.url}`}
                     alt=""
-                    className="aspect-square rounded-md border object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    className="aspect-square rounded-md border bg-muted object-cover"
                   />
                 ))}
               </div>

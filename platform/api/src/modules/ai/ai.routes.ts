@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../middleware/authenticate.js";
+import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 
 export const aiRouter = Router();
 aiRouter.use(authenticate);
+aiRouter.use(blockContractor);
 
 /// Архитектурная заготовка под AI-модуль из ТЗ. Реального подключения
 /// модели нет (нет ключа/провайдера) — эндпоинт возвращает предсказуемую
@@ -57,14 +58,16 @@ aiRouter.post("/analyze", async (req, res) => {
       targetId: parsed.data.targetId,
       summary,
       payload: { stub: true, note: "Реальная модель не подключена" },
+      organizationId: req.auth!.organizationId,
     },
   });
 
   res.status(201).json(insight);
 });
 
-aiRouter.get("/insights", async (_req, res) => {
+aiRouter.get("/insights", async (req, res) => {
   const insights = await prisma.aiInsight.findMany({
+    where: { organizationId: req.auth!.organizationId },
     orderBy: { createdAt: "desc" },
     take: 50,
   });

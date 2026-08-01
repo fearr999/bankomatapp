@@ -1,13 +1,18 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../middleware/authenticate.js";
+import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 
 export const warehouseRouter = Router();
 warehouseRouter.use(authenticate);
+// Склад — ресурс банка, вне списка разделов кабинета подрядчика.
+warehouseRouter.use(blockContractor);
 
-warehouseRouter.get("/items", async (_req, res) => {
-  const items = await prisma.inventoryItem.findMany({ orderBy: { name: "asc" } });
+warehouseRouter.get("/items", async (req, res) => {
+  const items = await prisma.inventoryItem.findMany({
+    where: { organizationId: req.auth!.organizationId },
+    orderBy: { name: "asc" },
+  });
   res.json(items);
 });
 
@@ -22,11 +27,18 @@ const createItemSchema = z.object({
 warehouseRouter.post("/items", async (req, res) => {
   const parsed = createItemSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-  const item = await prisma.inventoryItem.create({ data: parsed.data });
+  const item = await prisma.inventoryItem.create({
+    data: { ...parsed.data, organizationId: req.auth!.organizationId },
+  });
   res.status(201).json(item);
 });
 
 warehouseRouter.get("/items/:id/movements", async (req, res) => {
+  const item = await prisma.inventoryItem.findFirst({
+    where: { id: req.params.id, organizationId: req.auth!.organizationId },
+  });
+  if (!item) return res.status(404).json({ error: "Позиция не найдена" });
+
   const movements = await prisma.stockMovement.findMany({
     where: { itemId: req.params.id },
     include: {
@@ -57,6 +69,14 @@ const SIGN: Record<(typeof MOVEMENT_TYPES)[number], 1 | -1> = {
 warehouseRouter.post("/items/:id/movements", async (req, res) => {
   const parsed = movementSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const organizationId = req.auth!.organizationId;
+  const item = await prisma.inventoryItem.findFirst({ where: { id: req.params.id, organizationId } });
+  if (!item) return res.status(404).json({ error: "Позиция не найдена" });
+  if (parsed.data.workOrderId) {
+    const order = await prisma.workOrder.findFirst({ where: { id: parsed.data.workOrderId, organizationId } });
+    if (!order) return res.status(400).json({ error: "Заявка не найдена" });
+  }
 
   const delta = SIGN[parsed.data.type] * parsed.data.quantity;
 
