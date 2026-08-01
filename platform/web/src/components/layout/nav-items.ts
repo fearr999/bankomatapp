@@ -17,6 +17,7 @@ import {
   Landmark,
   Sparkles,
   Kanban,
+  Route,
 } from "lucide-react";
 
 export interface NavItem {
@@ -38,6 +39,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dispatch", label: "Диспетчерский центр", icon: Map, live: true },
   { href: "/employees", label: "Сотрудники", icon: Users, live: true },
   { href: "/teams", label: "Бригады", icon: UsersRound, live: true },
+  { href: "/territories", label: "Территории", icon: Route, live: true },
   { href: "/photo-reports", label: "Фотоотчёты", icon: Camera, live: true, contractorVisible: true },
   { href: "/checklists", label: "Чек-листы", icon: ListChecks, live: true, contractorVisible: true },
   { href: "/map", label: "Карта объектов", icon: MapPinned, live: true, contractorVisible: true },

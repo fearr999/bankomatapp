@@ -192,6 +192,7 @@ model Team {
 
   members    User[]
   workOrders WorkOrder[]
+  sites      Site[]
 }
 
 model Client {
@@ -220,6 +221,11 @@ model Site {
   client         Client?      @relation(fields: [clientId], references: [id])
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+  // Постоянная привязка объекта к бригаде-исполнителю (территория/маршрут) —
+  // задаётся один раз через "Территории", отдельно от разового назначения
+  // конкретной заявки (WorkOrder.teamId).
+  teamId         String?
+  team           Team?        @relation(fields: [teamId], references: [id])
   createdAt      DateTime     @default(now())
 
   workOrders WorkOrder[]
