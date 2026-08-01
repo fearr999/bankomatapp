@@ -1,0 +1,68 @@
+name: Apply ATMs import to Railway
+
+# Одноразовая задача: применяет scripts/out/import-atms.sql (122 исходных
+# банкомата "бригады А") и scripts/out/import-atms-remaining.sql (503 точки
+# из остатка полного списка) к боевой Postgres-базе на Railway. Требует
+# секрет репозитория RAILWAY_DATABASE_URL. Запускается только вручную.
+on:
+  workflow_dispatch:
+    inputs:
+      organization_id:
+        description: "id организации (оставьте пустым для автоопределения, если в базе только один банк-тенант верхнего уровня)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql
+        run: sudo apt-get update -y && sudo apt-get install -y postgresql-client
+
+      - name: Resolve organization id
+        id: org
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+          INPUT_ORG_ID: ${{ inputs.organization_id }}
+        run: |
+          if [ -n "$INPUT_ORG_ID" ]; then
+            echo "id=$INPUT_ORG_ID" >> "$GITHUB_OUTPUT"
+            echo "Использую переданный id организации: $INPUT_ORG_ID"
+            exit 0
+          fi
+          COUNT=$(psql "$DATABASE_URL" -tAc 'SELECT count(*) FROM "Organization" WHERE "parentOrganizationId" IS NULL;')
+          if [ "$COUNT" != "1" ]; then
+            echo "::error::В базе $COUNT организаций верхнего уровня — автоопределение невозможно. Список:"
+            psql "$DATABASE_URL" -c 'SELECT id, name FROM "Organization" WHERE "parentOrganizationId" IS NULL ORDER BY "createdAt" ASC;'
+            exit 1
+          fi
+          ORG_ID=$(psql "$DATABASE_URL" -tAc 'SELECT id FROM "Organization" WHERE "parentOrganizationId" IS NULL LIMIT 1;')
+          echo "id=$ORG_ID" >> "$GITHUB_OUTPUT"
+          echo "Автоопределён id организации: $ORG_ID"
+
+      - name: Apply import-atms.sql (122, бригада А)
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+          ORG_ID: ${{ steps.org.outputs.id }}
+        run: |
+          sed "s/ORG_ID_HERE/$ORG_ID/g" scripts/out/import-atms.sql > /tmp/import-atms-resolved.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /tmp/import-atms-resolved.sql
+
+      - name: Apply import-atms-remaining.sql (503, остаток списка)
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+          ORG_ID: ${{ steps.org.outputs.id }}
+        run: |
+          sed "s/ORG_ID_HERE/$ORG_ID/g" scripts/out/import-atms-remaining.sql > /tmp/import-atms-remaining-resolved.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /tmp/import-atms-remaining-resolved.sql
+
+      - name: Verify
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -c "SELECT count(*) AS atms_total FROM \"Equipment\" WHERE \"deviceType\" = 'atm';"
