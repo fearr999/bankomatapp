@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Unbounded, Golos_Text } from "next/font/google";
+import { Onest, Golos_Text } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SwRegister } from "@/components/sw-register";
 import "./globals.css";
 
-const display = Unbounded({
+const display = Onest({
   subsets: ["latin", "cyrillic"],
   weight: ["500", "600", "700", "800"],
   variable: "--font-display",
