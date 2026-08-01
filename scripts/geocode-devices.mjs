@@ -114,6 +114,22 @@ async function geocodeOnce(query) {
   return { lat: Number(data[0].lat), lng: Number(data[0].lon), displayName: data[0].display_name };
 }
 
+// Второй бесплатный геокодер (без API-ключа) — komoot/Photon. Использует
+// другой поисковый движок (Elasticsearch с опечатко-устойчивым поиском)
+// поверх во многом той же базы OSM, но с другой токенизацией — иногда
+// находит то, что не находит Nominatim, и наоборот. Пробуем последним
+// резервным вариантом, когда вся цепочка Nominatim не сработала.
+async function geocodePhoton(query) {
+  const url = `https://photon.komoot.io/api/?limit=1&q=${encodeURIComponent(query)}`;
+  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+  if (!res.ok) throw new Error(`Photon HTTP ${res.status}`);
+  const data = await res.json();
+  const feat = data.features && data.features[0];
+  if (!feat) return null;
+  const [lon, lat] = feat.geometry.coordinates;
+  return { lat: Number(lat), lng: Number(lon) };
+}
+
 // Короткие ссылки вида yandex.uz/maps/-/XXXXX редиректят на страницу с
 // координатами в query-параметре ll=lon,lat (порядок обратный обычному
 // lat,lng!) или whatshere[point]=lon,lat. Резолвим редирект и вытаскиваем
@@ -193,6 +209,33 @@ async function main() {
         }
         console.log("нет совпадения");
       }
+
+      // Nominatim ничего не нашёл вообще ни на одном уровне — пробуем Photon
+      // (другой бесплатный геокодер без ключа, другая поисковая база).
+      if (!geo) {
+        const photonQueries = [normalizeAddress(entry.address)];
+        if (entry.place && entry.place.trim()) {
+          photonQueries.push(`${entry.place.trim()}, ${extractCity(entry.address)}, Узбекистан`);
+        }
+        for (const q of photonQueries) {
+          process.stdout.write(`Геокодирую ${entry.code} (photon) — ${q} ... `);
+          try {
+            geo = await geocodePhoton(q);
+          } catch (e) {
+            console.log("ошибка запроса:", e.message);
+            geo = null;
+          }
+          await new Promise((r) => setTimeout(r, 1100));
+          if (geo) {
+            precision = "photon";
+            usedQuery = q;
+            console.log(`${geo.lat}, ${geo.lng}`);
+            break;
+          }
+          console.log("нет совпадения");
+        }
+      }
+
       if (!geo) {
         notFound.push(entry);
         continue;
@@ -222,7 +265,7 @@ async function main() {
     // "poi" — нечёткий поиск по названию заведения — тоже ненадёжен: на
     // практике так же уводит на совпадение по имени в другом городе (см.
     // историю коммитов), не только "district".
-    const isApprox = r.precision === "district" || r.precision === "poi";
+    const isApprox = r.precision === "district" || r.precision === "poi" || r.precision === "photon";
     if (isApprox) approxCount++;
     const notes = isApprox
       ? `ПРИБЛИЗИТЕЛЬНО — точка найдена по названию/району, а не точному адресу, уточните вручную`
