@@ -82,6 +82,27 @@ async function geocodeOnce(query) {
   return { lat: Number(data[0].lat), lng: Number(data[0].lon), displayName: data[0].display_name };
 }
 
+// Короткие ссылки вида yandex.uz/maps/-/XXXXX редиректят на страницу с
+// координатами в query-параметре ll=lon,lat (порядок обратный обычному
+// lat,lng!) или whatshere[point]=lon,lat. Резолвим редирект и вытаскиваем
+// координаты регуляркой — это точнее, чем угадывать адрес через Nominatim.
+async function resolveYandexLink(shortUrl) {
+  const res = await fetch(shortUrl, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; CorpiFSM-OneOffImport/1.0)" },
+    redirect: "follow",
+  });
+  const finalUrl = res.url || shortUrl;
+  // Тело страницы тоже не читаем — достаточно конечного URL, но на всякий
+  // случай сливаем body чтобы не оставлять сокет открытым.
+  await res.text().catch(() => {});
+  const match = finalUrl.match(/[?&](?:ll|whatshere%5Bpoint%5D|whatshere\[point\])=([\d.]+)%2C([\d.]+)|[?&](?:ll|whatshere\[point\])=([\d.]+),([\d.]+)/);
+  if (!match) return null;
+  const lon = Number(match[1] ?? match[3]);
+  const lat = Number(match[2] ?? match[4]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return { lat, lng: lon };
+}
+
 function sqlEscape(v) {
   if (v === null || v === undefined) return "NULL";
   return `'${String(v).replace(/'/g, "''")}'`;
@@ -100,10 +121,28 @@ async function main() {
   for (const file of files) {
     const entries = JSON.parse(readFileSync(path.join(DATA_DIR, file), "utf-8"));
     for (const entry of entries) {
-      const variants = addressVariants(entry);
       let geo = null;
       let precision = null;
       let usedQuery = null;
+
+      if (entry.yandexUrl) {
+        process.stdout.write(`Геокодирую ${entry.code} (yandex-link) — ${entry.yandexUrl} ... `);
+        try {
+          geo = await resolveYandexLink(entry.yandexUrl);
+        } catch (e) {
+          console.log("ошибка запроса:", e.message);
+          geo = null;
+        }
+        if (geo) {
+          precision = "yandex-link";
+          usedQuery = entry.yandexUrl;
+          console.log(`${geo.lat}, ${geo.lng}`);
+        } else {
+          console.log("не распознано, пробую адрес");
+        }
+      }
+
+      const variants = geo ? [] : addressVariants(entry);
       for (const variant of variants) {
         process.stdout.write(`Геокодирую ${entry.code} (${variant.precision}) — ${variant.q} ... `);
         try {
@@ -134,7 +173,7 @@ async function main() {
   writeFileSync(path.join(OUT_DIR, "not-found.json"), JSON.stringify(notFound, null, 2));
 
   const sqlLines = [
-    "-- Автосгенерировано scripts/geocode-devices.mjs — точки банкоматов/картоматов бригады А.",
+    "-- Автосгенерировано scripts/geocode-devices.mjs — точки банкоматов/картоматов.",
     "-- 1) Сначала выполните этот запрос и найдите id вашей организации:",
     '--    SELECT id, name FROM "Organization" ORDER BY "createdAt" ASC;',
     "-- 2) Замените ВСЕ вхождения ORG_ID_HERE ниже на реальный id (текстовый поиск-замена) и выполните файл целиком.",
