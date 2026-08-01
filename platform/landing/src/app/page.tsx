@@ -103,9 +103,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
-              C
-            </div>
+            <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg ring-1 ring-border/50" />
             <span className="text-sm font-semibold tracking-tight">Corpi</span>
           </div>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground sm:flex">

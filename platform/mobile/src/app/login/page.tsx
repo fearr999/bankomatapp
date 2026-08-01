@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wrench, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { login } from "@/lib/api";
 
@@ -30,9 +30,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col justify-center gap-8 px-6">
       <div className="flex animate-slide-up flex-col items-center gap-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-          <Wrench size={22} />
-        </div>
+        <img src="/logo.png" alt="Corpi" className="h-12 w-12 rounded-xl ring-1 ring-border/50" />
         <h1 className="text-xl font-semibold tracking-tight">Corpi</h1>
         <p className="text-sm text-muted-foreground">Вход для полевого сотрудника</p>
       </div>
