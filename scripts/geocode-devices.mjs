@@ -88,7 +88,12 @@ function sqlEscape(v) {
 }
 
 async function main() {
-  const files = readdirSync(DATA_DIR).filter((f) => f.endsWith(".json"));
+  // GEOCODE_FILE ограничивает запуск одним файлом данных (например, только
+  // новыми картоматами), чтобы не гонять повторно уже обработанные адреса.
+  const onlyFile = process.env.GEOCODE_FILE;
+  const files = readdirSync(DATA_DIR)
+    .filter((f) => f.endsWith(".json"))
+    .filter((f) => !onlyFile || f === onlyFile);
   const results = [];
   const notFound = [];
 
@@ -146,8 +151,8 @@ async function main() {
     const isApprox = r.precision === "district";
     if (isApprox) approxCount++;
     const notes = isApprox
-      ? `Бригада А; ПРИБЛИЗИТЕЛЬНО — не найден точный адрес, точка поставлена по центру района, уточните вручную`
-      : "Бригада А";
+      ? `ПРИБЛИЗИТЕЛЬНО — не найден точный адрес, точка поставлена по центру района, уточните вручную`
+      : null;
     sqlLines.push(
       `INSERT INTO "Site" (id, name, address, lat, lng, "organizationId", "createdAt") VALUES ` +
         `(${sqlEscape(siteId)}, ${sqlEscape(siteName)}, ${sqlEscape(r.address)}, ${r.lat}, ${r.lng}, 'ORG_ID_HERE', now());`

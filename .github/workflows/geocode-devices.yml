@@ -4,7 +4,12 @@ name: Geocode devices
 # (нужен интернет, которого нет в песочнице агента) и публикует готовый SQL
 # для ручного импорта банкоматов/картоматов в orphan-ветку geocode-results.
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      file:
+        description: "Имя файла в scripts/data/ (пусто = все файлы)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -20,6 +25,8 @@ jobs:
           node-version: 22
 
       - name: Geocode addresses and generate SQL
+        env:
+          GEOCODE_FILE: ${{ inputs.file }}
         run: node scripts/geocode-devices.mjs
 
       - name: Publish results to geocode-results branch
