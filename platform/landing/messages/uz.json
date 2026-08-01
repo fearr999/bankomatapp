@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "features": "Imkoniyatlar",
+    "audience": "Kimlar uchun",
+    "login": "Kirish",
+    "cta": "Bepul boshlash",
+    "telegramAria": "Corpi Telegram kanali",
+    "themeAria": "Mavzuni almashtirish",
+    "langAria": "Tilni tanlash"
+  },
+  "hero": {
+    "badge": "Yangi avlod Field Service Management",
+    "titleLine1": "Barcha dala xizmati —",
+    "titleLine2": "yagona tizimda",
+    "subtitle": "Arizalar, dispetcherlik, xarita, cheklistlar, foto-hisobotlar, bankomatlarga xizmat ko'rsatish va analitika — banklar, ularning pudratchilari va dala xodimlari uchun. Brauzerda va telefonda ishlaydi.",
+    "createCompany": "Kompaniya yaratish",
+    "loginToAccount": "Hisobga kirish"
+  },
+  "mockup": {
+    "url": "app.thecorpi.com/dashboard",
+    "activeOrders": "Faol arizalar",
+    "slaBreaches": "SLA muddati o'tganlar",
+    "teamsOnline": "Onlayn brigadalar",
+    "atms": "Bankomatlar",
+    "ordersChart": "So'nggi 7 kundagi arizalar",
+    "dispatchCenter": "Dispetcherlik markazi"
+  },
+  "stats": {
+    "modules": "tizimdagi modullar",
+    "atms": "xaritadagi bankomatlar",
+    "monitoring": "monitoring va SLA-taymer",
+    "isolation": "kompaniyalar orasida ma'lumotlar izolyatsiyasi"
+  },
+  "features": {
+    "heading": "Tizim ichida nimalar bor",
+    "subheading": "Namoyishda changlanib yotmaydigan, dalada haqiqatan ishlatiladigan modullar",
+    "orders": { "title": "Arizalar va SLA", "description": "Yaratilishidan aktgacha to'liq ariza jarayoni — SLA taymeri va muddati o'tgan arizalarni avtomatik eskalatsiya qilish bilan." },
+    "dispatch": { "title": "Dispetcherlik markazi", "description": "Real vaqt rejimidagi xarita, ijrochini sudrab-tashlash orqali tayinlash, eng yaqin bo'sh xodim." },
+    "atm": { "title": "Bankomatlarga xizmat ko'rsatish", "description": "Kassetalarning to'lganlik darajasi, inkassatsiya, favqulodda chaqiruvlar — bankomat va kartomatlar uchun alohida yo'nalish." },
+    "cleaning": { "title": "Brigadalar bo'yicha tozalash sikllari", "description": "Hududlar brigadalarga biriktirilgan; sikl har bir nuqta uchun o'zi ariza yaratadi va hammasi tozalanganda o'zi yopiladi." },
+    "photo": { "title": "Foto-hisobotlar va imzo", "description": "Geobelgili fotosuratlar, mijozning elektron imzosi, har bir ish turi uchun cheklistlar — to'g'ridan-to'g'ri telefondan." },
+    "analytics": { "title": "Analitika va reyting", "description": "Brigadalar va pudratchilar bo'yicha KPI, xodimlar reytingi, SLA taqqoslash — bitta ekranda." },
+    "multitenancy": { "title": "Ko'p tashkilotli tizim", "description": "Bank va har bir pudratchi faqat o'z ma'lumotlarini ko'radi; kirish huquqi rollar bo'yicha aniq bitta arizagacha cheklangan." },
+    "mobile": { "title": "Mobil ilova", "description": "Fotosuratlar uchun oflayn navbat, geozona orqali avtomatik yetib kelish, QR-tasdiqlash — aloqa yomon bo'lganda ham ishlaydi." }
+  },
+  "audience": {
+    "heading": "Kimlar uchun",
+    "banks": {
+      "title": "Banklar va tarmoqlar uchun",
+      "point1": "Barcha pudratchilar va brigadalar bo'yicha yagona manzara",
+      "point2": "SLA va muddati o'tgan arizalar qo'ng'iroqsiz darhol ko'rinadi",
+      "point3": "Mijoz uchun tizimga kirmasdan kuzatish havolasi"
+    },
+    "contractors": {
+      "title": "Pudratchilar uchun",
+      "point1": "Shaxsiy kabinet — faqat o'z arizalari va obyektlari ko'rinadi",
+      "point2": "Tozalash sikllari va hududlar o'zi yopiladi",
+      "point3": "Foto-hisobotlar va cheklistlar chatlarda yo'qolib qolmaydi"
+    }
+  },
+  "cta": {
+    "heading": "Sinab ko'rishga tayyormisiz?",
+    "subheading": "Bir daqiqada kompaniya yarating — o'z alohida tashkilotingiz, karta va kutishlarsiz.",
+    "createCompany": "Kompaniya yaratish"
+  },
+  "footer": {
+    "copyright": "© {year} Corpi"
+  }
+}
