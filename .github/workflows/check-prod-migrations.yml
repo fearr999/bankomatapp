@@ -1,0 +1,34 @@
+name: Check production migration status (Railway)
+
+# Диагностика: сверяет миграции Prisma в репозитории с тем, что реально
+# применено к боевой базе Railway (_prisma_migrations). Ничего не меняет —
+# только "prisma migrate status". Запускается только вручную.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: prisma migrate status (боевая база)
+        env:
+          DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+        run: npx prisma migrate status || true
+
+      - name: Список локальных миграций в репозитории
+        run: ls -1 prisma/migrations
