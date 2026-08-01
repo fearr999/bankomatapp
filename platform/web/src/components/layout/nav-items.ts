@@ -18,6 +18,7 @@ import {
   Sparkles,
   Kanban,
   Route,
+  SprayCan,
 } from "lucide-react";
 
 export interface NavItem {
@@ -51,5 +52,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/notifications", label: "Уведомления", icon: Bell, live: true, contractorVisible: true },
   { href: "/integrations", label: "Интеграции", icon: Plug, live: false },
   { href: "/atm-service", label: "Обслуживание банкоматов", icon: Landmark, live: true },
+  { href: "/cleaning-cycles", label: "Циклы уборки", icon: SprayCan, live: true },
   { href: "/ai", label: "AI-модуль", icon: Sparkles, live: true },
 ];

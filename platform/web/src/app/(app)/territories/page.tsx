@@ -89,6 +89,21 @@ export default function TerritoriesPage() {
     );
   }
 
+  async function quickReassign(siteId: string, teamId: string) {
+    setStatus(null);
+    try {
+      await apiFetch<{ updated: number }>("/sites/assign-team", {
+        method: "PATCH",
+        body: JSON.stringify({ siteIds: [siteId], teamId: teamId || null }),
+      });
+      setSites((prev) =>
+        prev.map((s) => (s.id === siteId ? { ...s, team: teams.find((t) => t.id === teamId) ?? null } : s))
+      );
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "Ошибка назначения");
+    }
+  }
+
   async function applyBulkAssign() {
     if (!selected.size) return;
     setBusy(true);
@@ -255,17 +270,24 @@ export default function TerritoriesPage() {
                       <td className="p-3 font-medium">{s.name}</td>
                       <td className="p-3 text-muted-foreground">{s.address ?? "—"}</td>
                       <td className="p-3">
-                        {s.team ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <span
-                              className="h-2.5 w-2.5 rounded-full"
-                              style={{ background: teamColor(s.team.id) }}
-                            />
-                            {s.team.name}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">без бригады</span>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                            style={{ background: teamColor(s.team?.id ?? null) }}
+                          />
+                          <select
+                            className="h-8 rounded-md border bg-transparent px-1.5 text-sm"
+                            value={s.team?.id ?? ""}
+                            onChange={(e) => quickReassign(s.id, e.target.value)}
+                          >
+                            <option value="">без бригады</option>
+                            {teams.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </td>
                     </tr>
                   ))}

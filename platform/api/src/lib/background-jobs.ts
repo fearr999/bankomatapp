@@ -1,6 +1,7 @@
 import { prisma } from "./prisma.js";
 import { notifyUser } from "../modules/notifications/notify.js";
 import { nextOrderNumber } from "../modules/workorders/workorders.routes.js";
+import { checkAllActiveCleaningCycles } from "./cleaning-cycle-helpers.js";
 
 const TERMINAL_STATUSES = ["COMPLETED", "CLOSED", "CANCELLED"] as const;
 
@@ -91,6 +92,7 @@ export function startBackgroundJobs() {
   const run = () => {
     checkSlaEscalations().catch((err) => console.error("Ошибка проверки SLA-эскалаций:", err));
     checkRecurringMaintenance().catch((err) => console.error("Ошибка проверки планового ТО:", err));
+    checkAllActiveCleaningCycles().catch((err) => console.error("Ошибка проверки циклов уборки:", err));
   };
   setTimeout(run, 15_000);
   setInterval(run, CHECK_INTERVAL_MS);

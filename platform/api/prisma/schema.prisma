@@ -101,6 +101,7 @@ model Organization {
   contractorTeams    Team[]              @relation("ContractorOrgTeams")
   projects           Project[]
   issues             Issue[]
+  cleaningCycles     CleaningCycle[]
 }
 
 enum WorkOrderStatus {
@@ -190,9 +191,10 @@ model Team {
   contractorOrganization   Organization? @relation("ContractorOrgTeams", fields: [contractorOrganizationId], references: [id])
   createdAt                DateTime      @default(now())
 
-  members    User[]
-  workOrders WorkOrder[]
-  sites      Site[]
+  members        User[]
+  workOrders     WorkOrder[]
+  sites          Site[]
+  cleaningCycles CleaningCycle[]
 }
 
 model Client {
@@ -269,6 +271,11 @@ model WorkOrder {
   // фоновая проверка не слала уведомление повторно на каждом цикле.
   slaEscalatedAt      DateTime?
 
+  // Заявка создана автоматически при старте цикла уборки бригады — см.
+  // CleaningCycle. null для обычных (не цикловых) заявок.
+  cleaningCycleId String?
+  cleaningCycle   CleaningCycle? @relation(fields: [cleaningCycleId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -278,6 +285,32 @@ model WorkOrder {
   stockMovements       StockMovement[]
 
   @@unique([organizationId, number])
+}
+
+enum CleaningCycleStatus {
+  ACTIVE
+  COMPLETED // все заявки цикла завершены — закрылся сам
+  CLOSED_EARLY // закрыт вручную админом до завершения всех заявок
+}
+
+/// Цикл уборки банкоматов/картоматов на бригаду — старт создаёт по одной
+/// заявке (WorkOrder, requestType=CLEANING) на каждое устройство территории
+/// бригады (Site.teamId). Прогресс — доля завершённых заявок цикла.
+/// Аналог внешнего трекера циклов, который заменяет этот модуль.
+model CleaningCycle {
+  id             String              @id @default(cuid())
+  number         Int // порядковый номер цикла в рамках бригады -> "Цикл №3"
+  teamId         String
+  team           Team                @relation(fields: [teamId], references: [id])
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id])
+  status         CleaningCycleStatus @default(ACTIVE)
+  startedAt      DateTime            @default(now())
+  closedAt       DateTime?
+
+  workOrders WorkOrder[]
+
+  @@unique([teamId, number])
 }
 
 /// История изменений заявки (для карточки "история изменений")
