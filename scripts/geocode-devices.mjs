@@ -208,10 +208,13 @@ async function main() {
     const siteName = r.place && r.place.trim() ? r.place.trim() : `${deviceLabel} ${r.code}`;
     const siteId = `site_${randomUUID()}`;
     const equipmentId = `eq_${randomUUID()}`;
-    const isApprox = r.precision === "district";
+    // "poi" — нечёткий поиск по названию заведения — тоже ненадёжен: на
+    // практике так же уводит на совпадение по имени в другом городе (см.
+    // историю коммитов), не только "district".
+    const isApprox = r.precision === "district" || r.precision === "poi";
     if (isApprox) approxCount++;
     const notes = isApprox
-      ? `ПРИБЛИЗИТЕЛЬНО — не найден точный адрес, точка поставлена по центру района, уточните вручную`
+      ? `ПРИБЛИЗИТЕЛЬНО — точка найдена по названию/району, а не точному адресу, уточните вручную`
       : null;
     sqlLines.push(
       `INSERT INTO "Site" (id, name, address, lat, lng, "organizationId", "createdAt") VALUES ` +
