@@ -5,6 +5,7 @@ export interface CurrentUser {
   name: string;
   email: string;
   role: string;
+  executorType?: string;
 }
 
 function getToken() {

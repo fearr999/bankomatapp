@@ -67,6 +67,8 @@ usersRouter.get("/:id", async (req, res) => {
       lat: true,
       lng: true,
       locationUpdatedAt: true,
+      shiftStartedAt: true,
+      executorType: true,
       createdAt: true,
       team: { select: { id: true, name: true } },
       assignedOrders: {
@@ -103,6 +105,26 @@ usersRouter.post("/me/location", async (req, res) => {
     data: { lat: parsed.data.lat, lng: parsed.data.lng, locationUpdatedAt: new Date(), status: "online" },
   });
   res.json({ ok: true });
+});
+
+const shiftSchema = z.object({ action: z.enum(["start", "end"]) });
+
+/// Кнопка "Начать рабочий день" в мобильном приложении — начало/конец смены
+/// сотрудника. Подпись кнопки на клиенте зависит от executorType, сама же
+/// смена — это просто отметка времени + статус online/offline.
+usersRouter.post("/me/shift", async (req, res) => {
+  const parsed = shiftSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const user = await prisma.user.update({
+    where: { id: req.auth!.userId },
+    data:
+      parsed.data.action === "start"
+        ? { shiftStartedAt: new Date(), status: "online" }
+        : { shiftStartedAt: null, status: "offline" },
+    select: { shiftStartedAt: true, status: true },
+  });
+  res.json(user);
 });
 
 const createUserSchema = z.object({

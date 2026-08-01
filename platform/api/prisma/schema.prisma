@@ -127,6 +127,7 @@ model User {
   lat              Float?
   lng              Float?
   locationUpdatedAt DateTime?
+  shiftStartedAt   DateTime? // рабочий день начат ("Начать рабочий день" в мобильном приложении)
   teamId       String?
   team         Team?    @relation(fields: [teamId], references: [id])
   organizationId String

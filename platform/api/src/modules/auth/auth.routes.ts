@@ -36,6 +36,7 @@ authRouter.post("/login", async (req, res) => {
       email: user.email,
       role: user.role,
       contractorOrganizationId: user.contractorOrganizationId,
+      executorType: user.executorType,
     },
   });
 });
@@ -81,7 +82,14 @@ authRouter.post("/register", async (req, res) => {
   });
   res.status(201).json({
     token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, contractorOrganizationId: null },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      contractorOrganizationId: null,
+      executorType: user.executorType,
+    },
     organization: { id: organization.id, name: organization.name },
   });
 });
