@@ -6,6 +6,7 @@ import { authenticate } from "../../middleware/authenticate.js";
 import { notifyUser } from "../notifications/notify.js";
 import { eligibleExecutorTypes } from "../../lib/executor-matching.js";
 import { generateWorkOrderReportPdf } from "../../lib/work-order-report.js";
+import { findNearestDevice } from "../../lib/nearest-device.js";
 
 const TERMINAL_STATUSES = new Set(["COMPLETED", "CLOSED", "CANCELLED"]);
 const AT_RISK_WINDOW_MS = 2 * 60 * 60 * 1000; // «горит» — до срока меньше 2 часов
@@ -60,6 +61,51 @@ function contractorScope(req: import("express").Request) {
   return req.auth!.contractorOrganizationId ? { assignedOrganizationId: req.auth!.contractorOrganizationId } : {};
 }
 
+/// После обслуживания банкомата/картомата (заявка закрыта или загружено
+/// фото) — подсказать бригаде ближайшую ещё необслуженную сегодня точку.
+/// Точка отсчёта — координаты только что обслуженного объекта (мерчендайзер
+/// сейчас физически там), а не последняя известная геопозиция пользователя.
+export async function notifyNearestNextDevice(
+  userId: string,
+  organizationId: string,
+  order: { siteId: string | null; equipmentId: string | null }
+) {
+  if (!order.siteId || !order.equipmentId) return;
+  try {
+    const equipment = await prisma.equipment.findUnique({
+      where: { id: order.equipmentId },
+      select: { deviceType: true },
+    });
+    if (!equipment || !["atm", "cardomat"].includes(equipment.deviceType)) return;
+
+    const site = await prisma.site.findUnique({ where: { id: order.siteId }, select: { lat: true, lng: true } });
+    if (!site || site.lat == null || site.lng == null) return;
+
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { teamId: true } });
+    const nearest = await findNearestDevice({
+      organizationId,
+      teamId: user?.teamId ?? null,
+      lat: site.lat,
+      lng: site.lng,
+      excludeEquipmentId: order.equipmentId,
+    });
+    if (!nearest) return;
+
+    const distanceLabel =
+      nearest.distanceMeters >= 1000
+        ? `${(nearest.distanceMeters / 1000).toFixed(1)} км`
+        : `${nearest.distanceMeters} м`;
+    await notifyUser(
+      userId,
+      "nearest_device",
+      "Ближайшая точка",
+      `${nearest.name} (${nearest.siteName}) — ${distanceLabel} от вас`
+    );
+  } catch {
+    // Подсказка — не критичный путь, ошибка здесь не должна ронять основной запрос.
+  }
+}
+
 export async function nextOrderNumber(organizationId: string) {
   const count = await prisma.workOrder.count({ where: { organizationId } });
   const year = new Date().getFullYear();
@@ -85,6 +131,28 @@ workOrdersRouter.get("/", async (req, res) => {
     orderBy: { createdAt: "desc" },
   });
   res.json(orders.map(withSlaStatus));
+});
+
+/// Ближайший необслуженный сегодня банкомат/картомат из точек бригады
+/// текущего пользователя — для виджета на главном экране мобильного
+/// приложения и подсказки после закрытия заявки/загрузки фото.
+workOrdersRouter.get("/nearest-device", async (req, res) => {
+  const lat = Number(req.query.lat);
+  const lng = Number(req.query.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return res.status(400).json({ error: "lat/lng обязательны" });
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: req.auth!.userId },
+    select: { teamId: true },
+  });
+  const nearest = await findNearestDevice({
+    organizationId: req.auth!.organizationId,
+    teamId: user?.teamId ?? null,
+    lat,
+    lng,
+  });
+  res.json(nearest);
 });
 
 /// Автоподбор исполнителей под тип заявки — сотрудники и бригады банка
@@ -188,6 +256,14 @@ workOrdersRouter.patch("/:id/status", async (req, res) => {
       },
     },
   });
+
+  if (parsed.data.status === "COMPLETED") {
+    await notifyNearestNextDevice(req.auth!.userId, req.auth!.organizationId, {
+      siteId: order.siteId,
+      equipmentId: order.equipmentId,
+    });
+  }
+
   res.json(order);
 });
 

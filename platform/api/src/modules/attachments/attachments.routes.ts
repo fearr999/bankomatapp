@@ -5,6 +5,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
+import { notifyNearestNextDevice } from "../workorders/workorders.routes.js";
 
 export const attachmentsRouter = Router();
 attachmentsRouter.use(authenticate);
@@ -89,6 +90,13 @@ attachmentsRouter.post("/work-orders/:id/photos", upload.single("photo"), async 
       message: kind === "signature" ? "Клиент подписал акт" : "Добавлена фотография",
     },
   });
+
+  if (kind === "photo") {
+    await notifyNearestNextDevice(req.auth!.userId, req.auth!.organizationId, {
+      siteId: order.siteId,
+      equipmentId: order.equipmentId,
+    });
+  }
 
   res.status(201).json(attachment);
 });

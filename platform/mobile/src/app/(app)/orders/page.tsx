@@ -2,10 +2,58 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogOut, MapPin } from "lucide-react";
+import { LogOut, MapPin, Navigation } from "lucide-react";
 import { apiFetch, getCurrentUser, logout } from "@/lib/api";
 import { StatusBadge } from "@/components/ui/badge";
+import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { useRouter } from "next/navigation";
+
+interface NearestDevice {
+  equipmentId: string;
+  name: string;
+  deviceType: string;
+  siteId: string;
+  siteName: string;
+  address: string | null;
+  distanceMeters: number;
+}
+
+function formatDistance(m: number) {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)} км` : `${m} м`;
+}
+
+function NearestDeviceWidget() {
+  const geo = useGeoCheckin(true);
+  const [nearest, setNearest] = useState<NearestDevice | null>(null);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (!geo.lastCoords) return;
+    apiFetch<NearestDevice | null>(
+      `/work-orders/nearest-device?lat=${geo.lastCoords.lat}&lng=${geo.lastCoords.lng}`
+    )
+      .then(setNearest)
+      .catch(() => setNearest(null))
+      .finally(() => setChecked(true));
+  }, [geo.lastCoords?.lat, geo.lastCoords?.lng]);
+
+  if (!geo.lastCoords || !checked || !nearest) return null;
+
+  return (
+    <div className="mx-4 mt-3 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+      <Navigation size={18} className="shrink-0 text-primary" />
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-muted-foreground">
+          Ближайшая точка · {nearest.deviceType === "atm" ? "банкомат" : "картомат"}
+        </p>
+        <p className="truncate text-sm font-medium">
+          {nearest.name} — {formatDistance(nearest.distanceMeters)}
+        </p>
+        {nearest.address && <p className="truncate text-xs text-muted-foreground">{nearest.address}</p>}
+      </div>
+    </div>
+  );
+}
 
 interface OrderListItem {
   id: string;
@@ -77,6 +125,8 @@ export default function OrdersPage() {
           <LogOut size={16} />
         </button>
       </header>
+
+      <NearestDeviceWidget />
 
       <div className="flex gap-2 px-4 pt-3">
         {(["open", "done"] as const).map((t) => (
