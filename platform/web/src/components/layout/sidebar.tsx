@@ -15,7 +15,8 @@ export function Sidebar() {
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r bg-card/40 md:flex">
-      <div className="flex h-14 items-center border-b px-5">
+      <div className="flex h-14 items-center gap-2 border-b px-5">
+        <img src="/logo.png" alt="" className="h-6 w-6 rounded-md ring-1 ring-border/50" />
         <span className="text-sm font-semibold tracking-tight">Corpi</span>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">

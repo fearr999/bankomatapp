@@ -36,9 +36,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-sm animate-slide-up">
         <CardHeader>
-          <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
-            C
-          </div>
+          <img src="/logo.png" alt="Corpi" className="mb-1 h-9 w-9 rounded-lg ring-1 ring-border/50" />
           <CardTitle className="text-lg text-foreground">Создать компанию</CardTitle>
           <p className="text-sm text-muted-foreground">
             Своя изолированная организация в Corpi — вы становитесь первым администратором
