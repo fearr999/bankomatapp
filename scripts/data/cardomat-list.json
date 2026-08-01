@@ -4,7 +4,7 @@
   { "code": "MS0010", "deviceType": "cardomat", "address": "Ташкент, Яшнабадский район, улица Махтумкули, 1/5", "place": "МФЦ" },
   { "code": "MS0014", "deviceType": "cardomat", "address": "г. Ташкент, Яшнабадский район, пересечение улиц Фаргона йули и ТКАД (Куйлюк)", "place": "ПВЗ - Таш 7" },
   { "code": "MS0015", "deviceType": "cardomat", "address": "г. Ташкент, Мирзо-Улугбекский район, Махаллинский сход граждан Асака, 1-й пр. Дархан, 8A", "place": "БЦ \"Галлеон\"" },
-  { "code": "MS0021", "deviceType": "cardomat", "address": "г. Ташкент, площадь Чорсу 2", "place": "МФЦ на Чорсу" },
+  { "code": "MS0021", "deviceType": "cardomat", "address": "г. Ташкент, площадь Чорсу 2", "place": "МФЦ на Чорсу 2" },
   { "code": "MS0034", "deviceType": "cardomat", "address": "г. Ташкент, Мирабадский район, ул. Кучкуприк, дом 30", "place": "ТЦ \"Alfraganus\"" },
   { "code": "MS0045", "deviceType": "cardomat", "address": "г. Ташкент, ул. Ханабад 2/2", "place": "Склад маркета UZUM" },
   { "code": "MS0052", "deviceType": "cardomat", "address": "г. Ташкент, Яшнабадский район, Ташкентская кольцевая автомобильная дорога", "place": "Корзинка \"Куйлюк\"" },
