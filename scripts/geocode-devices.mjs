@@ -119,14 +119,24 @@ async function geocodeOnce(query) {
 // поверх во многом той же базы OSM, но с другой токенизацией — иногда
 // находит то, что не находит Nominatim, и наоборот. Пробуем последним
 // резервным вариантом, когда вся цепочка Nominatim не сработала.
+//
+// ВАЖНО: Photon не принимает countrycodes как Nominatim — без ограничения
+// по bbox он радостно матчит "улица Гагарина"/"Чирчик"/"Ангрен" на
+// одноимённые совпадения в России, Молдове, Крыму и т.д. (проверено на
+// реальном прогоне — были результаты за тысячи км от Узбекистана).
+// Поэтому здесь ЖЁСТКО ограничиваем bbox территорией Узбекистана.
+const UZ_BBOX = "55.9,37.1,73.2,45.6"; // minLon,minLat,maxLon,maxLat
+
 async function geocodePhoton(query) {
-  const url = `https://photon.komoot.io/api/?limit=1&q=${encodeURIComponent(query)}`;
+  const url = `https://photon.komoot.io/api/?limit=1&bbox=${UZ_BBOX}&q=${encodeURIComponent(query)}`;
   const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
   if (!res.ok) throw new Error(`Photon HTTP ${res.status}`);
   const data = await res.json();
   const feat = data.features && data.features[0];
   if (!feat) return null;
   const [lon, lat] = feat.geometry.coordinates;
+  // Двойная страховка — даже с bbox иногда просачивается результат снаружи.
+  if (lat < 37.1 || lat > 45.6 || lon < 55.9 || lon > 73.2) return null;
   return { lat: Number(lat), lng: Number(lon) };
 }
 
