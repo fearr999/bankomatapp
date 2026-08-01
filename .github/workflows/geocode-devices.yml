@@ -1,0 +1,36 @@
+name: Geocode devices
+
+# Одноразовая задача: геокодирует адреса из scripts/data/*.json через Nominatim
+# (нужен интернет, которого нет в песочнице агента) и публикует готовый SQL
+# для ручного импорта банкоматов/картоматов в orphan-ветку geocode-results.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  geocode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Geocode addresses and generate SQL
+        run: node scripts/geocode-devices.mjs
+
+      - name: Publish results to geocode-results branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p /tmp/geocode-out
+          cp scripts/out/*.json scripts/out/*.sql /tmp/geocode-out/
+          git checkout --orphan geocode-results
+          git rm -rf . > /dev/null
+          cp /tmp/geocode-out/* .
+          git add .
+          git commit -m "Geocode results from run ${{ github.run_number }} (${{ github.sha }})"
+          git push -f origin geocode-results
