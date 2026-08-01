@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface ClientRow {
@@ -85,6 +86,8 @@ export default function CrmPage() {
 
       {loading ? (
         <PageLoader />
+      ) : clients.length === 0 ? (
+        <EmptyState icon={Building2} title="Клиентов пока нет" description="Добавьте первого клиента кнопкой выше" />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {clients.map((c) => (
@@ -101,7 +104,6 @@ export default function CrmPage() {
               </Card>
             </Link>
           ))}
-          {clients.length === 0 && <p className="text-sm text-muted-foreground">Клиентов пока нет.</p>}
         </div>
       )}
     </div>

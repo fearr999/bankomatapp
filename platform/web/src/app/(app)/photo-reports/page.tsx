@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MapPin, User } from "lucide-react";
+import { MapPin, User, Camera } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch, API_BASE } from "@/lib/api";
 
 interface PhotoAttachment {
@@ -70,12 +71,10 @@ export default function PhotoReportsPage() {
             </CardContent>
           </Card>
         ))}
-        {!loading && photos.length === 0 && (
-          <p className="col-span-full text-sm text-muted-foreground">
-            Пока нет фотографий — добавьте на странице заявки.
-          </p>
-        )}
       </div>
+      {!loading && photos.length === 0 && (
+        <EmptyState icon={Camera} title="Пока нет фотографий" description="Добавьте на странице заявки" />
+      )}
     </div>
   );
 }

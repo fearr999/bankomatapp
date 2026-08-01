@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Siren, DoorOpen, DoorClosed, Banknote, QrCode } from "lucide-react";
+import { Siren, DoorOpen, DoorClosed, Banknote, QrCode, History, ClipboardList } from "lucide-react";
 import QRCode from "qrcode";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -324,7 +325,7 @@ export default function EquipmentDetailPage() {
                     </div>
                   ))}
                   {item.accessLogs.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Записей пока нет</p>
+                    <EmptyState icon={History} title="Записей пока нет" size="sm" bordered={false} />
                   )}
                 </div>
               </div>
@@ -339,7 +340,7 @@ export default function EquipmentDetailPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {item.workOrders.length === 0 && (
-            <p className="text-sm text-muted-foreground">Заявок по этому оборудованию пока нет</p>
+            <EmptyState icon={ClipboardList} title="Заявок по этому оборудованию пока нет" size="sm" bordered={false} />
           )}
           {item.workOrders.map((o) => (
             <Link

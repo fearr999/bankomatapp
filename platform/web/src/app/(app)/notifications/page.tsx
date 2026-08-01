@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Bell, Check, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
 
@@ -166,7 +167,7 @@ export default function NotificationsPage() {
         <CardContent className="flex flex-col gap-2">
           {loading && <PageLoader className="p-0" />}
           {!loading && notifications.length === 0 && (
-            <p className="text-sm text-muted-foreground">Уведомлений пока нет</p>
+            <EmptyState icon={Bell} title="Уведомлений пока нет" bordered={false} />
           )}
           {notifications.map((n) => (
             <button

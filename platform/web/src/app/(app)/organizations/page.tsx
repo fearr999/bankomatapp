@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 const ORG_TYPE_LABELS: Record<string, string> = {
@@ -127,6 +128,8 @@ export default function OrganizationsPage() {
 
       {loading ? (
         <PageLoader />
+      ) : orgs.length === 0 ? (
+        <EmptyState icon={Building2} title="Подрядных организаций пока нет" description="Добавьте первую кнопкой выше" />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {orgs.map((o) => (
@@ -151,7 +154,6 @@ export default function OrganizationsPage() {
               </Card>
             </Link>
           ))}
-          {orgs.length === 0 && <p className="text-sm text-muted-foreground">Подрядных организаций пока нет.</p>}
         </div>
       )}
     </div>

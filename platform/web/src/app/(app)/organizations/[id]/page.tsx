@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Star } from "lucide-react";
+import { Star, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api";
@@ -196,7 +197,7 @@ export default function OrganizationDetailPage() {
                 </span>
               </div>
             ))}
-            {org.staff.length === 0 && <p className="text-sm text-muted-foreground">Сотрудников пока нет</p>}
+            {org.staff.length === 0 && <EmptyState icon={Users} title="Сотрудников пока нет" size="sm" bordered={false} />}
           </CardContent>
         </Card>
       </div>

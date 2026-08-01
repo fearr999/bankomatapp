@@ -9,10 +9,12 @@ import {
   WifiOff,
   AlertTriangle,
   PlusCircle,
+  History,
 } from "lucide-react";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface Summary {
@@ -73,7 +75,7 @@ export default function DashboardPage() {
         <CardContent className="flex flex-col gap-3">
           {!summary && <PageLoader className="p-0" />}
           {summary?.recentEvents.length === 0 && (
-            <p className="text-sm text-muted-foreground">Пока нет событий.</p>
+            <EmptyState icon={History} title="Пока нет событий" size="sm" bordered={false} />
           )}
           {summary?.recentEvents.map((e) => (
             <div

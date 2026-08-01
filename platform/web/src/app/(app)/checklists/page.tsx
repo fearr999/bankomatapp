@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 type FieldType = "checkbox" | "text" | "number";
@@ -162,6 +163,9 @@ export default function ChecklistsPage() {
       )}
 
       {loading && <PageLoader />}
+      {!loading && templates.length === 0 && (
+        <EmptyState icon={ListChecks} title="Шаблонов пока нет" description="Создайте первый чек-лист кнопкой выше" />
+      )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {!loading && templates.map((t) => (
           <Card key={t.id}>
@@ -189,9 +193,6 @@ export default function ChecklistsPage() {
             </CardContent>
           </Card>
         ))}
-        {!loading && templates.length === 0 && (
-          <p className="text-sm text-muted-foreground">Шаблонов пока нет — создайте первый.</p>
-        )}
       </div>
     </div>
   );

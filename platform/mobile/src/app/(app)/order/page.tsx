@@ -2,11 +2,12 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Camera, WifiOff, QrCode, FileDown, Link2, MapPin } from "lucide-react";
+import { ArrowLeft, Camera, WifiOff, QrCode, FileDown, Link2, MapPin, ListChecks } from "lucide-react";
 import { apiFetch, API_BASE, WEB_BASE, getToken } from "@/lib/api";
 import { STATUS_LABELS, StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { queuePhoto, listQueuedPhotos, flushOfflineQueue, type QueuedPhoto } from "@/lib/offline-queue";
 import { QrScannerModal } from "@/components/qr-scanner";
 import { SignaturePad } from "@/components/signature-pad";
@@ -124,7 +125,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
       ))}
 
       {templates.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Шаблонов пока нет</p>
+        <EmptyState icon={ListChecks} title="Шаблонов пока нет" size="sm" bordered={false} />
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-3">
           <select
@@ -431,7 +432,7 @@ function OrderDetailContent() {
           />
         </div>
         {order.attachments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Фотографий пока нет</p>
+          <EmptyState icon={Camera} title="Фотографий пока нет" size="sm" bordered={false} />
         ) : (
           <div className="grid grid-cols-3 gap-2">
             {order.attachments.map((a) => (

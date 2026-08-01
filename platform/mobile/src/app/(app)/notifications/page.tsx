@@ -5,6 +5,7 @@ import { Bell, Check } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Notification {
   id: string;
@@ -63,7 +64,7 @@ export default function NotificationsPage() {
       <div className="flex flex-col gap-2 p-4">
         {loading && <PageLoader className="p-0" />}
         {!loading && notifications.length === 0 && (
-          <p className="text-sm text-muted-foreground">Уведомлений пока нет</p>
+          <EmptyState icon={Bell} title="Уведомлений пока нет" bordered={false} />
         )}
         {notifications.map((n) => (
           <button

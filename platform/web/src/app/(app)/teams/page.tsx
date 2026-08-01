@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, UsersRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface Member {
@@ -110,6 +111,9 @@ export default function TeamsPage() {
       )}
 
       {loading && <PageLoader />}
+      {!loading && teams.length === 0 && (
+        <EmptyState icon={UsersRound} title="Бригад пока нет" description="Создайте первую кнопкой выше" />
+      )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {!loading && teams.map((t) => {
           const availableUsers = users.filter((u) => u.teamId !== t.id);
@@ -174,9 +178,6 @@ export default function TeamsPage() {
             </Card>
           );
         })}
-        {!loading && teams.length === 0 && (
-          <p className="text-sm text-muted-foreground">Бригад пока нет — создайте первую.</p>
-        )}
       </div>
     </div>
   );

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Play, Square } from "lucide-react";
+import { Play, Square, UsersRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface TeamApi {
@@ -158,8 +159,10 @@ export default function CleaningCyclesPage() {
             </Card>
           );
         })}
-        {!loading && teams.length === 0 && <p className="text-sm text-muted-foreground">Бригад пока нет.</p>}
       </div>
+      {!loading && teams.length === 0 && (
+        <EmptyState icon={UsersRound} title="Бригад пока нет" description="Создайте бригады в разделе «Бригады»" />
+      )}
     </div>
   );
 }

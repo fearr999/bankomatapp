@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, AlertTriangle, Warehouse as WarehouseIcon, History } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface Item {
@@ -114,7 +115,7 @@ export default function WarehousePage() {
 
       {loading && <PageLoader />}
       {!loading && items.length === 0 && (
-        <p className="text-sm text-muted-foreground">Товаров на складе пока нет.</p>
+        <EmptyState icon={WarehouseIcon} title="Товаров на складе пока нет" description="Добавьте первую позицию кнопкой выше" />
       )}
       <div className="flex flex-col gap-2">
         {!loading && items.map((it) => (
@@ -231,7 +232,7 @@ function ItemRow({
               </div>
             ))}
             {movements.length === 0 && (
-              <p className="text-xs text-muted-foreground">Движений пока нет</p>
+              <EmptyState icon={History} title="Движений пока нет" size="sm" bordered={false} />
             )}
           </div>
         </CardContent>

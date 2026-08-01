@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Wrench } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 const LocationPicker = dynamic(
@@ -191,6 +192,8 @@ export default function EquipmentPage() {
 
       {loading ? (
         <PageLoader />
+      ) : items.length === 0 ? (
+        <EmptyState icon={Wrench} title="Оборудования пока нет" description="Добавьте первую единицу кнопкой выше" />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((it) => (
@@ -216,9 +219,6 @@ export default function EquipmentPage() {
               </Card>
             </Link>
           ))}
-          {items.length === 0 && (
-            <p className="text-sm text-muted-foreground">Оборудования пока нет.</p>
-          )}
         </div>
       )}
     </div>

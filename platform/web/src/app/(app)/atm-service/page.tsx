@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Landmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface DeviceRow {
@@ -101,10 +102,14 @@ export default function AtmServicePage() {
             </Card>
           </Link>
         ))}
-        {!loading && devices.length === 0 && (
-          <p className="text-sm text-muted-foreground">Банкоматов/картоматов пока не заведено.</p>
-        )}
       </div>
+      {!loading && devices.length === 0 && (
+        <EmptyState
+          icon={Landmark}
+          title="Банкоматов/картоматов пока не заведено"
+          description="Укажите тип «Банкомат»/«Картомат» в карточке в разделе «Оборудование»"
+        />
+      )}
     </div>
   );
 }

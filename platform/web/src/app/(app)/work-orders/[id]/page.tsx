@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Camera, FileDown, Link2 } from "lucide-react";
+import { Camera, FileDown, Link2, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge, STATUS_LABELS } from "@/components/ui/badge";
 import { SlaBadge } from "@/components/ui/sla-badge";
 import { Button } from "@/components/ui/button";
@@ -133,9 +134,13 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
         ))}
 
         {templates.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Шаблонов пока нет — создайте в разделе «Чек-листы».
-          </p>
+          <EmptyState
+            icon={ListChecks}
+            title="Шаблонов пока нет"
+            description="Создайте в разделе «Чек-листы»"
+            size="sm"
+            bordered={false}
+          />
         ) : (
           <form onSubmit={submit} className="flex flex-col gap-3">
             <select
@@ -342,7 +347,7 @@ export default function WorkOrderDetailPage() {
           </CardHeader>
           <CardContent>
             {order.attachments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Фотографий пока нет</p>
+              <EmptyState icon={Camera} title="Фотографий пока нет" size="sm" bordered={false} />
             ) : (
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {order.attachments.map((a) => (

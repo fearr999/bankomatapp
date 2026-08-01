@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Paperclip, Trash2, X } from "lucide-react";
+import { ArrowLeft, Paperclip, Trash2, X, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch, API_BASE } from "@/lib/api";
@@ -233,7 +234,7 @@ export default function IssueDetailPage() {
                   <span className="text-xs text-muted-foreground">{ISSUE_STATUS_LABELS[c.status]}</span>
                 </Link>
               ))}
-              {issue.epicChildren.length === 0 && <p className="text-sm text-muted-foreground">Пока нет задач</p>}
+              {issue.epicChildren.length === 0 && <EmptyState icon={ListChecks} title="Пока нет задач" size="sm" bordered={false} />}
             </CardContent>
           </Card>
         )}

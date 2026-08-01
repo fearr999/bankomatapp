@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { ClipboardList, CheckCircle2, Clock, Star } from "lucide-react";
@@ -103,7 +104,7 @@ export default function EmployeeDetailPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {employee.orderHistory.length === 0 && (
-            <p className="text-sm text-muted-foreground">Пока нет назначенных заявок</p>
+            <EmptyState icon={ClipboardList} title="Пока нет назначенных заявок" size="sm" bordered={false} />
           )}
           {employee.orderHistory.map((o) => (
             <Link

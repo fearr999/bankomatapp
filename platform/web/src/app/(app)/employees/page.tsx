@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Trophy, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 
 interface EmployeeRow {
@@ -83,8 +84,8 @@ function Leaderboard() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                  Пока нет данных
+                <td colSpan={6} className="px-4 py-6">
+                  <EmptyState icon={Trophy} title="Пока нет данных" bordered={false} />
                 </td>
               </tr>
             )}

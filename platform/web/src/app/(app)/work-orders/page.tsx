@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SlaBadge } from "@/components/ui/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 import { REQUEST_TYPE_LABELS, REQUEST_TYPES } from "@/lib/request-types";
 
@@ -165,8 +166,8 @@ export default function WorkOrdersPage() {
               ))}
               {!loading && orders.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                    Заявок пока нет
+                  <td colSpan={7} className="px-4 py-6">
+                    <EmptyState icon={ClipboardList} title="Заявок пока нет" bordered={false} />
                   </td>
                 </tr>
               )}

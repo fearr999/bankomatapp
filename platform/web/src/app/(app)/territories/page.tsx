@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
 import { PageLoader } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { teamColor } from "@/lib/team-colors";
 import type { TerritorySite } from "@/components/territories/territory-map-view";
 
@@ -294,8 +296,8 @@ export default function TerritoriesPage() {
                   ))}
                   {filteredSites.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="p-5 text-center text-muted-foreground">
-                        Объектов не найдено
+                      <td colSpan={4} className="p-5">
+                        <EmptyState icon={MapPin} title="Объектов не найдено" bordered={false} />
                       </td>
                     </tr>
                   )}
