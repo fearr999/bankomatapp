@@ -9,17 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api";
-
-const ORG_TYPE_LABELS: Record<string, string> = {
-  BANK: "Банк",
-  CONTRACTOR: "Подрядчик",
-  CLEANING: "Клининг",
-  SERVICE: "Сервисная организация",
-  CASH_COLLECTION: "Инкассация",
-  LOGISTICS: "Логистика",
-  SECURITY: "Охрана",
-  OTHER: "Другое",
-};
+import { useLocale } from "@/lib/i18n/context";
 
 interface OrgDetail {
   id: string;
@@ -51,6 +41,7 @@ interface OrgDetail {
 }
 
 export default function OrganizationDetailPage() {
+  const { t } = useLocale();
   const params = useParams<{ id: string }>();
   const [org, setOrg] = useState<OrgDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +62,7 @@ export default function OrganizationDetailPage() {
         contractNumber: data.contractNumber ?? "",
       });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.organizations.loadError);
     }
   }
 
@@ -88,7 +79,7 @@ export default function OrganizationDetailPage() {
       setEditing(false);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка сохранения");
+      setError(e instanceof Error ? e.message : t.organizations.saveError);
     } finally {
       setBusy(false);
     }
@@ -103,16 +94,16 @@ export default function OrganizationDetailPage() {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">{org.name}</h1>
           <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-            {ORG_TYPE_LABELS[org.type] ?? org.type}
+            {t.orgType[org.type as keyof typeof t.orgType] ?? org.type}
           </span>
         </div>
 
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Контакты и договор</CardTitle>
+              <CardTitle>{t.organizations.contactsAndContract}</CardTitle>
               <Button variant="outline" onClick={() => setEditing((v) => !v)}>
-                {editing ? "Отмена" : "Редактировать"}
+                {editing ? t.organizations.cancel : t.organizations.edit}
               </Button>
             </div>
           </CardHeader>
@@ -121,14 +112,14 @@ export default function OrganizationDetailPage() {
               <form onSubmit={save} className="flex flex-col gap-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">Контактное лицо</label>
+                    <label className="mb-1 block text-xs text-muted-foreground">{t.organizations.contactPerson}</label>
                     <Input
                       value={form.contactName}
                       onChange={(e) => setForm((f) => ({ ...f, contactName: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">Телефон</label>
+                    <label className="mb-1 block text-xs text-muted-foreground">{t.organizations.phone}</label>
                     <Input
                       value={form.contactPhone}
                       onChange={(e) => setForm((f) => ({ ...f, contactPhone: e.target.value }))}
@@ -142,18 +133,18 @@ export default function OrganizationDetailPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">ИНН</label>
+                    <label className="mb-1 block text-xs text-muted-foreground">{t.organizations.inn}</label>
                     <Input value={form.inn} onChange={(e) => setForm((f) => ({ ...f, inn: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">Адрес</label>
+                    <label className="mb-1 block text-xs text-muted-foreground">{t.organizations.address}</label>
                     <Input
                       value={form.address}
                       onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">№ договора</label>
+                    <label className="mb-1 block text-xs text-muted-foreground">{t.organizations.contractNumber}</label>
                     <Input
                       value={form.contractNumber}
                       onChange={(e) => setForm((f) => ({ ...f, contractNumber: e.target.value }))}
@@ -161,17 +152,17 @@ export default function OrganizationDetailPage() {
                   </div>
                 </div>
                 <Button type="submit" disabled={busy} className="w-fit">
-                  {busy ? "Сохраняем..." : "Сохранить"}
+                  {busy ? t.organizations.saving : t.organizations.save}
                 </Button>
               </form>
             ) : (
               <div className="grid grid-cols-2 gap-2">
-                <span className="text-muted-foreground">Контактное лицо: {org.contactName ?? "—"}</span>
-                <span className="text-muted-foreground">Телефон: {org.contactPhone ?? "—"}</span>
+                <span className="text-muted-foreground">{t.organizations.contactPerson}: {org.contactName ?? "—"}</span>
+                <span className="text-muted-foreground">{t.organizations.phone}: {org.contactPhone ?? "—"}</span>
                 <span className="text-muted-foreground">Email: {org.contactEmail ?? "—"}</span>
-                <span className="text-muted-foreground">ИНН: {org.inn ?? "—"}</span>
-                <span className="text-muted-foreground">Адрес: {org.address ?? "—"}</span>
-                <span className="text-muted-foreground">№ договора: {org.contractNumber ?? "—"}</span>
+                <span className="text-muted-foreground">{t.organizations.inn}: {org.inn ?? "—"}</span>
+                <span className="text-muted-foreground">{t.organizations.address}: {org.address ?? "—"}</span>
+                <span className="text-muted-foreground">{t.organizations.contractNumber}: {org.contractNumber ?? "—"}</span>
               </div>
             )}
           </CardContent>
@@ -179,7 +170,7 @@ export default function OrganizationDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Сотрудники ({org.staff.length})</CardTitle>
+            <CardTitle>{t.organizations.staff} ({org.staff.length})</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {org.staff.map((s) => (
@@ -197,29 +188,29 @@ export default function OrganizationDetailPage() {
                 </span>
               </div>
             ))}
-            {org.staff.length === 0 && <EmptyState icon={Users} title="Сотрудников пока нет" size="sm" bordered={false} />}
+            {org.staff.length === 0 && <EmptyState icon={Users} title={t.organizations.noStaff} size="sm" bordered={false} />}
           </CardContent>
         </Card>
       </div>
 
       <Card className="h-fit">
         <CardHeader>
-          <CardTitle>Показатели</CardTitle>
+          <CardTitle>{t.organizations.metrics}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">
-          <span className="text-muted-foreground">Всего заявок: {org.stats.totalOrders}</span>
-          <span className="text-muted-foreground">Активных: {org.stats.activeOrders}</span>
-          <span className="text-muted-foreground">Завершено: {org.stats.completedOrders}</span>
-          <span className="text-muted-foreground">Отменено: {org.stats.cancelledOrders}</span>
+          <span className="text-muted-foreground">{t.organizations.totalOrders}: {org.stats.totalOrders}</span>
+          <span className="text-muted-foreground">{t.organizations.active}: {org.stats.activeOrders}</span>
+          <span className="text-muted-foreground">{t.organizations.completed}: {org.stats.completedOrders}</span>
+          <span className="text-muted-foreground">{t.organizations.cancelled}: {org.stats.cancelledOrders}</span>
           <span className="text-muted-foreground">
-            Среднее время выполнения:{" "}
-            {org.stats.avgCompletionHours != null ? `${org.stats.avgCompletionHours} ч` : "—"}
+            {t.organizations.avgCompletionTime}:{" "}
+            {org.stats.avgCompletionHours != null ? `${org.stats.avgCompletionHours} ${t.organizations.hoursShort}` : "—"}
           </span>
           <span className="text-muted-foreground">
             SLA: {org.stats.slaPercent != null ? `${org.stats.slaPercent}%` : "—"}
           </span>
           <span className="inline-flex items-center gap-1 text-muted-foreground">
-            Средний рейтинг:
+            {t.organizations.avgRating}:
             {org.stats.avgRating != null ? (
               <span className="inline-flex items-center gap-1 font-medium text-foreground">
                 <Star size={13} className="fill-amber-400 text-amber-400" />
