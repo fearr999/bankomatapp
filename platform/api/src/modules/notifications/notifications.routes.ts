@@ -5,6 +5,7 @@ import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { getBotInfo, isTelegramConfigured } from "../../lib/telegram.js";
 import { isWebPushConfigured } from "../../lib/webpush.js";
+import { isMailConfigured } from "../../lib/mail.js";
 
 export const notificationsRouter = Router();
 notificationsRouter.use(authenticate);
@@ -61,6 +62,14 @@ notificationsRouter.post("/telegram/link-code", async (req, res) => {
 notificationsRouter.post("/telegram/unlink", async (req, res) => {
   await prisma.user.update({ where: { id: req.auth!.userId }, data: { telegramChatId: null } });
   res.json({ ok: true });
+});
+
+notificationsRouter.get("/email/status", async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.auth!.userId },
+    select: { email: true },
+  });
+  res.json({ configured: isMailConfigured(), email: user?.email ?? null });
 });
 
 notificationsRouter.get("/push/status", async (req, res) => {

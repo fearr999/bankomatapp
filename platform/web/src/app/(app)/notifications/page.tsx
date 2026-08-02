@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Check, Send } from "lucide-react";
+import { Bell, Check, Mail, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -22,6 +22,22 @@ interface Notification {
 interface TelegramStatus {
   configured: boolean;
   linked: boolean;
+}
+
+interface EmailStatus {
+  configured: boolean;
+  email: string | null;
+}
+
+const CHANNEL_LABELS: Record<string, string> = {
+  telegram: "Telegram",
+  email: "Email",
+  web_push: "Push",
+  in_app: "В приложении",
+};
+
+function channelLabel(channel: string) {
+  return CHANNEL_LABELS[channel] ?? "В приложении";
 }
 
 function TelegramCard() {
@@ -123,6 +139,37 @@ function TelegramCard() {
   );
 }
 
+function EmailCard() {
+  const [status, setStatus] = useState<EmailStatus | null>(null);
+
+  useEffect(() => {
+    apiFetch<EmailStatus>("/notifications/email/status").then(setStatus);
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center gap-2 space-y-0">
+        <Mail size={15} className="text-muted-foreground" />
+        <CardTitle>Email</CardTitle>
+      </CardHeader>
+      <CardContent className="text-sm">
+        {!status ? (
+          <PageLoader className="p-0" />
+        ) : !status.configured ? (
+          <p className="text-muted-foreground">
+            Email-рассылка не настроена на сервере (нет <code>SMTP_HOST</code> в <code>.env</code>).
+          </p>
+        ) : (
+          <p className="text-muted-foreground">
+            Уведомления дублируются на <span className="text-foreground">{status.email}</span> — отдельно
+            подключать не нужно.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -167,6 +214,7 @@ export default function NotificationsPage() {
       </div>
 
       <TelegramCard />
+      <EmailCard />
 
       <Card>
         <CardHeader>
@@ -193,10 +241,8 @@ export default function NotificationsPage() {
               </div>
               <p className="text-muted-foreground">{n.message}</p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="rounded bg-muted px-1.5 py-0.5">
-                  {n.channel === "telegram" ? "Telegram" : "В приложении"}
-                </span>
-                {n.channel === "telegram" && !n.delivered && (
+                <span className="rounded bg-muted px-1.5 py-0.5">{channelLabel(n.channel)}</span>
+                {n.channel !== "in_app" && !n.delivered && (
                   <span className="text-red-500">не доставлено</span>
                 )}
               </div>
