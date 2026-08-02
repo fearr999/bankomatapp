@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polygon, useMapEvents } from "r
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { teamColor } from "@/lib/team-colors";
+import { useLocale } from "@/lib/i18n/context";
 
 export interface TerritorySite {
   id: string;
@@ -46,6 +47,7 @@ export function TerritoryMapView({
   polygon: [number, number][];
   onPoint: (point: [number, number]) => void;
 }) {
+  const { t } = useLocale();
   return (
     <MapContainer
       center={TASHKENT_CENTER}
@@ -71,7 +73,7 @@ export function TerritoryMapView({
               </>
             )}
             <br />
-            {s.teamName ? `Бригада: ${s.teamName}` : "Без бригады"}
+            {s.teamName ? `${t.territories.team}: ${s.teamName}` : t.territories.noTeam}
           </Popup>
         </Marker>
       ))}
