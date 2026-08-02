@@ -8,6 +8,7 @@ import { eligibleExecutorTypes } from "../../lib/executor-matching.js";
 import { generateWorkOrderReportPdf } from "../../lib/work-order-report.js";
 import { findNearestDevice } from "../../lib/nearest-device.js";
 import { checkAndAutoCompleteCycle } from "../../lib/cleaning-cycle-helpers.js";
+import { workOrderMessages, notificationMessages } from "../../lib/i18n-messages.js";
 
 const TERMINAL_STATUSES = new Set(["COMPLETED", "CLOSED", "CANCELLED"]);
 const AT_RISK_WINDOW_MS = 2 * 60 * 60 * 1000; // «горит» — до срока меньше 2 часов
@@ -226,7 +227,12 @@ workOrdersRouter.post("/", async (req, res) => {
       organizationId,
       publicTrackingToken: randomBytes(12).toString("hex"),
       events: {
-        create: { type: "created", message: "Заявка создана", userId: req.auth!.userId },
+        create: {
+          type: "created",
+          message: workOrderMessages.created().ru,
+          messageUz: workOrderMessages.created().uz,
+          userId: req.auth!.userId,
+        },
       },
     },
   });
@@ -244,6 +250,7 @@ workOrdersRouter.patch("/:id/status", async (req, res) => {
   });
   if (!existing) return res.status(404).json({ error: "Заявка не найдена" });
 
+  const statusMessage = workOrderMessages.statusChanged(parsed.data.status);
   const order = await prisma.workOrder.update({
     where: { id: req.params.id },
     data: {
@@ -251,7 +258,9 @@ workOrdersRouter.patch("/:id/status", async (req, res) => {
       events: {
         create: {
           type: "status_change",
-          message: parsed.data.comment ?? `Статус изменён на ${parsed.data.status}`,
+          message: parsed.data.comment ?? statusMessage.ru,
+          // Комментарий — свободный текст, перевести нельзя, показываем как есть в обеих локалях.
+          messageUz: parsed.data.comment ?? statusMessage.uz,
           userId: req.auth!.userId,
         },
       },
@@ -295,7 +304,8 @@ workOrdersRouter.post("/:id/confirm-arrival-qr", async (req, res) => {
       events: {
         create: {
           type: "qr_arrival",
-          message: "Прибытие подтверждено сканированием QR-кода объекта",
+          message: workOrderMessages.qrArrivalConfirmed().ru,
+          messageUz: workOrderMessages.qrArrivalConfirmed().uz,
           userId: req.auth!.userId,
         },
       },
@@ -358,7 +368,8 @@ workOrdersRouter.patch("/:id/assign", async (req, res) => {
       events: {
         create: {
           type: "assignment",
-          message: "Заявка назначена исполнителю",
+          message: workOrderMessages.assigned().ru,
+          messageUz: workOrderMessages.assigned().uz,
           userId: req.auth!.userId,
         },
       },
@@ -366,11 +377,14 @@ workOrdersRouter.patch("/:id/assign", async (req, res) => {
   });
 
   if (parsed.data.assignedToId) {
+    const assignedNotification = notificationMessages.workOrderAssigned(order.number, order.title);
     await notifyUser(
       parsed.data.assignedToId,
       "work_order_assigned",
-      "Новая заявка",
-      `Вам назначена заявка ${order.number}: ${order.title}`
+      assignedNotification.title.ru,
+      assignedNotification.message.ru,
+      assignedNotification.title.uz,
+      assignedNotification.message.uz
     );
   }
 

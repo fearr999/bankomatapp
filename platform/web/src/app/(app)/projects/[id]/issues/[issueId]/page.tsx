@@ -41,7 +41,14 @@ interface IssueDetail {
   epicChildren: Array<{ id: string; number: number; title: string; status: string; type: string }>;
   sprint: { id: string; name: string; status: string } | null;
   attachments: Array<{ id: string; url: string; createdAt: string; uploadedBy: { name: string } | null }>;
-  events: Array<{ id: string; type: string; message: string; createdAt: string; user: { name: string } | null }>;
+  events: Array<{
+    id: string;
+    type: string;
+    message: string;
+    messageUz?: string | null;
+    createdAt: string;
+    user: { name: string } | null;
+  }>;
 }
 
 interface UserOption {
@@ -320,7 +327,7 @@ export default function IssueDetailPage() {
             {issue.events.map((e) => (
               <div key={e.id} className="border-b pb-2 text-sm last:border-0">
                 <div className="flex items-center justify-between">
-                  <span>{e.message}</span>
+                  <span>{locale === "uz" && e.messageUz ? e.messageUz : e.message}</span>
                   <span className="text-xs text-muted-foreground">
                     {new Date(e.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
                   </span>

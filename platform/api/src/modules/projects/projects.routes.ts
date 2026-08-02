@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate, blockContractor } from "../../middleware/authenticate.js";
+import { issueMessages } from "../../lib/i18n-messages.js";
 
 export const projectsRouter = Router();
 projectsRouter.use(authenticate);
@@ -161,7 +162,14 @@ projectsRouter.post("/:id/issues", async (req, res) => {
       sprintId: parsed.data.sprintId,
       reporterId: req.auth!.userId,
       organizationId,
-      events: { create: { type: "created", message: "Задача создана", userId: req.auth!.userId } },
+      events: {
+        create: {
+          type: "created",
+          message: issueMessages.created().ru,
+          messageUz: issueMessages.created().uz,
+          userId: req.auth!.userId,
+        },
+      },
     },
   });
   res.status(201).json(issue);

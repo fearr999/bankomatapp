@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { notifyNearestNextDevice } from "../workorders/workorders.routes.js";
+import { workOrderMessages } from "../../lib/i18n-messages.js";
 
 export const attachmentsRouter = Router();
 attachmentsRouter.use(authenticate);
@@ -109,12 +110,14 @@ attachmentsRouter.post("/work-orders/:id/photos", (req, res, next) => {
     },
   });
 
+  const attachmentEventMessage = kind === "signature" ? workOrderMessages.signatureAdded() : workOrderMessages.photoAdded();
   await prisma.workOrderEvent.create({
     data: {
       workOrderId: req.params.id,
       userId: req.auth!.userId,
       type: kind,
-      message: kind === "signature" ? "Клиент подписал акт" : "Добавлена фотография",
+      message: attachmentEventMessage.ru,
+      messageUz: attachmentEventMessage.uz,
     },
   });
 
