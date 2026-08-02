@@ -23,13 +23,7 @@
     "teamsOnline": "Onlayn brigadalar",
     "atms": "Bankomatlar",
     "ordersChart": "So'nggi 7 kundagi arizalar",
-    "dispatchCenter": "Dispetcherlik markazi",
-    "recentOrders": "Arizalar",
-    "statusEnRoute": "Yo'lda",
-    "statusOnSite": "Obyektda",
-    "statusAssigned": "Tayinlangan",
-    "onlineNow": "onlayn",
-    "slaChip": "SLA · {min} daqiqa"
+    "dispatchCenter": "Dispetcherlik markazi"
   },
   "stats": {
     "modules": "tizimdagi modullar",
@@ -40,38 +34,14 @@
   "features": {
     "heading": "Tizim ichida nimalar bor",
     "subheading": "Namoyishda changlanib yotmaydigan, dalada haqiqatan ishlatiladigan modullar",
-    "orders": {
-      "title": "Arizalar va SLA",
-      "description": "Yaratilishidan aktgacha to'liq ariza jarayoni — SLA taymeri va muddati o'tgan arizalarni avtomatik eskalatsiya qilish bilan."
-    },
-    "dispatch": {
-      "title": "Dispetcherlik markazi",
-      "description": "Real vaqt rejimidagi xarita, ijrochini sudrab-tashlash orqali tayinlash, eng yaqin bo'sh xodim."
-    },
-    "atm": {
-      "title": "Bankomatlarga xizmat ko'rsatish",
-      "description": "Kassetalarning to'lganlik darajasi, inkassatsiya, favqulodda chaqiruvlar — bankomat va kartomatlar uchun alohida yo'nalish."
-    },
-    "cleaning": {
-      "title": "Brigadalar bo'yicha tozalash sikllari",
-      "description": "Hududlar brigadalarga biriktirilgan; sikl har bir nuqta uchun o'zi ariza yaratadi va hammasi tozalanganda o'zi yopiladi."
-    },
-    "photo": {
-      "title": "Foto-hisobotlar va imzo",
-      "description": "Geobelgili fotosuratlar, mijozning elektron imzosi, har bir ish turi uchun cheklistlar — to'g'ridan-to'g'ri telefondan."
-    },
-    "analytics": {
-      "title": "Analitika va reyting",
-      "description": "Brigadalar va pudratchilar bo'yicha KPI, xodimlar reytingi, SLA taqqoslash — bitta ekranda."
-    },
-    "multitenancy": {
-      "title": "Ko'p tashkilotli tizim",
-      "description": "Bank va har bir pudratchi faqat o'z ma'lumotlarini ko'radi; kirish huquqi rollar bo'yicha aniq bitta arizagacha cheklangan."
-    },
-    "mobile": {
-      "title": "Mobil ilova",
-      "description": "Fotosuratlar uchun oflayn navbat, geozona orqali avtomatik yetib kelish, QR-tasdiqlash — aloqa yomon bo'lganda ham ishlaydi."
-    }
+    "orders": { "title": "Arizalar va SLA", "description": "Yaratilishidan aktgacha to'liq ariza jarayoni — SLA taymeri va muddati o'tgan arizalarni avtomatik eskalatsiya qilish bilan." },
+    "dispatch": { "title": "Dispetcherlik markazi", "description": "Real vaqt rejimidagi xarita, ijrochini sudrab-tashlash orqali tayinlash, eng yaqin bo'sh xodim." },
+    "atm": { "title": "Bankomatlarga xizmat ko'rsatish", "description": "Kassetalarning to'lganlik darajasi, inkassatsiya, favqulodda chaqiruvlar — bankomat va kartomatlar uchun alohida yo'nalish." },
+    "cleaning": { "title": "Brigadalar bo'yicha tozalash sikllari", "description": "Hududlar brigadalarga biriktirilgan; sikl har bir nuqta uchun o'zi ariza yaratadi va hammasi tozalanganda o'zi yopiladi." },
+    "photo": { "title": "Foto-hisobotlar va imzo", "description": "Geobelgili fotosuratlar, mijozning elektron imzosi, har bir ish turi uchun cheklistlar — to'g'ridan-to'g'ri telefondan." },
+    "analytics": { "title": "Analitika va reyting", "description": "Brigadalar va pudratchilar bo'yicha KPI, xodimlar reytingi, SLA taqqoslash — bitta ekranda." },
+    "multitenancy": { "title": "Ko'p tashkilotli tizim", "description": "Bank va har bir pudratchi faqat o'z ma'lumotlarini ko'radi; kirish huquqi rollar bo'yicha aniq bitta arizagacha cheklangan." },
+    "mobile": { "title": "Mobil ilova", "description": "Fotosuratlar uchun oflayn navbat, geozona orqali avtomatik yetib kelish, QR-tasdiqlash — aloqa yomon bo'lganda ham ishlaydi." }
   },
   "audience": {
     "heading": "Kimlar uchun",
