@@ -25,6 +25,12 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       window.location.href = "/login";
       return new Promise<T>(() => {});
     }
+    // Пробный период истёк и организация ещё не оплатила — блокируем весь
+    // кабинет экраном "свяжитесь с нами" вместо обычных ошибок по каждому запросу.
+    if (res.status === 402 && token && window.location.pathname !== "/trial-expired") {
+      window.location.href = "/trial-expired";
+      return new Promise<T>(() => {});
+    }
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ? JSON.stringify(body.error) : `Ошибка запроса: ${res.status}`);
   }
@@ -76,4 +82,15 @@ export function getCurrentUser(): CurrentUser | null {
 export function isContractor(user?: CurrentUser | null): boolean {
   const u = user ?? getCurrentUser();
   return !!u?.contractorOrganizationId;
+}
+
+export interface SubscriptionStatus {
+  trialEndsAt: string | null;
+  subscriptionActive: boolean;
+  daysLeft: number | null;
+  expired: boolean;
+}
+
+export function getSubscriptionStatus() {
+  return apiFetch<SubscriptionStatus>("/auth/subscription");
 }

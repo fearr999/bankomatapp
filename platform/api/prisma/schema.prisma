@@ -87,6 +87,12 @@ model Organization {
   contractEndAt   DateTime?
   status          String    @default("active") // active | inactive
 
+  // Пробный период и подписка — только для верхнеуровневых (само-
+  // зарегистрированных) организаций; trialEndsAt = null у организаций,
+  // созданных до этой функции, поэтому доступ им не ограничивается.
+  trialEndsAt        DateTime?
+  subscriptionActive Boolean   @default(false)
+
   users              User[]
   teams              Team[]
   clients            Client[]

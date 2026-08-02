@@ -23,10 +23,25 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     // общий JWT_SECRET и не разлогинивая всех остальных сразу.
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { tokenVersion: true },
+      select: {
+        tokenVersion: true,
+        organization: { select: { trialEndsAt: true, subscriptionActive: true } },
+      },
     });
     if (!user || user.tokenVersion !== (payload.tokenVersion ?? 0)) {
       return res.status(401).json({ error: "Токен недействителен или истёк" });
+    }
+    // trialEndsAt = null у организаций, созданных до пробного периода, — для
+    // них доступ не ограничивается. Подрядчики (contractorOrganizationId)
+    // тоже проверяются по своей же organizationId — это верхнеуровневый
+    // тенант, платит одна организация целиком.
+    // /auth/subscription обязан оставаться доступным даже с истёкшим пробным
+    // периодом — иначе экран блокировки на фронтенде не сможет ни показать
+    // статус, ни проверить, что доступ уже разблокировали вручную.
+    const org = user.organization;
+    const isSubscriptionCheck = req.baseUrl + req.path === "/auth/subscription";
+    if (org?.trialEndsAt && !org.subscriptionActive && org.trialEndsAt < new Date() && !isSubscriptionCheck) {
+      return res.status(402).json({ error: "Пробный период истёк", code: "TRIAL_EXPIRED" });
     }
     req.auth = {
       userId: payload.userId,
