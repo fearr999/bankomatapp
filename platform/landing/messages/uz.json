@@ -28,7 +28,13 @@
     "teamRanking": "Brigadalar reytingi",
     "columnNew": "Yangi",
     "columnProgress": "Jarayonda",
-    "columnDone": "Tayyor"
+    "columnDone": "Tayyor",
+    "orderTitle": "UZUM1024 — Tozalash",
+    "checklistItem1": "Kassetalarni ko'zdan kechirish",
+    "checklistItem2": "Kupyura qabul qurilmasini tozalash",
+    "checklistItem3": "Hisobot fotosi",
+    "statusInProgress": "Jarayonda",
+    "statusDone": "Yakunlandi"
   },
   "stats": {
     "modules": "tizimdagi modullar",

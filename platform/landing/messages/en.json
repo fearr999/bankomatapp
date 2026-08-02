@@ -28,7 +28,13 @@
     "teamRanking": "Team ranking",
     "columnNew": "New",
     "columnProgress": "In progress",
-    "columnDone": "Done"
+    "columnDone": "Done",
+    "orderTitle": "UZUM1024 — Cleaning",
+    "checklistItem1": "Inspect cassettes",
+    "checklistItem2": "Clean bill acceptor",
+    "checklistItem3": "Photo report",
+    "statusInProgress": "In progress",
+    "statusDone": "Done"
   },
   "stats": {
     "modules": "modules in the system",
