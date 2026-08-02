@@ -415,6 +415,27 @@ export const ru = {
     hoursShort: "ч",
     avgRating: "Средний рейтинг",
   },
+  ai: {
+    title: "AI-модуль",
+    architecture: "Архитектура",
+    architectureText:
+      "Готова точка подключения: единый эндпоинт POST /ai/analyze, куда позже подключится реальная модель (например, Claude через Anthropic API) — сейчас он возвращает предсказуемую заглушку в том же формате, в котором будет отвечать модель, и сохраняет результат в базу (AiInsight), чтобы фронтенду не пришлось меняться, когда модель подключат по-настоящему.",
+    directionsIntro: "Из ТЗ предусмотрены следующие направления анализа (все уже в контракте API):",
+    demoCall: "Демо-вызов (заглушка)",
+    queryPlaceholder: "Запрос (для интеллектуального поиска)...",
+    running: "Выполняем...",
+    run: "Запустить",
+    noRunsYet: "Запусков пока не было",
+    types: {
+      photo_analysis: "Анализ фотографий",
+      employee_efficiency: "Эффективность сотрудника",
+      load_forecast: "Прогноз загрузки",
+      assignment_recommendation: "Рекомендация по назначению",
+      anomaly_detection: "Поиск аномалий",
+      equipment_failure_prediction: "Прогноз поломки оборудования",
+      smart_search: "Интеллектуальный поиск",
+    },
+  },
   cleaningCycles: {
     title: "Циклы уборки",
     description:
