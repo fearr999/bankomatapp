@@ -29,6 +29,7 @@ export const ru = {
     toggleTheme: "Переключить тему",
     language: "Язык",
     loading: "Загрузка",
+    back: "Назад",
   },
   login: {
     title: "Corpi",
