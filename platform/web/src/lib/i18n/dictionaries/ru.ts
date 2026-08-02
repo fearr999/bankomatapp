@@ -415,6 +415,30 @@ export const ru = {
     hoursShort: "ч",
     avgRating: "Средний рейтинг",
   },
+  cleaningCycles: {
+    title: "Циклы уборки",
+    description:
+      "Старт цикла создаёт заявку на уборку по каждому банкомату/картомату территории бригады. Цикл завершается сам, когда закрыты все заявки, либо закройте его досрочно вручную.",
+    loadError: "Ошибка загрузки",
+    startError: "Не удалось начать цикл",
+    closeError: "Не удалось закрыть цикл",
+    cycleNumber: "Цикл №",
+    started: "начат",
+    closed: "закрыт",
+    noCyclesYet: "Циклов ещё не было",
+    openPoints: "Открыть точки",
+    close: "Закрыть",
+    startCycle: "Начать цикл",
+    noTeams: "Бригад пока нет",
+    noTeamsDescription: "Создайте бригады в разделе «Бригады»",
+    allTeams: "Все бригады",
+    deviceCardomatShort: "КАРТ",
+    status: {
+      ACTIVE: "Активен",
+      COMPLETED: "Завершён",
+      CLOSED_EARLY: "Закрыт досрочно",
+    },
+  },
   atmService: {
     title: "Обслуживание банкоматов",
     description:
