@@ -2,9 +2,11 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n/context";
 
 /** Простая подпись на canvas — pointer events, без внешних библиотек. */
 export function SignaturePad({ onSave, busy }: { onSave: (blob: Blob) => void; busy?: boolean }) {
+  const { t } = useLocale();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const [hasDrawn, setHasDrawn] = useState(false);
@@ -68,10 +70,10 @@ export function SignaturePad({ onSave, busy }: { onSave: (blob: Blob) => void; b
       />
       <div className="flex gap-2">
         <Button variant="outline" onClick={clear} className="flex-1">
-          Очистить
+          {t.order.clearSignature}
         </Button>
         <Button onClick={save} disabled={!hasDrawn || busy} className="flex-1">
-          {busy ? "Сохраняем..." : "Сохранить подпись"}
+          {busy ? t.order.savingSignature : t.order.saveSignature}
         </Button>
       </div>
     </div>

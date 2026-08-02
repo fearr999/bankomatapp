@@ -6,15 +6,21 @@ import { Navigation, Loader2 } from "lucide-react";
 import { apiFetch, getCurrentUser } from "@/lib/api";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n/context";
+
+function MapLoading() {
+  const { t } = useLocale();
+  return (
+    <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
+      <Loader2 size={15} className="animate-spin" />
+      {t.map.loadingMap}
+    </div>
+  );
+}
 
 const MyRouteMap = dynamic(() => import("@/components/map-view").then((m) => m.MyRouteMap), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
-      <Loader2 size={15} className="animate-spin" />
-      Загрузка карты...
-    </div>
-  ),
+  loading: () => <MapLoading />,
 });
 
 interface OrderApi {
@@ -35,6 +41,7 @@ const OPEN_STATUSES = new Set([
 ]);
 
 export default function MapPage() {
+  const { t } = useLocale();
   const user = getCurrentUser();
   const geo = useGeoCheckin(true);
   const [orders, setOrders] = useState<OrderApi[]>([]);
@@ -58,11 +65,9 @@ export default function MapPage() {
   return (
     <div className="flex h-screen flex-col">
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-4 backdrop-blur">
-        <p className="font-semibold">Карта</p>
+        <p className="font-semibold">{t.map.title}</p>
         {orders.length === 0 ? (
-          <p className="mt-1 text-xs text-muted-foreground">
-            Нет открытых заявок с указанным адресом объекта
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t.map.noOpenOrders}</p>
         ) : (
           <div className="mt-2 flex gap-2 overflow-x-auto">
             {orders.map((o) => (
@@ -98,7 +103,7 @@ export default function MapPage() {
             rel="noreferrer"
           >
             <Button className="w-full">
-              <Navigation size={16} /> Построить маршрут
+              <Navigation size={16} /> {t.map.buildRoute}
             </Button>
           </a>
         </div>

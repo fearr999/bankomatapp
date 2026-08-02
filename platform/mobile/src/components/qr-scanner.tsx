@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
 import { X } from "lucide-react";
+import { useLocale } from "@/lib/i18n/context";
 
 /** Полноэкранный сканер QR через камеру устройства (jsqr — бесплатно, без внешних сервисов). */
 export function QrScannerModal({ onDetect, onClose }: { onDetect: (text: string) => void; onClose: () => void }) {
+  const { t } = useLocale();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -29,7 +31,7 @@ export function QrScannerModal({ onDetect, onClose }: { onDetect: (text: string)
         }
         tick();
       } catch {
-        setError("Нет доступа к камере");
+        setError(t.order.noCameraAccess);
       }
     }
 
@@ -73,7 +75,7 @@ export function QrScannerModal({ onDetect, onClose }: { onDetect: (text: string)
         <>
           <video ref={videoRef} className="flex-1 object-cover" playsInline muted />
           <p className="bg-black py-3 text-center text-xs text-white/70">
-            Наведите камеру на QR-код на объекте
+            {t.order.aimCameraAtQr}
           </p>
         </>
       )}

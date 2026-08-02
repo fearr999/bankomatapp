@@ -4,7 +4,8 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Camera, WifiOff, QrCode, FileDown, Link2, MapPin, ListChecks } from "lucide-react";
 import { apiFetch, API_BASE, WEB_BASE, getToken } from "@/lib/api";
-import { STATUS_LABELS, StatusBadge } from "@/components/ui/badge";
+import { STATUS_KEYS, StatusBadge, useStatusLabels } from "@/components/ui/badge";
+import { useLocale } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -27,7 +28,6 @@ interface OrderDetail {
   events: Array<{ id: string; type: string; message: string; createdAt: string; user?: { name: string } | null }>;
 }
 
-const SLA_LABELS: Record<string, string> = { overdue: "SLA просрочен", at_risk: "SLA горит", ok: "SLA в норме" };
 const SLA_STYLES: Record<string, string> = {
   overdue: "bg-red-500/15 text-red-500",
   at_risk: "bg-amber-500/15 text-amber-500",
@@ -55,7 +55,7 @@ interface ChecklistSubmission {
   template: ChecklistTemplate;
 }
 
-const STATUS_FLOW = Object.keys(STATUS_LABELS);
+const STATUS_FLOW = STATUS_KEYS;
 
 function getBrowserLocation(): Promise<{ lat: number; lng: number } | null> {
   return new Promise((resolve) => {
@@ -69,6 +69,7 @@ function getBrowserLocation(): Promise<{ lat: number; lng: number } | null> {
 }
 
 function ChecklistSection({ workOrderId }: { workOrderId: string }) {
+  const { t } = useLocale();
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [submissions, setSubmissions] = useState<ChecklistSubmission[]>([]);
   const [templateId, setTemplateId] = useState("");
@@ -76,12 +77,12 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
   const [busy, setBusy] = useState(false);
 
   async function load() {
-    const [t, s] = await Promise.all([
+    const [loadedTemplates, loadedSubmissions] = await Promise.all([
       apiFetch<ChecklistTemplate[]>("/checklists/templates"),
       apiFetch<ChecklistSubmission[]>(`/checklists/work-orders/${workOrderId}/submissions`),
     ]);
-    setTemplates(t);
-    setSubmissions(s);
+    setTemplates(loadedTemplates);
+    setSubmissions(loadedSubmissions);
   }
 
   useEffect(() => {
@@ -89,7 +90,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workOrderId]);
 
-  const selected = templates.find((t) => t.id === templateId);
+  const selected = templates.find((tpl) => tpl.id === templateId);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -110,7 +111,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
 
   return (
     <section className="flex flex-col gap-3 border-t border-border p-4">
-      <h2 className="text-sm font-semibold">Чек-лист</h2>
+      <h2 className="text-sm font-semibold">{t.order.checklist}</h2>
       {submissions.map((s) => (
         <div key={s.id} className="rounded-lg border border-border p-3 text-sm">
           <p className="font-medium">{s.template.name}</p>
@@ -125,7 +126,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
       ))}
 
       {templates.length === 0 ? (
-        <EmptyState icon={ListChecks} title="Шаблонов пока нет" size="sm" bordered={false} />
+        <EmptyState icon={ListChecks} title={t.order.noTemplates} size="sm" bordered={false} />
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-3">
           <select
@@ -136,10 +137,10 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
               setAnswers({});
             }}
           >
-            <option value="">Выбрать чек-лист...</option>
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+            <option value="">{t.order.selectChecklist}</option>
+            {templates.map((tpl) => (
+              <option key={tpl.id} value={tpl.id}>
+                {tpl.name}
               </option>
             ))}
           </select>
@@ -170,7 +171,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
                 </div>
               ))}
               <Button type="submit" disabled={busy}>
-                {busy ? "Сохраняем..." : "Сохранить чек-лист"}
+                {busy ? t.order.saving : t.order.saveChecklist}
               </Button>
             </div>
           )}
@@ -181,6 +182,8 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
 }
 
 function OrderDetailContent() {
+  const { t, locale } = useLocale();
+  const statusLabels = useStatusLabels();
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams.get("id") ?? "";
@@ -206,7 +209,7 @@ function OrderDetailContent() {
       // Обрыв сети при уже открытой заявке (офлайн-режим) не должен стирать
       // с экрана уже показанные данные — иначе теряется и баннер очереди фото.
       if (!hasLoadedRef.current) {
-        setError(e instanceof Error ? e.message : "Ошибка загрузки");
+        setError(e instanceof Error ? e.message : t.order.loadError);
       }
     }
     const q = await listQueuedPhotos();
@@ -255,10 +258,10 @@ function OrderDetailContent() {
         method: "POST",
         body: JSON.stringify({ scannedSiteId }),
       });
-      setQrMessage("Прибытие подтверждено");
+      setQrMessage(t.order.arrivalConfirmed);
       await load();
     } catch (e) {
-      setQrMessage(e instanceof Error ? e.message : "QR-код не подошёл");
+      setQrMessage(e instanceof Error ? e.message : t.order.qrMismatch);
     }
     setTimeout(() => setQrMessage(null), 4000);
   }
@@ -289,7 +292,7 @@ function OrderDetailContent() {
   function copyTrackingLink() {
     if (!order?.publicTrackingToken) return;
     navigator.clipboard?.writeText(`${WEB_BASE}/track/${order.publicTrackingToken}`);
-    setQrMessage("Ссылка скопирована");
+    setQrMessage(t.order.linkCopied);
     setTimeout(() => setQrMessage(null), 3000);
   }
 
@@ -332,7 +335,7 @@ function OrderDetailContent() {
   return (
     <div className="flex flex-col">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-4 backdrop-blur">
-        <button onClick={() => router.back()} aria-label="Назад">
+        <button onClick={() => router.back()} aria-label={t.order.back}>
           <ArrowLeft size={18} />
         </button>
         <div className="flex-1">
@@ -347,7 +350,7 @@ function OrderDetailContent() {
           onClick={retryQueue}
           className="flex items-center gap-2 bg-amber-500/15 px-4 py-2 text-xs text-amber-500"
         >
-          <WifiOff size={14} /> {queued.length} фото не отправлено — нажмите, чтобы повторить
+          <WifiOff size={14} /> {queued.length} {t.order.photosNotSent}
         </button>
       )}
 
@@ -360,7 +363,7 @@ function OrderDetailContent() {
           onClick={() => changeStatus("ARRIVED")}
           className="flex items-center gap-2 bg-emerald-500/15 px-4 py-2 text-xs font-medium text-emerald-600"
         >
-          <MapPin size={14} /> Вы рядом с объектом — отметить «Прибыл»?
+          <MapPin size={14} /> {t.order.nearSitePrompt}
         </button>
       )}
 
@@ -368,34 +371,34 @@ function OrderDetailContent() {
         <div className="flex items-center gap-2">
           {order.slaStatus && (
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${SLA_STYLES[order.slaStatus]}`}>
-              {SLA_LABELS[order.slaStatus]}
+              {t.sla[order.slaStatus as keyof typeof t.sla]}
             </span>
           )}
         </div>
-        <p className="text-muted-foreground">{order.description || "Без описания"}</p>
-        <p className="text-xs text-muted-foreground">Клиент: {order.client?.name ?? "—"}</p>
+        <p className="text-muted-foreground">{order.description || t.order.noDescription}</p>
+        <p className="text-xs text-muted-foreground">{t.order.client}: {order.client?.name ?? "—"}</p>
         <p className="text-xs text-muted-foreground">
-          Адрес: {order.site?.address ?? order.site?.name ?? "—"}
+          {t.order.address}: {order.site?.address ?? order.site?.name ?? "—"}
         </p>
         <div className="flex flex-wrap gap-2 pt-2">
           {order.site && (
             <Button variant="outline" onClick={() => setShowScanner(true)}>
-              <QrCode size={16} /> Сканировать QR прибытия
+              <QrCode size={16} /> {t.order.scanArrivalQr}
             </Button>
           )}
           <Button variant="outline" onClick={downloadReport}>
-            <FileDown size={16} /> Скачать акт
+            <FileDown size={16} /> {t.order.downloadReport}
           </Button>
           {order.publicTrackingToken && (
             <Button variant="outline" onClick={copyTrackingLink}>
-              <Link2 size={16} /> Ссылка для клиента
+              <Link2 size={16} /> {t.order.clientLink}
             </Button>
           )}
         </div>
       </section>
 
       <section className="flex flex-col gap-2 border-b border-border p-4">
-        <h2 className="text-sm font-semibold">Сменить статус</h2>
+        <h2 className="text-sm font-semibold">{t.order.changeStatus}</h2>
         <div className="flex flex-wrap gap-2">
           {STATUS_FLOW.map((s) => (
             <button
@@ -406,7 +409,7 @@ function OrderDetailContent() {
                 s === order.status ? "bg-primary text-primary-foreground" : "border border-border"
               }`}
             >
-              {STATUS_LABELS[s]}
+              {statusLabels[s as keyof typeof statusLabels]}
             </button>
           ))}
         </div>
@@ -414,9 +417,9 @@ function OrderDetailContent() {
 
       <section className="flex flex-col gap-3 border-b border-border p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Фотографии</h2>
+          <h2 className="text-sm font-semibold">{t.order.photos}</h2>
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-            <Camera size={16} /> {uploading ? "Загружаем..." : "Снять фото"}
+            <Camera size={16} /> {uploading ? t.order.uploading : t.order.takePhoto}
           </Button>
           <input
             ref={fileInputRef}
@@ -432,7 +435,7 @@ function OrderDetailContent() {
           />
         </div>
         {order.attachments.length === 0 ? (
-          <EmptyState icon={Camera} title="Фотографий пока нет" size="sm" bordered={false} />
+          <EmptyState icon={Camera} title={t.order.noPhotos} size="sm" bordered={false} />
         ) : (
           <div className="grid grid-cols-3 gap-2">
             {order.attachments.map((a) => (
@@ -451,21 +454,21 @@ function OrderDetailContent() {
       <ChecklistSection workOrderId={order.id} />
 
       <section className="flex flex-col gap-3 border-b border-border p-4">
-        <h2 className="text-sm font-semibold">Подпись клиента</h2>
+        <h2 className="text-sm font-semibold">{t.order.signature}</h2>
         <SignaturePad onSave={saveSignature} busy={savingSignature} />
       </section>
 
       <section className="flex flex-col gap-3 p-4">
-        <h2 className="text-sm font-semibold">История</h2>
+        <h2 className="text-sm font-semibold">{t.order.history}</h2>
         {order.events.map((e) => (
           <div key={e.id} className="border-b border-border pb-2 text-sm last:border-0">
             <div className="flex items-center justify-between">
               <span>{e.message}</span>
               <span className="text-xs text-muted-foreground">
-                {new Date(e.createdAt).toLocaleString("ru-RU")}
+                {new Date(e.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
               </span>
             </div>
-            <span className="text-xs text-muted-foreground">{e.user?.name ?? "система"}</span>
+            <span className="text-xs text-muted-foreground">{e.user?.name ?? t.order.system}</span>
           </div>
         ))}
       </section>
