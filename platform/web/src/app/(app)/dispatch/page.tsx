@@ -8,18 +8,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api";
 import { useRequestTypeLabels } from "@/lib/request-types";
+import { useLocale } from "@/lib/i18n/context";
 import type { MapEmployee, MapOrder } from "@/components/dispatch/map-view";
 
 // react-leaflet использует window/document — рендерим только на клиенте.
 const MapView = dynamic(() => import("@/components/dispatch/map-view").then((m) => m.MapView), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
-      <Loader2 size={15} className="animate-spin" />
-      Загрузка карты...
-    </div>
+    <MapLoading />
   ),
 });
+
+function MapLoading() {
+  const { t } = useLocale();
+  return (
+    <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
+      <Loader2 size={15} className="animate-spin" />
+      {t.dispatch.loadingMap}
+    </div>
+  );
+}
 
 interface EmployeeApi {
   id: string;
@@ -44,6 +52,7 @@ interface OrderApi {
 const POLL_MS = 8000;
 
 export default function DispatchPage() {
+  const { t } = useLocale();
   const requestTypeLabels = useRequestTypeLabels();
   const [employees, setEmployees] = useState<EmployeeApi[]>([]);
   const [orders, setOrders] = useState<OrderApi[]>([]);
@@ -61,9 +70,9 @@ export default function DispatchPage() {
       setEmployees(e);
       setOrders(o);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка загрузки");
+      setError(err instanceof Error ? err.message : t.dispatch.loadError);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -73,7 +82,7 @@ export default function DispatchPage() {
 
   async function assignOrder(orderId: string, employeeId: string) {
     if (eligibleIds && !eligibleIds.has(employeeId)) {
-      setError("Этот сотрудник не подходит по типу заявки");
+      setError(t.dispatch.notEligible);
       return;
     }
     setAssigning(true);
@@ -84,7 +93,7 @@ export default function DispatchPage() {
       });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось назначить заявку");
+      setError(err instanceof Error ? err.message : t.dispatch.assignError);
     } finally {
       setAssigning(false);
     }
@@ -128,7 +137,7 @@ export default function DispatchPage() {
 
   return (
     <div className="flex h-[calc(100vh-6.5rem)] flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Диспетчерский центр</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t.dispatch.title}</h1>
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-[1fr_320px]">
@@ -140,8 +149,8 @@ export default function DispatchPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                Сотрудники ({employees.filter((e) => e.status === "online").length} онлайн из{" "}
-                {employees.length})
+                {t.dispatch.employees} ({employees.filter((e) => e.status === "online").length}{" "}
+                {t.dispatch.online} {employees.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-1.5">
@@ -188,11 +197,14 @@ export default function DispatchPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Неназначенные заявки ({unassigned.length})</CardTitle>
+              <CardTitle>
+                {t.dispatch.unassignedOrders} ({unassigned.length})
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-1.5">
               <p className="pb-1 text-xs text-muted-foreground">
-                Перетащите заявку на сотрудника, чтобы назначить{assigning ? " (сохраняем...)" : ""}
+                {t.dispatch.dragHint}
+                {assigning ? ` (${t.dispatch.saving})` : ""}
               </p>
               {unassigned.map((o) => (
                 <div
@@ -216,7 +228,7 @@ export default function DispatchPage() {
                 </div>
               ))}
               {unassigned.length === 0 && (
-                <p className="text-sm text-muted-foreground">Все заявки назначены</p>
+                <p className="text-sm text-muted-foreground">{t.dispatch.allAssigned}</p>
               )}
             </CardContent>
           </Card>
