@@ -31,6 +31,7 @@ export const uz: typeof ru = {
     toggleTheme: "Mavzuni almashtirish",
     language: "Til",
     loading: "Yuklanmoqda",
+    back: "Orqaga",
   },
   login: {
     title: "Corpi",
