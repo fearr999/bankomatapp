@@ -6,22 +6,21 @@ import { usePathname } from "next/navigation";
 import { ClipboardList, Map, Bell, UserCircle, Power } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiFetch, getCurrentUser } from "@/lib/api";
-import { shiftLabel } from "@/lib/shift-labels";
-
-const LEFT_ITEMS = [
-  { href: "/orders", label: "Заявки", icon: ClipboardList },
-  { href: "/map", label: "Карта", icon: Map },
-];
-
-const RIGHT_ITEMS = [
-  { href: "/notifications", label: "Уведомления", icon: Bell },
-  { href: "/profile", label: "Профиль", icon: UserCircle },
-];
+import { useLocale, shiftLabel } from "@/lib/i18n/context";
 
 const UNREAD_POLL_MS = 30_000;
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLocale();
+  const LEFT_ITEMS = [
+    { href: "/orders", label: t.nav.orders, icon: ClipboardList },
+    { href: "/map", label: t.nav.map, icon: Map },
+  ];
+  const RIGHT_ITEMS = [
+    { href: "/notifications", label: t.nav.notifications, icon: Bell },
+    { href: "/profile", label: t.nav.profile, icon: UserCircle },
+  ];
   const [unread, setUnread] = useState(0);
   const [shiftStartedAt, setShiftStartedAt] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -90,7 +89,7 @@ export function BottomNav() {
         >
           <Power size={22} strokeWidth={2.4} />
           <span className="text-[10px] font-medium leading-tight">
-            {shiftLabel(user?.executorType, active)}
+            {shiftLabel(t, user?.executorType, active)}
           </span>
         </button>
       </div>

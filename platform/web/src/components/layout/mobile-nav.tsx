@@ -6,10 +6,12 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isContractor } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 import { NAV_ITEMS } from "./nav-items";
 
 export function MobileNav() {
   const pathname = usePathname();
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const items = isContractor() ? NAV_ITEMS.filter((item) => item.contractorVisible) : NAV_ITEMS;
 
@@ -31,7 +33,7 @@ export function MobileNav() {
   return (
     <>
       <button
-        aria-label="Открыть меню"
+        aria-label={t.shell.openMenu}
         onClick={() => setOpen(true)}
         className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 md:hidden"
       >
@@ -57,7 +59,7 @@ export function MobileNav() {
             <span className="font-display text-sm font-semibold tracking-tight">Corpi</span>
           </div>
           <button
-            aria-label="Закрыть меню"
+            aria-label={t.shell.closeMenu}
             onClick={() => setOpen(false)}
             className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
           >
@@ -80,11 +82,11 @@ export function MobileNav() {
               >
                 <span className="flex items-center gap-2">
                   <item.icon size={16} />
-                  {item.label}
+                  {t.nav[item.labelKey]}
                 </span>
                 {!item.live && (
                   <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    скоро
+                    {t.nav.comingSoon}
                   </span>
                 )}
               </Link>

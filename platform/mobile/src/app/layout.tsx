@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SwRegister } from "@/components/sw-register";
+import { LocaleProvider } from "@/lib/i18n/context";
 import "./globals.css";
 
 const geist = localFont({
@@ -42,8 +43,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru" suppressHydrationWarning className={geist.variable}>
       <body className="antialiased">
         <ThemeProvider>
-          <SwRegister />
-          <div className="mx-auto min-h-screen max-w-md">{children}</div>
+          <LocaleProvider>
+            <SwRegister />
+            <div className="mx-auto min-h-screen max-w-md">{children}</div>
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>
