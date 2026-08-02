@@ -7,6 +7,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface Notification {
   id: string;
@@ -29,19 +30,8 @@ interface EmailStatus {
   email: string | null;
 }
 
-const CHANNEL_LABELS: Record<string, string> = {
-  telegram: "Telegram",
-  email: "Email",
-  web_push: "Push",
-  push: "Push",
-  in_app: "В приложении",
-};
-
-function channelLabel(channel: string) {
-  return CHANNEL_LABELS[channel] ?? "В приложении";
-}
-
 function TelegramCard() {
+  const { t } = useLocale();
   const [status, setStatus] = useState<TelegramStatus | null>(null);
   const [link, setLink] = useState<{ deepLink: string; code: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -65,7 +55,7 @@ function TelegramCard() {
       );
       setLink(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось получить ссылку");
+      setError(e instanceof Error ? e.message : t.notifications.linkError);
     } finally {
       setBusy(false);
     }
@@ -99,21 +89,17 @@ function TelegramCard() {
         {!status ? (
           <PageLoader className="p-0" />
         ) : !status.configured ? (
-          <p className="text-muted-foreground">
-            Бот не настроен на сервере (нет <code>TELEGRAM_BOT_TOKEN</code> в <code>.env</code>).
-          </p>
+          <p className="text-muted-foreground">{t.notifications.telegramNotConfigured}</p>
         ) : status.linked ? (
           <div className="flex items-center justify-between">
-            <p className="text-muted-foreground">Telegram привязан — уведомления приходят туда.</p>
+            <p className="text-muted-foreground">{t.notifications.telegramLinked}</p>
             <Button variant="outline" onClick={unlink} disabled={busy}>
-              Отвязать
+              {t.notifications.unlink}
             </Button>
           </div>
         ) : link ? (
           <div className="flex flex-col gap-2">
-            <p className="text-muted-foreground">
-              Откройте бота и нажмите «Запустить», либо перейдите по ссылке:
-            </p>
+            <p className="text-muted-foreground">{t.notifications.telegramOpenBot}</p>
             <a
               href={link.deepLink}
               target="_blank"
@@ -123,14 +109,14 @@ function TelegramCard() {
               {link.deepLink}
             </a>
             <Button variant="outline" className="w-fit" onClick={loadStatus}>
-              Я подключил(а) — обновить статус
+              {t.notifications.telegramConfirmLinked}
             </Button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <p className="text-muted-foreground">Получайте уведомления о заявках прямо в Telegram.</p>
+            <p className="text-muted-foreground">{t.notifications.telegramPromo}</p>
             <Button onClick={requestLink} disabled={busy}>
-              <Send size={14} /> Подключить
+              <Send size={14} /> {t.notifications.connect}
             </Button>
           </div>
         )}
@@ -141,6 +127,7 @@ function TelegramCard() {
 }
 
 function EmailCard() {
+  const { t } = useLocale();
   const [status, setStatus] = useState<EmailStatus | null>(null);
 
   useEffect(() => {
@@ -157,13 +144,11 @@ function EmailCard() {
         {!status ? (
           <PageLoader className="p-0" />
         ) : !status.configured ? (
-          <p className="text-muted-foreground">
-            Email-рассылка не настроена на сервере (нет <code>SMTP_HOST</code> в <code>.env</code>).
-          </p>
+          <p className="text-muted-foreground">{t.notifications.emailNotConfigured}</p>
         ) : (
           <p className="text-muted-foreground">
-            Уведомления дублируются на <span className="text-foreground">{status.email}</span> — отдельно
-            подключать не нужно.
+            {t.notifications.emailDuplicated} <span className="text-foreground">{status.email}</span>{" "}
+            {t.notifications.emailNoSetupNeeded}
           </p>
         )}
       </CardContent>
@@ -172,6 +157,7 @@ function EmailCard() {
 }
 
 export default function NotificationsPage() {
+  const { t, locale } = useLocale();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -205,11 +191,11 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bell size={22} />
-          <h1 className="text-2xl font-semibold tracking-tight">Уведомления</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t.notifications.title}</h1>
         </div>
         {unreadCount > 0 && (
           <Button variant="outline" onClick={markAllRead}>
-            <Check size={14} /> Прочитать всё ({unreadCount})
+            <Check size={14} /> {t.notifications.markAllRead} ({unreadCount})
           </Button>
         )}
       </div>
@@ -219,12 +205,12 @@ export default function NotificationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>История</CardTitle>
+          <CardTitle>{t.notifications.history}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {loading && <PageLoader className="p-0" />}
           {!loading && notifications.length === 0 && (
-            <EmptyState icon={Bell} title="Уведомлений пока нет" bordered={false} />
+            <EmptyState icon={Bell} title={t.notifications.empty} bordered={false} />
           )}
           {notifications.map((n) => (
             <button
@@ -237,14 +223,22 @@ export default function NotificationsPage() {
               <div className="flex items-center justify-between">
                 <span className="font-medium">{n.title}</span>
                 <span className="text-xs text-muted-foreground">
-                  {new Date(n.createdAt).toLocaleString("ru-RU")}
+                  {new Date(n.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
                 </span>
               </div>
               <p className="text-muted-foreground">{n.message}</p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="rounded bg-muted px-1.5 py-0.5">{channelLabel(n.channel)}</span>
+                <span className="rounded bg-muted px-1.5 py-0.5">
+                  {n.channel === "telegram"
+                    ? "Telegram"
+                    : n.channel === "email"
+                      ? "Email"
+                      : n.channel === "web_push" || n.channel === "push"
+                        ? t.notifications.channelPush
+                        : t.notifications.channelInApp}
+                </span>
                 {n.channel !== "in_app" && !n.delivered && (
-                  <span className="text-red-500">не доставлено</span>
+                  <span className="text-red-500">{t.notifications.notDelivered}</span>
                 )}
               </div>
             </button>
