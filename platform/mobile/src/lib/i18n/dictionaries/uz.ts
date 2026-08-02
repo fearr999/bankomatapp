@@ -9,7 +9,7 @@ export const uz: typeof ru = {
   },
   login: {
     title: "Corpi",
-    subtitle: "Dala xodimi uchun kirish",
+    subtitle: "Xodim uchun kirish",
     email: "Email",
     password: "Parol",
     submit: "Kirish",

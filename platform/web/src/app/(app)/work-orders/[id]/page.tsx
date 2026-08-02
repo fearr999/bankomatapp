@@ -6,12 +6,13 @@ import { Camera, FileDown, Link2, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Badge, STATUS_LABELS } from "@/components/ui/badge";
+import { Badge, STATUS_KEYS, useStatusLabels } from "@/components/ui/badge";
 import { SlaBadge } from "@/components/ui/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch, API_BASE, getToken } from "@/lib/api";
-import { REQUEST_TYPE_LABELS } from "@/lib/request-types";
+import { useRequestTypeLabels } from "@/lib/request-types";
+import { useLocale } from "@/lib/i18n/context";
 
 interface OrderDetail {
   id: string;
@@ -48,7 +49,7 @@ function getBrowserLocation(): Promise<{ lat: number; lng: number } | null> {
   });
 }
 
-const STATUS_FLOW = Object.keys(STATUS_LABELS);
+const STATUS_FLOW = STATUS_KEYS;
 
 interface ChecklistField {
   id: string;
@@ -70,6 +71,7 @@ interface ChecklistSubmission {
 }
 
 function ChecklistSection({ workOrderId }: { workOrderId: string }) {
+  const { t, locale } = useLocale();
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [submissions, setSubmissions] = useState<ChecklistSubmission[]>([]);
   const [templateId, setTemplateId] = useState("");
@@ -77,12 +79,12 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
   const [busy, setBusy] = useState(false);
 
   async function load() {
-    const [t, s] = await Promise.all([
+    const [loadedTemplates, loadedSubmissions] = await Promise.all([
       apiFetch<ChecklistTemplate[]>("/checklists/templates"),
       apiFetch<ChecklistSubmission[]>(`/checklists/work-orders/${workOrderId}/submissions`),
     ]);
-    setTemplates(t);
-    setSubmissions(s);
+    setTemplates(loadedTemplates);
+    setSubmissions(loadedSubmissions);
   }
 
   useEffect(() => {
@@ -90,7 +92,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workOrderId]);
 
-  const selected = templates.find((t) => t.id === templateId);
+  const selected = templates.find((tpl) => tpl.id === templateId);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -112,7 +114,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Чек-лист</CardTitle>
+        <CardTitle>{t.orderDetail.checklist}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {submissions.map((s) => (
@@ -120,7 +122,8 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
             <div className="flex items-center justify-between">
               <span className="font-medium">{s.template.name}</span>
               <span className="text-xs text-muted-foreground">
-                {s.submittedBy?.name ?? "—"} · {new Date(s.createdAt).toLocaleString("ru-RU")}
+                {s.submittedBy?.name ?? "—"} ·{" "}
+                {new Date(s.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
               </span>
             </div>
             <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
@@ -136,8 +139,8 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
         {templates.length === 0 ? (
           <EmptyState
             icon={ListChecks}
-            title="Шаблонов пока нет"
-            description="Создайте в разделе «Чек-листы»"
+            title={t.orderDetail.noTemplates}
+            description={t.orderDetail.createInChecklists}
             size="sm"
             bordered={false}
           />
@@ -151,10 +154,10 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
                 setAnswers({});
               }}
             >
-              <option value="">Выбрать шаблон для заполнения...</option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
+              <option value="">{t.orderDetail.selectTemplate}</option>
+              {templates.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {tpl.name}
                 </option>
               ))}
             </select>
@@ -184,7 +187,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
                   </div>
                 ))}
                 <Button type="submit" disabled={busy} className="mt-2 w-fit">
-                  {busy ? "Сохраняем..." : "Сохранить чек-лист"}
+                  {busy ? t.orderDetail.saving : t.orderDetail.saveChecklist}
                 </Button>
               </div>
             )}
@@ -196,6 +199,9 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
 }
 
 export default function WorkOrderDetailPage() {
+  const { t, locale } = useLocale();
+  const statusLabels = useStatusLabels();
+  const requestTypeLabels = useRequestTypeLabels();
   const params = useParams<{ id: string }>();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -208,7 +214,7 @@ export default function WorkOrderDetailPage() {
       const data = await apiFetch<OrderDetail>(`/work-orders/${params.id}`);
       setOrder(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.workOrders.loadError);
     }
   }
 
@@ -241,7 +247,7 @@ export default function WorkOrderDetailPage() {
       });
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось загрузить фото");
+      setError(e instanceof Error ? e.message : t.orderDetail.photoUploadError);
     } finally {
       setUploading(false);
     }
@@ -290,11 +296,11 @@ export default function WorkOrderDetailPage() {
           <SlaBadge status={order.slaStatus} />
           <div className="ml-auto flex gap-2">
             <Button variant="outline" onClick={downloadReport}>
-              <FileDown size={16} /> Скачать акт
+              <FileDown size={16} /> {t.orderDetail.downloadReport}
             </Button>
             {order.publicTrackingToken && (
               <Button variant="outline" onClick={copyTrackingLink}>
-                <Link2 size={16} /> Ссылка отслеживания
+                <Link2 size={16} /> {t.orderDetail.trackingLink}
               </Button>
             )}
           </div>
@@ -305,16 +311,23 @@ export default function WorkOrderDetailPage() {
             <CardTitle>{order.title}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
-            <p className="text-muted-foreground">{order.description || "Без описания"}</p>
+            <p className="text-muted-foreground">{order.description || t.orderDetail.noDescription}</p>
             <div className="grid grid-cols-2 gap-2 pt-2 text-xs">
-              <span className="text-muted-foreground">Клиент: {order.client?.name ?? "—"}</span>
-              <span className="text-muted-foreground">Объект: {order.site?.name ?? "—"}</span>
-              <span className="text-muted-foreground">Адрес: {order.site?.address ?? "—"}</span>
               <span className="text-muted-foreground">
-                Тип заявки: {REQUEST_TYPE_LABELS[order.requestType] ?? order.requestType}
+                {t.orderDetail.client}: {order.client?.name ?? "—"}
               </span>
               <span className="text-muted-foreground">
-                Исполнитель: {order.assignedTo?.name ?? order.team?.name ?? "—"}
+                {t.orderDetail.site}: {order.site?.name ?? "—"}
+              </span>
+              <span className="text-muted-foreground">
+                {t.orderDetail.address}: {order.site?.address ?? "—"}
+              </span>
+              <span className="text-muted-foreground">
+                {t.orderDetail.type}:{" "}
+                {requestTypeLabels[order.requestType as keyof typeof requestTypeLabels] ?? order.requestType}
+              </span>
+              <span className="text-muted-foreground">
+                {t.orderDetail.assignee}: {order.assignedTo?.name ?? order.team?.name ?? "—"}
               </span>
             </div>
           </CardContent>
@@ -323,13 +336,13 @@ export default function WorkOrderDetailPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Фотографии</CardTitle>
+              <CardTitle>{t.orderDetail.photos}</CardTitle>
               <Button
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
               >
-                <Camera size={16} /> {uploading ? "Загружаем..." : "Добавить фото"}
+                <Camera size={16} /> {uploading ? t.orderDetail.uploading : t.orderDetail.addPhoto}
               </Button>
               <input
                 ref={fileInputRef}
@@ -347,7 +360,7 @@ export default function WorkOrderDetailPage() {
           </CardHeader>
           <CardContent>
             {order.attachments.length === 0 ? (
-              <EmptyState icon={Camera} title="Фотографий пока нет" size="sm" bordered={false} />
+              <EmptyState icon={Camera} title={t.orderDetail.noPhotos} size="sm" bordered={false} />
             ) : (
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {order.attachments.map((a) => (
@@ -370,7 +383,7 @@ export default function WorkOrderDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>История изменений</CardTitle>
+            <CardTitle>{t.orderDetail.history}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {order.events.map((e) => (
@@ -378,19 +391,19 @@ export default function WorkOrderDetailPage() {
                 <div className="flex items-center justify-between">
                   <span>{e.message}</span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(e.createdAt).toLocaleString("ru-RU")}
+                    {new Date(e.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground">{e.user?.name ?? "система"}</span>
+                <span className="text-xs text-muted-foreground">{e.user?.name ?? t.dashboard.system}</span>
               </div>
             ))}
             <form onSubmit={addComment} className="flex gap-2 pt-2">
               <Input
-                placeholder="Добавить комментарий..."
+                placeholder={t.orderDetail.addComment}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
               />
-              <Button type="submit">Отправить</Button>
+              <Button type="submit">{t.orderDetail.send}</Button>
             </form>
           </CardContent>
         </Card>
@@ -398,7 +411,7 @@ export default function WorkOrderDetailPage() {
 
       <Card className="h-fit">
         <CardHeader>
-          <CardTitle>Сменить статус</CardTitle>
+          <CardTitle>{t.orderDetail.changeStatus}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-1.5">
           {STATUS_FLOW.map((s) => (
@@ -409,7 +422,7 @@ export default function WorkOrderDetailPage() {
               onClick={() => changeStatus(s)}
               disabled={s === order.status}
             >
-              {STATUS_LABELS[s]}
+              {statusLabels[s as keyof typeof statusLabels]}
             </Button>
           ))}
         </CardContent>
