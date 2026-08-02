@@ -1,4 +1,9 @@
 import "dotenv/config";
+// Патчит express.Router, чтобы отклонённый промис из async-хендлера
+// автоматически шёл в error-middleware ниже, а не зависал без ответа —
+// сам Express 4 такого не делает. Импортировать после dotenv, но до того,
+// как заведётся любой роутер.
+import "express-async-errors";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
@@ -24,6 +29,7 @@ import { issuesRouter } from "./modules/projects/issues.routes.js";
 import { sprintsRouter } from "./modules/projects/sprints.routes.js";
 import { cleaningCyclesRouter } from "./modules/cleaning-cycles/cleaning-cycles.routes.js";
 import { ownerAdminRouter } from "./modules/owner-admin/owner-admin.routes.js";
+import { googleSheetsRouter } from "./modules/integrations/google-sheets.routes.js";
 import { startTelegramPolling, isTelegramConfigured } from "./lib/telegram.js";
 import { startSupportBotPolling, isSupportBotConfigured } from "./lib/support-bot.js";
 import { startBackgroundJobs } from "./lib/background-jobs.js";
@@ -93,6 +99,19 @@ app.use("/issues", issuesRouter);
 app.use("/sprints", sprintsRouter);
 app.use("/cleaning-cycles", cleaningCyclesRouter);
 app.use("/owner-admin", ownerAdminRouter);
+app.use("/integrations/google-sheets", googleSheetsRouter);
+
+// Последний обработчик — подстраховка на случай ошибки, до которой не
+// дотянулся try/catch в самом роуте (в т.ч. отклонённые промисы благодаря
+// express-async-errors выше). Без него запрос завис бы без ответа до таймаута
+// клиента вместо аккуратного 500. Внутренние детали (стек, сообщение Prisma)
+// клиенту не отдаём — только в лог сервера.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error("Необработанная ошибка в роуте:", err);
+  if (res.headersSent) return;
+  res.status(500).json({ error: "Внутренняя ошибка сервера" });
+});
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {

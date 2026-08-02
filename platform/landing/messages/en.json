@@ -23,7 +23,12 @@
     "teamsOnline": "Teams online",
     "atms": "ATMs",
     "ordersChart": "Orders, last 7 days",
-    "dispatchCenter": "Dispatch center"
+    "dispatchCenter": "Dispatch center",
+    "ordersBoard": "Orders board",
+    "teamRanking": "Team ranking",
+    "columnNew": "New",
+    "columnProgress": "In progress",
+    "columnDone": "Done"
   },
   "stats": {
     "modules": "modules in the system",
@@ -56,6 +61,19 @@
       "point1": "Your own cabinet — see only your orders and sites",
       "point2": "Cleaning cycles and territories close themselves",
       "point3": "Photo reports and checklists never get lost in chats"
+    }
+  },
+  "trust": {
+    "badge": "Data protection",
+    "heading": "Your data is protected at every layer",
+    "subheading": "A bank can't hand its data to a system it doesn't trust — so Corpi's architecture was designed for protection from day one, not bolted on afterward.",
+    "items": {
+      "isolation": { "title": "Data isolation", "description": "Every company runs in its own protected boundary — access to another tenant's data is ruled out at the architecture level, not just by a setting." },
+      "encryption": { "title": "Encrypted connections", "description": "All traffic runs over TLS; passwords are stored as one-way hashes and are never visible, even to us." },
+      "access": { "title": "Role-based access", "description": "Permissions are scoped by role down to a single order — an employee sees exactly what they need to do their job, nothing more." },
+      "audit": { "title": "Full activity history", "description": "Every status change, comment, and attachment is recorded in an event log — nothing is lost or quietly rewritten after the fact." },
+      "backups": { "title": "Regular backups", "description": "Scheduled data backups protect against loss from any technical failure." },
+      "monitoring": { "title": "24/7 monitoring", "description": "Infrastructure is under continuous observation — outages and anomalies are caught instantly, not reported by frustrated clients." }
     }
   },
   "cta": {

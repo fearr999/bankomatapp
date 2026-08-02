@@ -113,7 +113,7 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-4 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
         <div>
           <p className="text-xs text-muted-foreground">{t.orders.title}</p>
           <p className="font-semibold">{user?.name}</p>
@@ -155,7 +155,7 @@ export default function OrdersPage() {
           <Link
             key={order.id}
             href={`/order?id=${order.id}`}
-            className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4"
+            className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4 shadow-sm transition-shadow duration-150 active:shadow-none"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">{order.number}</span>
