@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface ProjectRow {
   id: string;
@@ -19,6 +20,7 @@ interface ProjectRow {
 }
 
 export default function ProjectsPage() {
+  const { t } = useLocale();
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export default function ProjectsPage() {
     try {
       setProjects(await apiFetch<ProjectRow[]>("/projects"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.projects.loadError);
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ export default function ProjectsPage() {
       setShowCreate(false);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка создания");
+      setError(e instanceof Error ? e.message : t.projects.createError);
     } finally {
       setBusy(false);
     }
@@ -63,9 +65,9 @@ export default function ProjectsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Проекты</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.projects.title}</h1>
         <Button onClick={() => setShowCreate((v) => !v)}>
-          <Plus size={16} /> Новый проект
+          <Plus size={16} /> {t.projects.newProject}
         </Button>
       </div>
 
@@ -74,11 +76,11 @@ export default function ProjectsPage() {
           <CardContent className="pt-5">
             <form onSubmit={create} className="flex flex-col gap-3 md:flex-row md:items-end">
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Название</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.projects.name}</label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">Ключ (напр. COR)</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.projects.key}</label>
                 <Input
                   value={key}
                   onChange={(e) => setKey(e.target.value.toUpperCase())}
@@ -88,11 +90,11 @@ export default function ProjectsPage() {
                 />
               </div>
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Описание</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.projects.description}</label>
                 <Input value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
               <Button type="submit" disabled={busy}>
-                {busy ? "Создаём..." : "Создать"}
+                {busy ? t.projects.creating : t.projects.create}
               </Button>
             </form>
           </CardContent>
@@ -104,7 +106,7 @@ export default function ProjectsPage() {
       {loading ? (
         <PageLoader />
       ) : projects.length === 0 ? (
-        <EmptyState icon={Kanban} title="Проектов пока нет" description="Создайте первый проект кнопкой выше" />
+        <EmptyState icon={Kanban} title={t.projects.empty} description={t.projects.emptyDescription} />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((p) => (
@@ -121,7 +123,7 @@ export default function ProjectsPage() {
                     </div>
                   </div>
                   {p.description && <p className="text-xs text-muted-foreground">{p.description}</p>}
-                  <p className="text-xs text-muted-foreground">{p._count.issues} задач</p>
+                  <p className="text-xs text-muted-foreground">{p._count.issues} {t.projects.tasksCount}</p>
                 </CardContent>
               </Card>
             </Link>
