@@ -339,7 +339,7 @@ export function DashboardMockup() {
             ))}
           </div>
 
-          <div className="flex-1 p-4 sm:p-5">
+          <div className="flex-1 min-h-[452px] p-4 sm:min-h-[272px] sm:p-5">
             <div key={view} className="animate-fade-in">
               {view === 0 && <OverviewView stats={STATS} t={t} />}
               {view === 1 && (
