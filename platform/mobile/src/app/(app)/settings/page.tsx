@@ -202,7 +202,11 @@ function TelegramSection() {
   const [error, setError] = useState<string | null>(null);
 
   async function loadStatus() {
-    setStatus(await apiFetch<TelegramStatus>("/notifications/telegram/status"));
+    try {
+      setStatus(await apiFetch<TelegramStatus>("/notifications/telegram/status"));
+    } catch {
+      // офлайн/ошибка — просто не показываем блок
+    }
   }
 
   useEffect(() => {

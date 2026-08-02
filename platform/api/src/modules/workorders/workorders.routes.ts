@@ -341,7 +341,9 @@ workOrdersRouter.patch("/:id/assign", async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
   const organizationId = req.auth!.organizationId;
-  const existing = await prisma.workOrder.findFirst({ where: { id: req.params.id, organizationId } });
+  const existing = await prisma.workOrder.findFirst({
+    where: { id: req.params.id, organizationId, ...contractorScope(req) },
+  });
   if (!existing) return res.status(404).json({ error: "Заявка не найдена" });
 
   // assignedOrganizationId зеркалит подрядчика исполнителя — это то, по чему

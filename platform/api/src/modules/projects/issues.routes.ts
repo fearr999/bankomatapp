@@ -11,14 +11,44 @@ export const issuesRouter = Router();
 issuesRouter.use(authenticate);
 issuesRouter.use(blockContractor);
 
+// Расширение сохранённого файла берём из провалидированного MIME-типа, а не из
+// имени файла, присланного клиентом — иначе можно подсунуть исполняемый
+// контент (html/svg со скриптом) под видом вложения и получить его обратно по
+// прямой ссылке без авторизации (папка /uploads раздаётся статикой). См. тот
+// же приём в attachments.routes.ts.
+const ALLOWED_ATTACHMENT_TYPES: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+  "image/heic": ".heic",
+  "image/heif": ".heif",
+  "application/pdf": ".pdf",
+  "application/msword": ".doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+  "application/vnd.ms-excel": ".xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+  "text/plain": ".txt",
+  "application/zip": ".zip",
+};
+
 const storage = multer.diskStorage({
   destination: UPLOADS_DIR,
   filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || "";
+    const ext = ALLOWED_ATTACHMENT_TYPES[file.mimetype] ?? "";
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
   },
 });
-const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!ALLOWED_ATTACHMENT_TYPES[file.mimetype]) {
+      return cb(new Error("Недопустимый тип файла"));
+    }
+    cb(null, true);
+  },
+});
 
 const ISSUE_TYPES = ["EPIC", "STORY", "TASK", "BUG", "SUBTASK"] as const;
 const ISSUE_STATUSES = ["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"] as const;

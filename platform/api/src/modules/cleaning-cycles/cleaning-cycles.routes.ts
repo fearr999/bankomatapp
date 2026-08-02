@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate, blockContractor, requireRole } from "../../middleware/authenticate.js";
 import { nextOrderNumber } from "../workorders/workorders.routes.js";
+import { workOrderMessages } from "../../lib/i18n-messages.js";
 
 export const cleaningCyclesRouter = Router();
 cleaningCyclesRouter.use(authenticate);
@@ -101,7 +102,14 @@ cleaningCyclesRouter.post("/", requireRole("ADMIN", "DISPATCHER", "MANAGER"), as
         cleaningCycleId: cycle.id,
         createdById: req.auth!.userId,
         organizationId,
-        events: { create: { type: "created", message: `Заявка создана автоматически (цикл уборки №${number})`, userId: req.auth!.userId } },
+        events: {
+          create: {
+            type: "created",
+            message: workOrderMessages.createdAutoCleaning(number).ru,
+            messageUz: workOrderMessages.createdAutoCleaning(number).uz,
+            userId: req.auth!.userId,
+          },
+        },
       },
     });
   }

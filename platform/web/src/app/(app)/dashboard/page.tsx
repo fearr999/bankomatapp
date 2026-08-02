@@ -30,6 +30,7 @@ interface Summary {
   recentEvents: Array<{
     id: string;
     message: string;
+    messageUz?: string | null;
     createdAt: string;
     user?: { name: string } | null;
     workOrder: { number: string; title: string };
@@ -86,7 +87,9 @@ export default function DashboardPage() {
             >
               <div>
                 <span className="font-medium">{e.workOrder.number}</span>{" "}
-                <span className="text-muted-foreground">{e.message}</span>
+                <span className="text-muted-foreground">
+                  {locale === "uz" && e.messageUz ? e.messageUz : e.message}
+                </span>
               </div>
               <span className="whitespace-nowrap text-xs text-muted-foreground">
                 {e.user?.name ?? t.dashboard.system} ·{" "}

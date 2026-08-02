@@ -42,6 +42,10 @@ export const workOrderMessages = {
     ru: "Заявка создана автоматически (плановое ТО)",
     uz: "Ariza avtomatik yaratildi (rejali texnik xizmat)",
   }),
+  createdAutoCleaning: (cycleNumber: number | string): Bilingual => ({
+    ru: `Заявка создана автоматически (цикл уборки №${cycleNumber})`,
+    uz: `Ariza avtomatik yaratildi (tozalash tsikli №${cycleNumber})`,
+  }),
   emergencyCallCreated: (): Bilingual => ({
     ru: "Аварийный вызов создан",
     uz: "Avariya chaqiruvi yaratildi",
