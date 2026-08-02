@@ -417,6 +417,30 @@ export const uz: typeof ru = {
     hoursShort: "soat",
     avgRating: "O'rtacha reyting",
   },
+  cleaningCycles: {
+    title: "Tozalash sikllari",
+    description:
+      "Sikl boshlanishi brigada hududidagi har bir bankomat/kartomat uchun tozalash arizasini yaratadi. Sikl barcha arizalar yopilganda o'zi tugaydi, yoki uni qo'lda muddatidan oldin yopishingiz mumkin.",
+    loadError: "Yuklashda xatolik",
+    startError: "Siklni boshlab bo'lmadi",
+    closeError: "Siklni yopib bo'lmadi",
+    cycleNumber: "Sikl №",
+    started: "boshlandi",
+    closed: "yopildi",
+    noCyclesYet: "Hali sikllar bo'lmagan",
+    openPoints: "Nuqtalarni ochish",
+    close: "Yopish",
+    startCycle: "Siklni boshlash",
+    noTeams: "Hozircha brigadalar yo'q",
+    noTeamsDescription: "\"Brigadalar\" bo'limida brigada yarating",
+    allTeams: "Barcha brigadalar",
+    deviceCardomatShort: "KART",
+    status: {
+      ACTIVE: "Faol",
+      COMPLETED: "Yakunlangan",
+      CLOSED_EARLY: "Muddatidan oldin yopilgan",
+    },
+  },
   atmService: {
     title: "Bankomatlarga xizmat ko'rsatish",
     description:

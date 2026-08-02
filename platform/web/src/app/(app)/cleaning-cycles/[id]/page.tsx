@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface CycleDetailApi {
   id: string;
@@ -35,6 +36,7 @@ function tileClasses(status: string) {
 }
 
 export default function CleaningCycleDetailPage() {
+  const { t, locale } = useLocale();
   const params = useParams<{ id: string }>();
   const [cycle, setCycle] = useState<CycleDetailApi | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +45,8 @@ export default function CleaningCycleDetailPage() {
     if (!params.id) return;
     apiFetch<CycleDetailApi>(`/cleaning-cycles/${params.id}`)
       .then(setCycle)
-      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка загрузки"));
+      .catch((err) => setError(err instanceof Error ? err.message : t.cleaningCycles.loadError));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
@@ -54,16 +57,18 @@ export default function CleaningCycleDetailPage() {
   return (
     <div className="flex flex-col gap-5">
       <Link href="/cleaning-cycles" className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft size={14} /> Все бригады
+        <ArrowLeft size={14} /> {t.cleaningCycles.allTeams}
       </Link>
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {cycle.team.name} · Цикл №{cycle.number}
+          {cycle.team.name} · {t.cleaningCycles.cycleNumber}
+          {cycle.number}
         </h1>
         <p className="text-sm text-muted-foreground">
-          начат {new Date(cycle.startedAt).toLocaleString("ru-RU")}
-          {cycle.closedAt && ` · закрыт ${new Date(cycle.closedAt).toLocaleString("ru-RU")}`}
+          {t.cleaningCycles.started} {new Date(cycle.startedAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
+          {cycle.closedAt &&
+            ` · ${t.cleaningCycles.closed} ${new Date(cycle.closedAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}`}
         </p>
       </div>
 
@@ -88,7 +93,11 @@ export default function CleaningCycleDetailPage() {
           >
             <span>{wo.equipment?.serialNumber ?? wo.equipment?.name ?? "—"}</span>
             <span className="mt-0.5 text-[10px] uppercase opacity-70">
-              {wo.equipment?.deviceType === "atm" ? "ATM" : wo.equipment?.deviceType === "cardomat" ? "КАРТ" : ""}
+              {wo.equipment?.deviceType === "atm"
+                ? "ATM"
+                : wo.equipment?.deviceType === "cardomat"
+                  ? t.cleaningCycles.deviceCardomatShort
+                  : ""}
             </span>
           </Link>
         ))}
