@@ -10,19 +10,25 @@ import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 const LocationPicker = dynamic(
   () => import("@/components/equipment/location-picker").then((m) => m.LocationPicker),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Loader2 size={15} className="animate-spin" />
-        Загрузка карты...
-      </div>
-    ),
+    loading: () => <MapLoading />,
   }
 );
+
+function MapLoading() {
+  const { t } = useLocale();
+  return (
+    <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
+      <Loader2 size={15} className="animate-spin" />
+      {t.equipment.loadingMap}
+    </div>
+  );
+}
 
 interface EquipmentRow {
   id: string;
@@ -34,12 +40,6 @@ interface EquipmentRow {
   site?: { name: string } | null;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  operational: "Исправно",
-  broken: "Неисправно",
-  maintenance: "На обслуживании",
-};
-
 const STATUS_STYLES: Record<string, string> = {
   operational: "bg-emerald-500/10 text-emerald-600",
   broken: "bg-red-500/10 text-red-600",
@@ -47,6 +47,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function EquipmentPage() {
+  const { t, locale } = useLocale();
   const [items, setItems] = useState<EquipmentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +66,7 @@ export default function EquipmentPage() {
     try {
       setItems(await apiFetch<EquipmentRow[]>("/equipment"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.equipment.loadError);
     } finally {
       setLoading(false);
     }
@@ -87,7 +88,7 @@ export default function EquipmentPage() {
         const site = await apiFetch<{ id: string }>("/sites", {
           method: "POST",
           body: JSON.stringify({
-            name: name || address || "Новый объект",
+            name: name || address || t.equipment.newSite,
             address: address || undefined,
             lat: lat ?? undefined,
             lng: lng ?? undefined,
@@ -116,9 +117,9 @@ export default function EquipmentPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Оборудование</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.equipment.title}</h1>
         <Button onClick={() => setShowCreate((v) => !v)}>
-          <Plus size={16} /> Добавить оборудование
+          <Plus size={16} /> {t.equipment.add}
         </Button>
       </div>
       {error && <p className="text-sm text-red-500">{error}</p>}
@@ -129,27 +130,27 @@ export default function EquipmentPage() {
             <form onSubmit={create} className="flex flex-col gap-3">
               <div className="flex flex-col gap-3 md:flex-row md:items-end">
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">Название</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">{t.equipment.name}</label>
                   <Input value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">Модель</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">{t.equipment.model}</label>
                   <Input value={model} onChange={(e) => setModel(e.target.value)} />
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">Серийный номер</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">{t.equipment.serialNumber}</label>
                   <Input value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
                 </div>
                 <div className="w-40">
-                  <label className="mb-1 block text-xs text-muted-foreground">Тип</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">{t.equipment.type}</label>
                   <select
                     className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
                     value={deviceType}
                     onChange={(e) => setDeviceType(e.target.value)}
                   >
-                    <option value="other">Другое</option>
-                    <option value="atm">Банкомат</option>
-                    <option value="cardomat">Картомат</option>
+                    <option value="other">{t.equipment.typeOther}</option>
+                    <option value="atm">{t.equipment.typeAtm}</option>
+                    <option value="cardomat">{t.equipment.typeCardomat}</option>
                   </select>
                 </div>
               </div>
@@ -157,19 +158,19 @@ export default function EquipmentPage() {
               <div className="flex flex-col gap-3 md:flex-row md:items-end">
                 <div className="flex-1">
                   <label className="mb-1 block text-xs text-muted-foreground">
-                    Адрес объекта (необязательно)
+                    {t.equipment.siteAddress}
                   </label>
                   <Input
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="г. Ташкент, ..."
+                    placeholder={t.equipment.addressPlaceholder}
                   />
                 </div>
                 <Button type="button" variant="outline" onClick={() => setShowMap((v) => !v)}>
-                  {showMap ? "Скрыть карту" : "Указать точку на карте"}
+                  {showMap ? t.equipment.hideMap : t.equipment.pickOnMap}
                 </Button>
                 <Button type="submit" disabled={saving}>
-                  Добавить
+                  {t.equipment.submit}
                 </Button>
               </div>
 
@@ -180,8 +181,8 @@ export default function EquipmentPage() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {lat != null && lng != null
-                      ? `Точка выбрана: ${lat.toFixed(5)}, ${lng.toFixed(5)}`
-                      : "Кликните по карте, чтобы поставить точку"}
+                      ? `${t.equipment.pointSelected}: ${lat.toFixed(5)}, ${lng.toFixed(5)}`
+                      : t.equipment.clickToPick}
                   </p>
                 </div>
               )}
@@ -193,7 +194,7 @@ export default function EquipmentPage() {
       {loading ? (
         <PageLoader />
       ) : items.length === 0 ? (
-        <EmptyState icon={Wrench} title="Оборудования пока нет" description="Добавьте первую единицу кнопкой выше" />
+        <EmptyState icon={Wrench} title={t.equipment.empty} description={t.equipment.emptyDescription} />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((it) => (
@@ -203,16 +204,16 @@ export default function EquipmentPage() {
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{it.name}</span>
                     <span className={`rounded px-2 py-0.5 text-xs ${STATUS_STYLES[it.status]}`}>
-                      {STATUS_LABELS[it.status] ?? it.status}
+                      {t.equipmentStatus[it.status as keyof typeof t.equipmentStatus] ?? it.status}
                     </span>
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {it.model ?? "—"} {it.serialNumber ? `· S/N ${it.serialNumber}` : ""}
                   </span>
-                  <span className="text-xs text-muted-foreground">{it.site?.name ?? "Без объекта"}</span>
+                  <span className="text-xs text-muted-foreground">{it.site?.name ?? t.equipment.noSite}</span>
                   {it.nextServiceAt && (
                     <span className="text-xs text-muted-foreground">
-                      Следующее ТО: {new Date(it.nextServiceAt).toLocaleDateString("ru-RU")}
+                      {t.equipment.nextService}: {new Date(it.nextServiceAt).toLocaleDateString(locale === "uz" ? "uz-UZ" : "ru-RU")}
                     </span>
                   )}
                 </CardContent>
