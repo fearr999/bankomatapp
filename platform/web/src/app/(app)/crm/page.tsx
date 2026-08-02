@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface ClientRow {
   id: string;
@@ -20,6 +21,7 @@ interface ClientRow {
 }
 
 export default function CrmPage() {
+  const { t } = useLocale();
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export default function CrmPage() {
     try {
       setClients(await apiFetch<ClientRow[]>("/clients"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.crm.loadError);
     } finally {
       setLoading(false);
     }
@@ -55,9 +57,9 @@ export default function CrmPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">CRM</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.crm.title}</h1>
         <Button onClick={() => setShowCreate((v) => !v)}>
-          <Plus size={16} /> Новый клиент
+          <Plus size={16} /> {t.crm.newClient}
         </Button>
       </div>
       {error && <p className="text-sm text-red-500">{error}</p>}
@@ -67,18 +69,18 @@ export default function CrmPage() {
           <CardContent className="pt-5">
             <form onSubmit={create} className="flex flex-col gap-3 md:flex-row md:items-end">
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Название</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.crm.name}</label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Телефон</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.crm.phone}</label>
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Email</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.crm.email}</label>
                 <Input value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
-              <Button type="submit">Создать</Button>
+              <Button type="submit">{t.crm.create}</Button>
             </form>
           </CardContent>
         </Card>
@@ -87,7 +89,7 @@ export default function CrmPage() {
       {loading ? (
         <PageLoader />
       ) : clients.length === 0 ? (
-        <EmptyState icon={Building2} title="Клиентов пока нет" description="Добавьте первого клиента кнопкой выше" />
+        <EmptyState icon={Building2} title={t.crm.empty} description={t.crm.emptyDescription} />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {clients.map((c) => (
@@ -98,7 +100,7 @@ export default function CrmPage() {
                   <span className="text-xs text-muted-foreground">{c.phone ?? "—"}</span>
                   <span className="text-xs text-muted-foreground">{c.email ?? "—"}</span>
                   <span className="text-xs text-muted-foreground">
-                    {c.sitesCount} объект(ов) · {c.workOrdersCount} заявок
+                    {c.sitesCount} {t.crm.sitesAndOrders} {c.workOrdersCount} {t.crm.orders}
                   </span>
                 </CardContent>
               </Card>
