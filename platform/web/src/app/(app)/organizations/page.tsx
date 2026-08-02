@@ -9,17 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
-
-const ORG_TYPE_LABELS: Record<string, string> = {
-  BANK: "Банк",
-  CONTRACTOR: "Подрядчик",
-  CLEANING: "Клининг",
-  SERVICE: "Сервисная организация",
-  CASH_COLLECTION: "Инкассация",
-  LOGISTICS: "Логистика",
-  SECURITY: "Охрана",
-  OTHER: "Другое",
-};
+import { useLocale } from "@/lib/i18n/context";
 
 interface OrgRow {
   id: string;
@@ -38,6 +28,7 @@ interface OrgRow {
 }
 
 export default function OrganizationsPage() {
+  const { t } = useLocale();
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +42,7 @@ export default function OrganizationsPage() {
     try {
       setOrgs(await apiFetch<OrgRow[]>("/organizations"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.organizations.loadError);
     } finally {
       setLoading(false);
     }
@@ -74,7 +65,7 @@ export default function OrganizationsPage() {
       setShowCreate(false);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка создания");
+      setError(e instanceof Error ? e.message : t.organizations.createError);
     } finally {
       setBusy(false);
     }
@@ -83,9 +74,9 @@ export default function OrganizationsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Подрядные организации</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.organizations.title}</h1>
         <Button onClick={() => setShowCreate((v) => !v)}>
-          <Plus size={16} /> Новая организация
+          <Plus size={16} /> {t.organizations.newOrg}
         </Button>
       </div>
       {error && <p className="text-sm text-red-500">{error}</p>}
@@ -95,31 +86,31 @@ export default function OrganizationsPage() {
           <CardContent className="pt-5">
             <form onSubmit={create} className="flex flex-col gap-3 md:flex-row md:items-end">
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Название</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.organizations.name}</label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">Тип</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.organizations.type}</label>
                 <select
                   className="h-9 rounded-md border bg-transparent px-2 text-sm"
                   value={type}
                   onChange={(e) => setType(e.target.value)}
                 >
-                  {Object.entries(ORG_TYPE_LABELS)
-                    .filter(([v]) => v !== "BANK")
-                    .map(([v, l]) => (
+                  {(Object.keys(t.orgType) as Array<keyof typeof t.orgType>)
+                    .filter((v) => v !== "BANK")
+                    .map((v) => (
                       <option key={v} value={v}>
-                        {l}
+                        {t.orgType[v]}
                       </option>
                     ))}
                 </select>
               </div>
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Регион обслуживания</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.organizations.serviceRegion}</label>
                 <Input value={serviceRegion} onChange={(e) => setServiceRegion(e.target.value)} />
               </div>
               <Button type="submit" disabled={busy}>
-                {busy ? "Создаём..." : "Создать"}
+                {busy ? t.organizations.creating : t.organizations.create}
               </Button>
             </form>
           </CardContent>
@@ -129,7 +120,7 @@ export default function OrganizationsPage() {
       {loading ? (
         <PageLoader />
       ) : orgs.length === 0 ? (
-        <EmptyState icon={Building2} title="Подрядных организаций пока нет" description="Добавьте первую кнопкой выше" />
+        <EmptyState icon={Building2} title={t.organizations.empty} description={t.organizations.emptyDescription} />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {orgs.map((o) => (
@@ -139,15 +130,15 @@ export default function OrganizationsPage() {
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{o.name}</span>
                     <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                      {ORG_TYPE_LABELS[o.type] ?? o.type}
+                      {t.orgType[o.type as keyof typeof t.orgType] ?? o.type}
                     </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{o.serviceRegion ?? "Регион не указан"}</span>
+                  <span className="text-xs text-muted-foreground">{o.serviceRegion ?? t.organizations.noRegion}</span>
                   <span className="text-xs text-muted-foreground">
-                    {o.stats.staffCount} сотрудник(ов) · {o.stats.teamCount} бригад(ы)
+                    {o.stats.staffCount} {t.organizations.staffAndTeams} {o.stats.teamCount} {t.organizations.teams}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {o.stats.activeOrders} активных заявок · SLA{" "}
+                    {o.stats.activeOrders} {t.organizations.activeOrdersAndSla}{" "}
                     {o.stats.slaPercent != null ? `${o.stats.slaPercent}%` : "—"}
                   </span>
                 </CardContent>
