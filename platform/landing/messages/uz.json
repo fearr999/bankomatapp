@@ -9,10 +9,10 @@
     "langAria": "Tilni tanlash"
   },
   "hero": {
-    "badge": "Yangi avlod Field Service Management",
-    "titleLine1": "Barcha dala xizmati —",
-    "titleLine2": "yagona tizimda",
-    "subtitle": "Arizalar, dispetcherlik, xarita, cheklistlar, foto-hisobotlar, bankomatlarga xizmat ko'rsatish va analitika — banklar, ularning pudratchilari va dala xodimlari uchun. Brauzerda va telefonda ishlaydi.",
+    "badge": "Dala operatsiyalari uchun yagona tizim",
+    "titleLine1": "To'liq nazorat.",
+    "titleLine2": "Har bir chiqishda.",
+    "subtitle": "Arizadan obyekt yopilishigacha — har bir chiqishning to'liq tarixi real vaqtda.",
     "createCompany": "Kompaniya yaratish",
     "loginToAccount": "Hisobga kirish"
   },

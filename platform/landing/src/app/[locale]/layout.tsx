@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
-import { Onest, Golos_Text } from "next/font/google";
+import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
-const display = Onest({
-  subsets: ["latin", "cyrillic"],
-  weight: ["500", "600", "700", "800"],
-  variable: "--font-display",
-});
-
-const body = Golos_Text({
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600", "700"],
+const geist = localFont({
+  src: [
+    { path: "../../fonts/Geist-400.ttf", weight: "400", style: "normal" },
+    { path: "../../fonts/Geist-500.ttf", weight: "500", style: "normal" },
+    { path: "../../fonts/Geist-600.ttf", weight: "600", style: "normal" },
+    { path: "../../fonts/Geist-700.ttf", weight: "700", style: "normal" },
+    { path: "../../fonts/Geist-800.ttf", weight: "800", style: "normal" },
+  ],
   variable: "--font-body",
+  display: "swap",
 });
 
 const TITLES: Record<string, string> = {
@@ -62,7 +62,7 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound();
 
   return (
-    <html lang={locale} suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
+    <html lang={locale} suppressHydrationWarning className={geist.variable}>
       <body className="antialiased">
         <NextIntlClientProvider>
           <ThemeProvider>{children}</ThemeProvider>
