@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface Member {
   id: string;
@@ -34,6 +35,7 @@ interface UserRow {
 }
 
 export default function TeamsPage() {
+  const { t } = useLocale();
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,14 +45,14 @@ export default function TeamsPage() {
 
   async function load() {
     try {
-      const [t, u] = await Promise.all([
+      const [loadedTeams, loadedUsers] = await Promise.all([
         apiFetch<TeamRow[]>("/teams"),
         apiFetch<UserRow[]>("/users"),
       ]);
-      setTeams(t);
-      setUsers(u);
+      setTeams(loadedTeams);
+      setUsers(loadedUsers);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.teams.loadError);
     } finally {
       setLoading(false);
     }
@@ -88,9 +90,9 @@ export default function TeamsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Бригады</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.teams.title}</h1>
         <Button onClick={() => setShowCreate((v) => !v)}>
-          <Plus size={16} /> Новая бригада
+          <Plus size={16} /> {t.teams.newTeam}
         </Button>
       </div>
 
@@ -101,10 +103,10 @@ export default function TeamsPage() {
           <CardContent className="pt-5">
             <form onSubmit={createTeam} className="flex items-end gap-3">
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Название бригады</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.teams.teamName}</label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
-              <Button type="submit">Создать</Button>
+              <Button type="submit">{t.teams.create}</Button>
             </form>
           </CardContent>
         </Card>
@@ -112,26 +114,26 @@ export default function TeamsPage() {
 
       {loading && <PageLoader />}
       {!loading && teams.length === 0 && (
-        <EmptyState icon={UsersRound} title="Бригад пока нет" description="Создайте первую кнопкой выше" />
+        <EmptyState icon={UsersRound} title={t.teams.empty} description={t.teams.emptyDescription} />
       )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {!loading && teams.map((t) => {
-          const availableUsers = users.filter((u) => u.teamId !== t.id);
+        {!loading && teams.map((team) => {
+          const availableUsers = users.filter((u) => u.teamId !== team.id);
           return (
-            <Card key={t.id}>
+            <Card key={team.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base text-foreground">{t.name}</CardTitle>
+                  <CardTitle className="text-base text-foreground">{team.name}</CardTitle>
                   <span className="text-xs text-muted-foreground">
-                    {t.activeOrders} активных / {t.totalOrders} всего
+                    {team.activeOrders} {t.teams.activeOfTotal} {team.totalOrders} {t.teams.total}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Руководитель: {t.leader?.name ?? "не назначен"}
+                  {t.teams.leader}: {team.leader?.name ?? t.teams.noLeader}
                 </p>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
-                {t.members.map((m) => (
+                {team.members.map((m) => (
                   <div
                     key={m.id}
                     className="flex items-center justify-between rounded-md border px-3 py-1.5 text-sm"
@@ -148,25 +150,25 @@ export default function TeamsPage() {
                       )}
                     </div>
                     <button
-                      onClick={() => removeMember(t.id, m.id)}
+                      onClick={() => removeMember(team.id, m.id)}
                       className="text-muted-foreground transition-colors hover:text-red-500"
-                      title="Убрать из бригады"
+                      title={t.teams.removeFromTeam}
                     >
                       <X size={14} />
                     </button>
                   </div>
                 ))}
-                {t.members.length === 0 && (
-                  <p className="text-sm text-muted-foreground">В бригаде пока никого нет</p>
+                {team.members.length === 0 && (
+                  <p className="text-sm text-muted-foreground">{t.teams.noMembers}</p>
                 )}
 
                 {availableUsers.length > 0 && (
                   <select
                     className="mt-2 h-9 rounded-md border bg-transparent px-2 text-sm"
                     value=""
-                    onChange={(e) => addMember(t.id, e.target.value)}
+                    onChange={(e) => addMember(team.id, e.target.value)}
                   >
-                    <option value="">+ Добавить сотрудника...</option>
+                    <option value="">{t.teams.addMember}</option>
                     {availableUsers.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.name}
