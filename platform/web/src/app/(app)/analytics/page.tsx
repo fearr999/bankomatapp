@@ -7,6 +7,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { useStatusLabels } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface Summary {
   total: number;
@@ -19,6 +20,7 @@ interface Summary {
 }
 
 export default function AnalyticsPage() {
+  const { t } = useLocale();
   const statusLabels = useStatusLabels();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,26 +38,26 @@ export default function AnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Аналитика</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t.analytics.title}</h1>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        <KpiCard label="Всего заявок" value={summary.total} icon={ClipboardList} />
+        <KpiCard label={t.analytics.totalOrders} value={summary.total} icon={ClipboardList} />
         <KpiCard
-          label="Соблюдение SLA"
+          label={t.analytics.slaCompliance}
           value={summary.slaCompliance != null ? `${Math.round(summary.slaCompliance * 100)}%` : "—"}
           icon={ShieldCheck}
           tone={summary.slaCompliance != null && summary.slaCompliance < 0.8 ? "danger" : "success"}
         />
         <KpiCard
-          label="Среднее время выполнения"
-          value={summary.avgCompletionHours != null ? `${summary.avgCompletionHours.toFixed(1)} ч` : "—"}
+          label={t.analytics.avgCompletionTime}
+          value={summary.avgCompletionHours != null ? `${summary.avgCompletionHours.toFixed(1)} ${t.analytics.hoursShort}` : "—"}
           icon={Clock}
         />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Заявки за 14 дней</CardTitle>
+          <CardTitle>{t.analytics.ordersOverPeriod}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex h-32 items-end gap-1">
@@ -76,7 +78,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>По статусам</CardTitle>
+            <CardTitle>{t.analytics.byStatus}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-1.5">
             {Object.entries(summary.byStatus).map(([status, count]) => (
@@ -90,19 +92,19 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Бригады</CardTitle>
+            <CardTitle>{t.analytics.teams}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-1.5">
-            {summary.byTeam.map((t) => (
-              <div key={t.name} className="flex items-center justify-between text-sm">
-                <span>{t.name}</span>
+            {summary.byTeam.map((team) => (
+              <div key={team.name} className="flex items-center justify-between text-sm">
+                <span>{team.name}</span>
                 <span className="text-muted-foreground">
-                  {t.completed}/{t.total} завершено
+                  {team.completed}/{team.total} {t.analytics.completedShort}
                 </span>
               </div>
             ))}
             {summary.byTeam.length === 0 && (
-              <p className="text-sm text-muted-foreground">Нет данных по бригадам</p>
+              <p className="text-sm text-muted-foreground">{t.analytics.noTeamData}</p>
             )}
           </CardContent>
         </Card>
@@ -110,16 +112,16 @@ export default function AnalyticsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Эффективность сотрудников</CardTitle>
+          <CardTitle>{t.analytics.employeeEfficiency}</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full min-w-[520px] text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="px-4 py-2 font-medium">Сотрудник</th>
-                <th className="px-4 py-2 font-medium">Всего заявок</th>
-                <th className="px-4 py-2 font-medium">Завершено</th>
-                <th className="px-4 py-2 font-medium">% завершения</th>
+                <th className="px-4 py-2 font-medium">{t.analytics.employee}</th>
+                <th className="px-4 py-2 font-medium">{t.analytics.total}</th>
+                <th className="px-4 py-2 font-medium">{t.analytics.completed}</th>
+                <th className="px-4 py-2 font-medium">{t.analytics.completionPercent}</th>
               </tr>
             </thead>
             <tbody>
@@ -134,7 +136,7 @@ export default function AnalyticsPage() {
               {summary.byEmployee.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
-                    Нет данных
+                    {t.analytics.noData}
                   </td>
                 </tr>
               )}
