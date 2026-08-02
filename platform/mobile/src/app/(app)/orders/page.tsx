@@ -9,6 +9,7 @@ import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/lib/i18n/context";
 
 interface NearestDevice {
   equipmentId: string;
@@ -20,11 +21,12 @@ interface NearestDevice {
   distanceMeters: number;
 }
 
-function formatDistance(m: number) {
-  return m >= 1000 ? `${(m / 1000).toFixed(1)} км` : `${m} м`;
+function formatDistance(m: number, unitKm: string, unitM: string) {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)} ${unitKm}` : `${m} ${unitM}`;
 }
 
 function NearestDeviceWidget() {
+  const { t } = useLocale();
   const geo = useGeoCheckin(true);
   const [nearest, setNearest] = useState<NearestDevice | null>(null);
   const [checked, setChecked] = useState(false);
@@ -46,10 +48,10 @@ function NearestDeviceWidget() {
       <Navigation size={18} className="shrink-0 text-primary" />
       <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground">
-          Ближайшая точка · {nearest.deviceType === "atm" ? "банкомат" : "картомат"}
+          {t.orders.nearestPoint} · {nearest.deviceType === "atm" ? t.orders.atm : t.orders.cardomat}
         </p>
         <p className="truncate text-sm font-medium">
-          {nearest.name} — {formatDistance(nearest.distanceMeters)}
+          {nearest.name} — {formatDistance(nearest.distanceMeters, t.orders.km, t.orders.m)}
         </p>
         {nearest.address && <p className="truncate text-xs text-muted-foreground">{nearest.address}</p>}
       </div>
@@ -69,7 +71,6 @@ interface OrderListItem {
   createdAt: string;
 }
 
-const SLA_LABELS: Record<string, string> = { overdue: "SLA просрочен", at_risk: "SLA горит" };
 const SLA_STYLES: Record<string, string> = {
   overdue: "bg-red-500/15 text-red-500",
   at_risk: "bg-amber-500/15 text-amber-500",
@@ -86,6 +87,7 @@ const OPEN_STATUSES = new Set([
 ]);
 
 export default function OrdersPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [tab, setTab] = useState<"open" | "done">("open");
@@ -113,7 +115,7 @@ export default function OrdersPage() {
     <div className="flex flex-col">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-4 py-4 backdrop-blur">
         <div>
-          <p className="text-xs text-muted-foreground">Мои заявки</p>
+          <p className="text-xs text-muted-foreground">{t.orders.title}</p>
           <p className="font-semibold">{user?.name}</p>
         </div>
         <button
@@ -122,7 +124,7 @@ export default function OrdersPage() {
             router.replace("/login");
           }}
           className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-all duration-150 active:scale-95"
-          aria-label="Выйти"
+          aria-label={t.orders.logout}
         >
           <LogOut size={16} />
         </button>
@@ -131,15 +133,15 @@ export default function OrdersPage() {
       <NearestDeviceWidget />
 
       <div className="flex gap-2 px-4 pt-3">
-        {(["open", "done"] as const).map((t) => (
+        {(["open", "done"] as const).map((tabKey) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
             className={`h-9 rounded-full px-4 text-sm transition-all duration-150 active:scale-95 ${
-              tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              tab === tabKey ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             }`}
           >
-            {t === "open" ? "Активные" : "Завершённые"}
+            {tabKey === "open" ? t.orders.tabOpen : t.orders.tabDone}
           </button>
         ))}
       </div>
@@ -147,7 +149,7 @@ export default function OrdersPage() {
       <div className="flex flex-col gap-2 p-4">
         {loading && <PageLoader className="p-0" />}
         {!loading && filtered.length === 0 && (
-          <EmptyState icon={ClipboardList} title="Заявок нет" bordered={false} />
+          <EmptyState icon={ClipboardList} title={t.orders.empty} bordered={false} />
         )}
         {filtered.map((order) => (
           <Link
@@ -168,14 +170,14 @@ export default function OrdersPage() {
             <div className="flex gap-1.5">
               {order.priority === "urgent" && (
                 <span className="w-fit rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-medium text-red-500">
-                  Срочно
+                  {t.orders.urgent}
                 </span>
               )}
-              {order.slaStatus && SLA_LABELS[order.slaStatus] && (
+              {order.slaStatus && t.sla[order.slaStatus as keyof typeof t.sla] && (
                 <span
                   className={`w-fit rounded-full px-2 py-0.5 text-[11px] font-medium ${SLA_STYLES[order.slaStatus]}`}
                 >
-                  {SLA_LABELS[order.slaStatus]}
+                  {t.sla[order.slaStatus as keyof typeof t.sla]}
                 </span>
               )}
             </div>
