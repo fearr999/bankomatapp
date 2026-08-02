@@ -74,12 +74,15 @@ export default function NotificationsPage() {
           <button
             key={n.id}
             onClick={() => !n.readAt && markRead(n.id)}
-            className={`flex flex-col gap-1 rounded-lg border border-border p-3 text-left text-sm ${
-              n.readAt ? "opacity-60" : ""
+            className={`flex flex-col gap-1 rounded-lg border border-border p-3 text-left text-sm shadow-sm transition-shadow duration-150 active:shadow-none ${
+              n.readAt ? "opacity-60" : "border-l-[3px] border-l-primary bg-primary/[0.03]"
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-medium">{locale === "uz" && n.titleUz ? n.titleUz : n.title}</span>
+              <span className="flex items-center gap-1.5 font-medium">
+                {!n.readAt && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
+                {locale === "uz" && n.titleUz ? n.titleUz : n.title}
+              </span>
               <span className="whitespace-nowrap text-xs text-muted-foreground">
                 {new Date(n.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
               </span>

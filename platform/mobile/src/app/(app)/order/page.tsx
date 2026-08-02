@@ -120,7 +120,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
     <section className="flex flex-col gap-3 border-t border-border p-4">
       <h2 className="text-sm font-semibold">{t.order.checklist}</h2>
       {submissions.map((s) => (
-        <div key={s.id} className="rounded-lg border border-border p-3 text-sm">
+        <div key={s.id} className="rounded-lg border border-border p-3 text-sm shadow-sm">
           <p className="font-medium">{s.template.name}</p>
           <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
             {s.template.fields.map((f) => (
@@ -153,7 +153,7 @@ function ChecklistSection({ workOrderId }: { workOrderId: string }) {
           </select>
 
           {selected && (
-            <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
+            <div className="flex flex-col gap-3 rounded-lg border border-border p-3 shadow-sm">
               {selected.fields.map((f) => (
                 <div key={f.id} className="flex items-center justify-between gap-3 text-sm">
                   <label>

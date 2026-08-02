@@ -60,7 +60,7 @@ function DiagnosticsSection({
         Corpi v{APP_VERSION}
       </p>
       {open && (
-        <div className="w-full rounded-lg border border-border p-3 text-xs text-muted-foreground">
+        <div className="w-full rounded-lg border border-border p-3 text-xs text-muted-foreground shadow-sm">
           <p className="mb-1 font-medium text-foreground">{t.profile.diagnostics}</p>
           <p>API: {API_BASE}</p>
           <p>{t.profile.network}: {online ? t.profile.online : t.profile.offline}</p>
@@ -121,7 +121,7 @@ function PushSection() {
   if (!configured) return null;
 
   return (
-    <div className="rounded-lg border border-border p-4 text-sm">
+    <div className="rounded-lg border border-border p-4 text-sm shadow-sm">
       <div className="flex items-center gap-2 font-medium">
         <Bell size={16} />
         {t.profile.pushNotifications}
@@ -173,7 +173,7 @@ function BiometricSection() {
   if (!available) return null;
 
   return (
-    <div className="rounded-lg border border-border p-4 text-sm">
+    <div className="rounded-lg border border-border p-4 text-sm shadow-sm">
       <div className="flex items-center gap-2 font-medium">
         <Fingerprint size={16} />
         {t.profile.biometricLogin}
@@ -227,7 +227,7 @@ function TelegramSection() {
   if (!status || !status.configured) return null;
 
   return (
-    <div className="rounded-lg border border-border p-4 text-sm">
+    <div className="rounded-lg border border-border p-4 text-sm shadow-sm">
       <div className="flex items-center justify-between font-medium">
         <div className="flex items-center gap-2">
           <Send size={16} />
@@ -298,7 +298,7 @@ export default function ProfilePage() {
         <p className="text-sm text-muted-foreground">{user?.email}</p>
       </div>
 
-      <div className="rounded-lg border border-border p-4 text-sm">
+      <div className="rounded-lg border border-border p-4 text-sm shadow-sm">
         <div className="flex items-center gap-2 font-medium">
           <MapPin size={16} />
           {t.profile.gpsCheckin}
@@ -316,7 +316,7 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      <div className="rounded-lg border border-border p-4 text-sm">
+      <div className="rounded-lg border border-border p-4 text-sm shadow-sm">
         <div className="flex items-center gap-2 font-medium">
           <WifiOff size={16} />
           {t.profile.offlineQueue}
@@ -335,7 +335,7 @@ export default function ProfilePage() {
       <BiometricSection />
       <TelegramSection />
 
-      <div className="flex items-center justify-between rounded-lg border border-border p-4 text-sm">
+      <div className="flex items-center justify-between rounded-lg border border-border p-4 text-sm shadow-sm">
         <span className="font-medium">{t.shell.language}</span>
         <button
           aria-label={t.shell.language}
@@ -347,7 +347,7 @@ export default function ProfilePage() {
       </div>
 
       {mounted && (
-        <div className="flex items-center justify-between rounded-lg border border-border p-4 text-sm">
+        <div className="flex items-center justify-between rounded-lg border border-border p-4 text-sm shadow-sm">
           <span className="font-medium">{t.profile.theme}</span>
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}

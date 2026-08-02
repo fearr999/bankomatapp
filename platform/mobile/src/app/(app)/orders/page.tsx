@@ -155,7 +155,7 @@ export default function OrdersPage() {
           <Link
             key={order.id}
             href={`/order?id=${order.id}`}
-            className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4"
+            className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4 shadow-sm transition-shadow duration-150 active:shadow-none"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">{order.number}</span>
