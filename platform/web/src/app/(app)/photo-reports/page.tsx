@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch, API_BASE } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface PhotoAttachment {
   id: string;
@@ -24,6 +25,7 @@ interface PhotoAttachment {
 }
 
 export default function PhotoReportsPage() {
+  const { t, locale } = useLocale();
   const [photos, setPhotos] = useState<PhotoAttachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export default function PhotoReportsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Фотоотчёты</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t.photoReports.title}</h1>
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       {loading && <PageLoader />}
@@ -66,14 +68,14 @@ export default function PhotoReportsPage() {
                 </span>
               )}
               <span className="text-muted-foreground">
-                {new Date(p.createdAt).toLocaleString("ru-RU")}
+                {new Date(p.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
               </span>
             </CardContent>
           </Card>
         ))}
       </div>
       {!loading && photos.length === 0 && (
-        <EmptyState icon={Camera} title="Пока нет фотографий" description="Добавьте на странице заявки" />
+        <EmptyState icon={Camera} title={t.photoReports.empty} description={t.photoReports.emptyDescription} />
       )}
     </div>
   );

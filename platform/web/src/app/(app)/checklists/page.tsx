@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 type FieldType = "checkbox" | "text" | "number";
 
@@ -24,17 +25,12 @@ interface Template {
   fields: Field[];
 }
 
-const TYPE_LABELS: Record<FieldType, string> = {
-  checkbox: "Да/Нет",
-  text: "Текст",
-  number: "Число",
-};
-
 function emptyField(): Field {
   return { id: "", label: "", type: "checkbox", required: false };
 }
 
 export default function ChecklistsPage() {
+  const { t } = useLocale();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +42,7 @@ export default function ChecklistsPage() {
     try {
       setTemplates(await apiFetch<Template[]>("/checklists/templates"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.checklists.loadError);
     } finally {
       setLoading(false);
     }
@@ -76,7 +72,7 @@ export default function ChecklistsPage() {
       setShowCreate(false);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка создания");
+      setError(e instanceof Error ? e.message : t.checklists.createError);
     }
   }
 
@@ -88,9 +84,9 @@ export default function ChecklistsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Чек-листы</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.checklists.title}</h1>
         <Button onClick={() => setShowCreate((v) => !v)}>
-          <Plus size={16} /> Новый шаблон
+          <Plus size={16} /> {t.checklists.newTemplate}
         </Button>
       </div>
       {error && <p className="text-sm text-red-500">{error}</p>}
@@ -98,12 +94,12 @@ export default function ChecklistsPage() {
       {showCreate && (
         <Card>
           <CardHeader>
-            <CardTitle>Новый шаблон</CardTitle>
+            <CardTitle>{t.checklists.newTemplate}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={createTemplate} className="flex flex-col gap-3">
               <Input
-                placeholder="Название шаблона (например, «Обслуживание банкомата»)"
+                placeholder={t.checklists.templateName}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -112,7 +108,7 @@ export default function ChecklistsPage() {
                 {fields.map((f, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <Input
-                      placeholder="Название пункта"
+                      placeholder={t.checklists.fieldName}
                       value={f.label}
                       onChange={(e) => updateField(i, { label: e.target.value })}
                       className="flex-1"
@@ -122,9 +118,9 @@ export default function ChecklistsPage() {
                       value={f.type}
                       onChange={(e) => updateField(i, { type: e.target.value as FieldType })}
                     >
-                      {Object.entries(TYPE_LABELS).map(([v, l]) => (
+                      {(Object.keys(t.fieldType) as FieldType[]).map((v) => (
                         <option key={v} value={v}>
-                          {l}
+                          {t.fieldType[v]}
                         </option>
                       ))}
                     </select>
@@ -134,7 +130,7 @@ export default function ChecklistsPage() {
                         checked={f.required}
                         onChange={(e) => updateField(i, { required: e.target.checked })}
                       />
-                      обязательно
+                      {t.checklists.required}
                     </label>
                     <button
                       type="button"
@@ -151,11 +147,11 @@ export default function ChecklistsPage() {
                   className="w-fit"
                   onClick={() => setFields((prev) => [...prev, emptyField()])}
                 >
-                  <Plus size={14} /> Добавить пункт
+                  <Plus size={14} /> {t.checklists.addField}
                 </Button>
               </div>
               <Button type="submit" className="w-fit">
-                Создать шаблон
+                {t.checklists.create}
               </Button>
             </form>
           </CardContent>
@@ -164,16 +160,16 @@ export default function ChecklistsPage() {
 
       {loading && <PageLoader />}
       {!loading && templates.length === 0 && (
-        <EmptyState icon={ListChecks} title="Шаблонов пока нет" description="Создайте первый чек-лист кнопкой выше" />
+        <EmptyState icon={ListChecks} title={t.checklists.empty} description={t.checklists.emptyDescription} />
       )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {!loading && templates.map((t) => (
-          <Card key={t.id}>
+        {!loading && templates.map((tpl) => (
+          <Card key={tpl.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base text-foreground">{t.name}</CardTitle>
+                <CardTitle className="text-base text-foreground">{tpl.name}</CardTitle>
                 <button
-                  onClick={() => removeTemplate(t.id)}
+                  onClick={() => removeTemplate(tpl.id)}
                   className="text-muted-foreground transition-colors hover:text-red-500"
                 >
                   <Trash2 size={14} />
@@ -181,12 +177,12 @@ export default function ChecklistsPage() {
               </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-1">
-              {t.fields.map((f) => (
+              {tpl.fields.map((f) => (
                 <div key={f.id} className="flex items-center justify-between text-sm">
                   <span>{f.label}</span>
                   <span className="text-xs text-muted-foreground">
-                    {TYPE_LABELS[f.type]}
-                    {f.required ? " · обязательно" : ""}
+                    {t.fieldType[f.type]}
+                    {f.required ? ` · ${t.checklists.required}` : ""}
                   </span>
                 </div>
               ))}
