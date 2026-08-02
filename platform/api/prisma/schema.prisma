@@ -183,6 +183,11 @@ model Notification {
   type      String // work_order_assigned | emergency_call | status_change | ...
   title     String
   message   String
+  // Узбекский вариант — заполняется вместе с title/message при создании
+  // (см. lib/i18n-messages.ts). Null у записей, созданных до этой колонки —
+  // фронтенд в этом случае показывает RU-вариант независимо от локали.
+  titleUz   String?
+  messageUz String?
   channel   String // in_app | telegram
   delivered Boolean   @default(false)
   readAt    DateTime?
@@ -332,6 +337,8 @@ model WorkOrderEvent {
   user        User?     @relation(fields: [userId], references: [id])
   type        String // status_change | comment | assignment | ...
   message     String
+  // См. Notification.messageUz — тот же принцип: null у старых записей.
+  messageUz   String?
   createdAt   DateTime  @default(now())
 }
 
@@ -615,6 +622,7 @@ model IssueEvent {
   user      User?    @relation(fields: [userId], references: [id])
   type      String // created | status_change | comment | assignment | attachment
   message   String
+  messageUz String?
   createdAt DateTime @default(now())
 }
 

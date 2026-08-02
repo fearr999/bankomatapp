@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 import { notifyUser } from "../notifications/notify.js";
+import { workOrderMessages, notificationMessages } from "../../lib/i18n-messages.js";
 
 export const equipmentRouter = Router();
 equipmentRouter.use(authenticate);
@@ -150,7 +151,12 @@ equipmentRouter.post("/:id/emergency", async (req, res) => {
       createdById: req.auth!.userId,
       organizationId,
       events: {
-        create: { type: "created", message: "Аварийный вызов создан", userId: req.auth!.userId },
+        create: {
+          type: "created",
+          message: workOrderMessages.emergencyCallCreated().ru,
+          messageUz: workOrderMessages.emergencyCallCreated().uz,
+          userId: req.auth!.userId,
+        },
       },
     },
   });
@@ -160,13 +166,16 @@ equipmentRouter.post("/:id/emergency", async (req, res) => {
     where: { organizationId, role: { in: ["ADMIN", "DISPATCHER"] } },
     select: { id: true },
   });
+  const emergencyNotification = notificationMessages.emergencyCall(order.title, order.number);
   await Promise.all(
     responders.map((u) =>
       notifyUser(
         u.id,
         "emergency_call",
-        "Аварийный вызов",
-        `${order.title} — заявка ${order.number} создана и требует назначения исполнителя`
+        emergencyNotification.title.ru,
+        emergencyNotification.message.ru,
+        emergencyNotification.title.uz,
+        emergencyNotification.message.uz
       )
     )
   );

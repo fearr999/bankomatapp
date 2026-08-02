@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate, blockContractor } from "../../middleware/authenticate.js";
 import { UPLOADS_DIR } from "../attachments/attachments.routes.js";
+import { issueMessages } from "../../lib/i18n-messages.js";
 
 export const issuesRouter = Router();
 issuesRouter.use(authenticate);
@@ -22,14 +23,6 @@ const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
 const ISSUE_TYPES = ["EPIC", "STORY", "TASK", "BUG", "SUBTASK"] as const;
 const ISSUE_STATUSES = ["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"] as const;
 const ISSUE_PRIORITIES = ["LOWEST", "LOW", "MEDIUM", "HIGH", "HIGHEST"] as const;
-
-const STATUS_LABELS: Record<string, string> = {
-  BACKLOG: "Бэклог",
-  TODO: "К выполнению",
-  IN_PROGRESS: "В работе",
-  IN_REVIEW: "На проверке",
-  DONE: "Готово",
-};
 
 issuesRouter.get("/:id", async (req, res) => {
   const issue = await prisma.issue.findFirst({
@@ -82,16 +75,24 @@ issuesRouter.patch("/:id", async (req, res) => {
     if (!assignee) return res.status(400).json({ error: "Исполнитель не найден" });
   }
 
-  const events: Array<{ type: string; message: string; userId: string }> = [];
+  const events: Array<{ type: string; message: string; messageUz: string; userId: string }> = [];
   if (parsed.data.status && parsed.data.status !== existing.status) {
+    const statusChangeMessage = issueMessages.statusChanged(existing.status, parsed.data.status);
     events.push({
       type: "status_change",
-      message: `Статус изменён: ${STATUS_LABELS[existing.status]} → ${STATUS_LABELS[parsed.data.status]}`,
+      message: statusChangeMessage.ru,
+      messageUz: statusChangeMessage.uz,
       userId: req.auth!.userId,
     });
   }
   if (parsed.data.assigneeId !== undefined && parsed.data.assigneeId !== existing.assigneeId) {
-    events.push({ type: "assignment", message: "Изменён исполнитель", userId: req.auth!.userId });
+    const assignmentMessage = issueMessages.assignmentChanged();
+    events.push({
+      type: "assignment",
+      message: assignmentMessage.ru,
+      messageUz: assignmentMessage.uz,
+      userId: req.auth!.userId,
+    });
   }
 
   const { dueDate, ...rest } = parsed.data;
@@ -147,8 +148,15 @@ issuesRouter.post("/:id/attachments", upload.single("file"), async (req, res) =>
   const attachment = await prisma.issueAttachment.create({
     data: { issueId: req.params.id, url: `/uploads/${req.file.filename}`, uploadedById: req.auth!.userId },
   });
+  const attachmentEventMessage = issueMessages.attachmentAdded();
   await prisma.issueEvent.create({
-    data: { issueId: req.params.id, type: "attachment", message: "Добавлено вложение", userId: req.auth!.userId },
+    data: {
+      issueId: req.params.id,
+      type: "attachment",
+      message: attachmentEventMessage.ru,
+      messageUz: attachmentEventMessage.uz,
+      userId: req.auth!.userId,
+    },
   });
   res.status(201).json(attachment);
 });

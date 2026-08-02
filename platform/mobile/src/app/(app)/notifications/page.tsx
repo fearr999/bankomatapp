@@ -13,6 +13,8 @@ interface Notification {
   type: string;
   title: string;
   message: string;
+  titleUz?: string | null;
+  messageUz?: string | null;
   channel: string;
   delivered: boolean;
   readAt: string | null;
@@ -77,12 +79,12 @@ export default function NotificationsPage() {
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-medium">{n.title}</span>
+              <span className="font-medium">{locale === "uz" && n.titleUz ? n.titleUz : n.title}</span>
               <span className="whitespace-nowrap text-xs text-muted-foreground">
                 {new Date(n.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
               </span>
             </div>
-            <p className="text-muted-foreground">{n.message}</p>
+            <p className="text-muted-foreground">{locale === "uz" && n.messageUz ? n.messageUz : n.message}</p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="rounded bg-muted px-1.5 py-0.5">
                 {n.channel === "telegram"

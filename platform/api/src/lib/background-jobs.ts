@@ -2,6 +2,7 @@ import { prisma } from "./prisma.js";
 import { notifyUser } from "../modules/notifications/notify.js";
 import { nextOrderNumber } from "../modules/workorders/workorders.routes.js";
 import { checkAllActiveCleaningCycles } from "./cleaning-cycle-helpers.js";
+import { workOrderMessages, notificationMessages } from "./i18n-messages.js";
 
 const TERMINAL_STATUSES = ["COMPLETED", "CLOSED", "CANCELLED"] as const;
 
@@ -20,20 +21,29 @@ export async function checkSlaEscalations() {
 
   for (const order of overdue) {
     await prisma.workOrder.update({ where: { id: order.id }, data: { slaEscalatedAt: new Date() } });
+    const escalationMessage = workOrderMessages.slaEscalation();
     await prisma.workOrderEvent.create({
-      data: { workOrderId: order.id, type: "sla_escalation", message: "SLA просрочен — эскалация" },
+      data: {
+        workOrderId: order.id,
+        type: "sla_escalation",
+        message: escalationMessage.ru,
+        messageUz: escalationMessage.uz,
+      },
     });
     const responders = await prisma.user.findMany({
       where: { organizationId: order.organizationId, role: { in: ["ADMIN", "DISPATCHER"] } },
       select: { id: true },
     });
+    const escalationNotification = notificationMessages.slaEscalation(order.number, order.title);
     await Promise.all(
       responders.map((u) =>
         notifyUser(
           u.id,
           "sla_escalation",
-          "Просрочен SLA",
-          `Заявка ${order.number} «${order.title}» просрочена по SLA — требуется внимание`
+          escalationNotification.title.ru,
+          escalationNotification.message.ru,
+          escalationNotification.title.uz,
+          escalationNotification.message.uz
         )
       )
     );
@@ -70,7 +80,11 @@ export async function checkRecurringMaintenance() {
         createdById: admin.id,
         organizationId: eq.organizationId,
         events: {
-          create: { type: "created", message: "Заявка создана автоматически (плановое ТО)" },
+          create: {
+            type: "created",
+            message: workOrderMessages.createdAutoMaintenance().ru,
+            messageUz: workOrderMessages.createdAutoMaintenance().uz,
+          },
         },
       },
     });

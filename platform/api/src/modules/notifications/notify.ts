@@ -5,8 +5,18 @@ import { isMailConfigured, sendMail } from "../../lib/mail.js";
 import { sendFcmPush } from "../../lib/fcm.js";
 
 /** Создаёт запись во внутреннем центре уведомлений и дублирует её во все
- * подключённые каналы пользователя (Telegram, email, Web Push, нативный FCM push). */
-export async function notifyUser(userId: string, type: string, title: string, message: string) {
+ * подключённые каналы пользователя (Telegram, email, Web Push, нативный FCM push).
+ * titleUz/messageUz — узбекский вариант для отображения в приложении при
+ * выбранной UZ-локали; внешние каналы (Telegram/email/push) всегда уходят
+ * на русском, так как у нас нет надёжного способа узнать язык получателя вне приложения. */
+export async function notifyUser(
+  userId: string,
+  type: string,
+  title: string,
+  message: string,
+  titleUz?: string,
+  messageUz?: string
+) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { email: true, telegramChatId: true, pushSubscription: true, fcmToken: true },
@@ -31,6 +41,6 @@ export async function notifyUser(userId: string, type: string, title: string, me
   }
 
   return prisma.notification.create({
-    data: { userId, type, title, message, channel, delivered },
+    data: { userId, type, title, message, titleUz, messageUz, channel, delivered },
   });
 }

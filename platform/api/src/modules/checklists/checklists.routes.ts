@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate, blockContractor } from "../../middleware/authenticate.js";
+import { workOrderMessages } from "../../lib/i18n-messages.js";
 
 export const checklistsRouter = Router();
 checklistsRouter.use(authenticate);
@@ -95,12 +96,14 @@ checklistsRouter.post("/work-orders/:id/submissions", async (req, res) => {
     include: { template: true },
   });
 
+  const checklistEventMessage = workOrderMessages.checklistFilled(submission.template.name);
   await prisma.workOrderEvent.create({
     data: {
       workOrderId: req.params.id,
       userId: req.auth!.userId,
       type: "checklist",
-      message: `Заполнен чек-лист «${submission.template.name}»`,
+      message: checklistEventMessage.ru,
+      messageUz: checklistEventMessage.uz,
     },
   });
 

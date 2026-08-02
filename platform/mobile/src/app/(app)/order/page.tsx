@@ -25,7 +25,14 @@ interface OrderDetail {
   client?: { name: string } | null;
   site?: { id: string; name: string; address: string | null; lat: number | null; lng: number | null } | null;
   attachments: Array<{ id: string; url: string; createdAt: string }>;
-  events: Array<{ id: string; type: string; message: string; createdAt: string; user?: { name: string } | null }>;
+  events: Array<{
+    id: string;
+    type: string;
+    message: string;
+    messageUz?: string | null;
+    createdAt: string;
+    user?: { name: string } | null;
+  }>;
 }
 
 const SLA_STYLES: Record<string, string> = {
@@ -463,7 +470,7 @@ function OrderDetailContent() {
         {order.events.map((e) => (
           <div key={e.id} className="border-b border-border pb-2 text-sm last:border-0">
             <div className="flex items-center justify-between">
-              <span>{e.message}</span>
+              <span>{locale === "uz" && e.messageUz ? e.messageUz : e.message}</span>
               <span className="text-xs text-muted-foreground">
                 {new Date(e.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
               </span>
