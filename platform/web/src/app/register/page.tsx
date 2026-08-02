@@ -36,13 +36,13 @@ export default function RegisterPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-muted/30 px-4">
-      <Link
-        href="/login"
+      <a
+        href="https://thecorpi.com"
         aria-label={t.shell.back}
         className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <ArrowLeft size={18} />
-      </Link>
+      </a>
       <Button
         variant="ghost"
         aria-label={t.shell.language}
