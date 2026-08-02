@@ -23,7 +23,12 @@
     "teamsOnline": "Onlayn brigadalar",
     "atms": "Bankomatlar",
     "ordersChart": "So'nggi 7 kundagi arizalar",
-    "dispatchCenter": "Dispetcherlik markazi"
+    "dispatchCenter": "Dispetcherlik markazi",
+    "ordersBoard": "Arizalar taxtasi",
+    "teamRanking": "Brigadalar reytingi",
+    "columnNew": "Yangi",
+    "columnProgress": "Jarayonda",
+    "columnDone": "Tayyor"
   },
   "stats": {
     "modules": "tizimdagi modullar",
@@ -56,6 +61,19 @@
       "point1": "Shaxsiy kabinet — faqat o'z arizalari va obyektlari ko'rinadi",
       "point2": "Tozalash sikllari va hududlar o'zi yopiladi",
       "point3": "Foto-hisobotlar va cheklistlar chatlarda yo'qolib qolmaydi"
+    }
+  },
+  "trust": {
+    "badge": "Ma'lumotlar himoyada",
+    "heading": "Ma'lumotlaringiz har bir bosqichda himoyalangan",
+    "subheading": "Bankka ishonchi bo'lmagan tizimga ma'lumot berish mumkin emas — shuning uchun Corpi arxitekturasi dastlab himoya uchun loyihalangan, keyinchalik qo'shilmagan.",
+    "items": {
+      "isolation": { "title": "Ma'lumotlar izolyatsiyasi", "description": "Har bir kompaniya o'zining himoyalangan konturida ishlaydi — begona ma'lumotlarga kirish faqat sozlamalar emas, arxitektura darajasida istisno qilingan." },
+      "encryption": { "title": "Ulanish shifrlanishi", "description": "Barcha ma'lumotlar himoyalangan TLS-ulanish orqali uzatiladi; parollar qaytarib bo'lmas holda xeshlanadi va hatto bizga ham ko'rinmaydi." },
+      "access": { "title": "Rol bo'yicha kirish", "description": "Huquqlar rollar bo'yicha aniq bitta arizagacha beriladi — xodim ishi uchun aynan zarur bo'lgan narsani ko'radi, undan ortiq emas." },
+      "audit": { "title": "To'liq amallar tarixi", "description": "Har bir holat, izoh va biriktirilgan fayl voqealar jurnalida qayd etiladi — hech narsa yo'qolmaydi va orqaga qarab o'zgartirilmaydi." },
+      "backups": { "title": "Zaxira nusxalash", "description": "Muntazam zaxira nusxalar har qanday texnik nosozliklarda ma'lumot yo'qolishidan himoya qiladi." },
+      "monitoring": { "title": "24/7 monitoring", "description": "Infratuzilma doimiy kuzatuv ostida — nosozliklar va anomaliyalar mijozlar shikoyatiga qadar emas, darhol aniqlanadi." }
     }
   },
   "cta": {

@@ -17,6 +17,11 @@ import {
   ArrowRight,
   Check,
   Send,
+  Lock,
+  KeyRound,
+  History,
+  Database,
+  Activity,
 } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { Counter } from "@/components/counter";
@@ -45,6 +50,15 @@ const STAT_KEYS = [
   { key: "isolation", value: 100, suffix: "%" },
 ] as const;
 
+const TRUST_ICONS = [
+  { key: "isolation", icon: ShieldCheck },
+  { key: "encryption", icon: Lock },
+  { key: "access", icon: KeyRound },
+  { key: "audit", icon: History },
+  { key: "backups", icon: Database },
+  { key: "monitoring", icon: Activity },
+] as const;
+
 function ThemeToggle() {
   const t = useTranslations("nav");
   const { theme, setTheme } = useTheme();
@@ -68,6 +82,7 @@ export default function LandingPage() {
   const tStats = useTranslations("stats");
   const tFeatures = useTranslations("features");
   const tAudience = useTranslations("audience");
+  const tTrust = useTranslations("trust");
   const tCta = useTranslations("cta");
   const tFooter = useTranslations("footer");
 
@@ -143,21 +158,21 @@ export default function LandingPage() {
               </a>
             </div>
           </div>
-          <div className="relative animate-slide-up px-5 pb-28" style={{ animationDelay: "200ms" }}>
+          <div className="relative animate-slide-up px-5" style={{ animationDelay: "200ms" }}>
             <DashboardMockup />
           </div>
-        </section>
 
-        <section className="border-y bg-muted/20">
-          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 px-5 py-12 sm:grid-cols-4">
-            {STAT_KEYS.map((s, i) => (
-              <Reveal key={s.key} delay={i * 80} className="text-center">
-                <p className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-                  <Counter target={s.value} suffix={s.suffix} />
-                </p>
-                <p className="mt-1 text-xs leading-tight text-muted-foreground sm:text-sm">{tStats(s.key)}</p>
-              </Reveal>
-            ))}
+          <div className="relative mx-auto -mt-5 max-w-4xl px-5 pb-24 sm:-mt-8">
+            <div className="grid grid-cols-2 gap-6 rounded-2xl border bg-card/90 px-6 py-7 shadow-xl shadow-black/[0.04] backdrop-blur sm:grid-cols-4 sm:px-10 sm:py-8">
+              {STAT_KEYS.map((s, i) => (
+                <Reveal key={s.key} delay={i * 80} className="text-center">
+                  <p className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                    <Counter target={s.value} suffix={s.suffix} />
+                  </p>
+                  <p className="mt-1 text-xs leading-tight text-muted-foreground sm:text-sm">{tStats(s.key)}</p>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -201,6 +216,34 @@ export default function LandingPage() {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="trust" className="border-t bg-muted/20">
+          <div className="mx-auto max-w-6xl px-5 py-32 sm:py-44">
+            <Reveal className="mb-4 text-center">
+              <span className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs text-muted-foreground">
+                <ShieldCheck size={13} className="text-accent" />
+                {tTrust("badge")}
+              </span>
+            </Reveal>
+            <Reveal delay={40} className="mb-16 text-center">
+              <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">{tTrust("heading")}</h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">{tTrust("subheading")}</p>
+            </Reveal>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {TRUST_ICONS.map((item, i) => (
+                <Reveal key={item.key} delay={(i % 3) * 70}>
+                  <div className="group flex h-full flex-col gap-3 rounded-xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors duration-300 group-hover:bg-accent/15">
+                      <item.icon size={18} />
+                    </div>
+                    <h3 className="text-sm font-semibold">{tTrust(`items.${item.key}.title`)}</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{tTrust(`items.${item.key}.description`)}</p>
                   </div>
                 </Reveal>
               ))}
