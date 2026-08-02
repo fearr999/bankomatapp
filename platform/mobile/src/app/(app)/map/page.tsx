@@ -64,7 +64,7 @@ export default function MapPage() {
 
   return (
     <div className="flex h-screen flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
         <p className="font-semibold">{t.map.title}</p>
         {orders.length === 0 ? (
           <p className="mt-1 text-xs text-muted-foreground">{t.map.noOpenOrders}</p>

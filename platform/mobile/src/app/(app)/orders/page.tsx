@@ -113,7 +113,7 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-4 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
         <div>
           <p className="text-xs text-muted-foreground">{t.orders.title}</p>
           <p className="font-semibold">{user?.name}</p>

@@ -53,7 +53,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-4 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
         <div className="flex items-center gap-2">
           <Bell size={20} />
           <p className="font-semibold">{t.notifications.title}</p>

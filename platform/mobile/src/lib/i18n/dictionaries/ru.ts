@@ -17,6 +17,7 @@ export const ru = {
   shell: {
     language: "Язык",
     loading: "Загрузка",
+    back: "Назад",
   },
   status: {
     NEW: "Новая",
@@ -97,6 +98,18 @@ export const ru = {
   },
   profile: {
     employee: "Сотрудник",
+    settings: "Настройки",
+    account: "Аккаунт",
+    roleLabel: {
+      STAFF: "Штатный сотрудник",
+      CONTRACTOR: "Подрядчик",
+      CLEANING: "Клининг",
+      CASH_COLLECTOR: "Инкассатор",
+      SERVICE_ENGINEER: "Сервисный инженер",
+      LOGISTICIAN: "Логист",
+      SECURITY: "Охрана",
+      OTHER: "Сотрудник",
+    },
     gpsCheckin: "GPS check-in",
     positionSynced: "Позиция синхронизирована",
     locating: "Определяем позицию...",

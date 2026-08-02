@@ -341,7 +341,7 @@ function OrderDetailContent() {
 
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/80 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
         <button onClick={() => router.back()} aria-label={t.order.back}>
           <ArrowLeft size={18} />
         </button>

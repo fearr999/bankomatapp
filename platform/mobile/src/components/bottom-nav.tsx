@@ -72,26 +72,27 @@ export function BottomNav() {
   const active = !!shiftStartedAt;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 mx-auto flex max-w-md items-end border-t border-border bg-card/95 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-10 mx-auto flex max-w-md items-end border-t border-border bg-card/90 backdrop-blur-xl backdrop-saturate-150">
       {LEFT_ITEMS.map((item) => (
         <NavLink key={item.href} item={item} pathname={pathname} unread={item.href === "/notifications" ? unread : 0} />
       ))}
 
-      <div className="flex flex-1 justify-center">
+      <div className="flex flex-1 flex-col items-center justify-end gap-1 pb-2.5">
         <button
           onClick={toggleShift}
           disabled={busy}
+          aria-label={shiftLabel(t, user?.executorType, active)}
           className={cn(
-            "-mt-5 flex h-16 min-w-[92px] flex-col items-center justify-center gap-0.5 rounded-2xl px-3 text-center shadow-lg transition-all duration-150 ease-out active:scale-95",
-            active ? "bg-accent text-white" : "bg-primary text-primary-foreground",
+            "-mt-8 flex h-16 w-16 items-center justify-center rounded-full shadow-lg ring-[3px] ring-background transition-all duration-150 ease-out active:scale-95",
+            active ? "bg-accent text-background" : "bg-primary text-primary-foreground",
             busy && "opacity-70"
           )}
         >
-          <Power size={22} strokeWidth={2.4} />
-          <span className="text-[10px] font-medium leading-tight">
-            {shiftLabel(t, user?.executorType, active)}
-          </span>
+          <Power size={24} strokeWidth={2.4} />
         </button>
+        <span className="max-w-[92px] truncate text-[10px] font-medium leading-tight text-muted-foreground">
+          {shiftLabel(t, user?.executorType, active)}
+        </span>
       </div>
 
       {RIGHT_ITEMS.map((item) => (

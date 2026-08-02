@@ -19,6 +19,7 @@ export const uz: typeof ru = {
   shell: {
     language: "Til",
     loading: "Yuklanmoqda",
+    back: "Orqaga",
   },
   status: {
     NEW: "Yangi",
@@ -99,6 +100,18 @@ export const uz: typeof ru = {
   },
   profile: {
     employee: "Xodim",
+    settings: "Sozlamalar",
+    account: "Hisob",
+    roleLabel: {
+      STAFF: "Shtat xodimi",
+      CONTRACTOR: "Pudratchi",
+      CLEANING: "Tozalash xodimi",
+      CASH_COLLECTOR: "Inkassator",
+      SERVICE_ENGINEER: "Servis muhandisi",
+      LOGISTICIAN: "Logist",
+      SECURITY: "Qo'riqlash",
+      OTHER: "Xodim",
+    },
     gpsCheckin: "GPS check-in",
     positionSynced: "Joylashuv sinxronlandi",
     locating: "Joylashuv aniqlanmoqda...",
