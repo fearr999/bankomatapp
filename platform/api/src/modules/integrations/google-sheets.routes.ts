@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { authenticate, requireRole } from "../../middleware/authenticate.js";
-import { createReportSheet, isGoogleSheetsConfigured } from "../../lib/google-sheets.js";
+import { createAtmTrackingSheet, isGoogleSheetsConfigured } from "../../lib/google-sheets.js";
 
 export const googleSheetsRouter = Router();
 googleSheetsRouter.use(authenticate);
@@ -33,7 +33,7 @@ googleSheetsRouter.post("/connect", requireRole("ADMIN"), async (req, res) => {
 
   let sheet: { spreadsheetId: string; spreadsheetUrl: string };
   try {
-    sheet = await createReportSheet(organization.name, parsed.data.email);
+    sheet = await createAtmTrackingSheet(organization.id, organization.name, parsed.data.email);
   } catch (err) {
     return res.status(502).json({ error: "Не удалось создать таблицу в Google", details: (err as Error).message });
   }
