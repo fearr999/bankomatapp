@@ -5,18 +5,20 @@ import { useRouter } from "next/navigation";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/spinner";
-import { getCurrentUser, getSubscriptionStatus, logout, type SubscriptionStatus } from "@/lib/api";
+import { getCurrentUser, getSubscriptionStatus, getSupportLink, logout, type SubscriptionStatus } from "@/lib/api";
 
 export default function TrialExpiredPage() {
   const router = useRouter();
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [checking, setChecking] = useState(false);
+  const [supportLink, setSupportLink] = useState("https://t.me/thecorpi");
 
   useEffect(() => {
     if (!getCurrentUser()) {
       router.replace("/login");
       return;
     }
+    getSupportLink().then(setSupportLink);
     getSubscriptionStatus()
       .then((s) => {
         setStatus(s);
@@ -47,7 +49,7 @@ export default function TrialExpiredPage() {
       </div>
 
       <a
-        href="https://t.me/thecorpi"
+        href={supportLink}
         target="_blank"
         rel="noreferrer"
         className="flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-primary-foreground"

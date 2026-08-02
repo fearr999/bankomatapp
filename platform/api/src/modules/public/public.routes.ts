@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../../lib/prisma.js";
+import { isSupportBotConfigured, getSupportBotUsername } from "../../lib/support-bot.js";
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: "Новая",
@@ -15,6 +16,15 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export const publicRouter = Router();
+
+/// Ссылка на support-бота для экрана "пробный период истёк" и т.п. —
+/// username бота узнаём динамически через getMe, чтобы фронтенду не
+/// пришлось хардкодить его и обновлять при смене бота.
+publicRouter.get("/support-bot", async (_req, res) => {
+  const configured = isSupportBotConfigured();
+  const username = configured ? await getSupportBotUsername() : null;
+  res.json({ configured, username });
+});
 
 /// Публичное отслеживание заявки по одноразовому токену — без логина, без
 /// раскрытия внутренних данных (никаких id исполнителей, финансов и т.п.).
