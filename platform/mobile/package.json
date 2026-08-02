@@ -9,7 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aparajita/capacitor-biometric-auth": "^10.0.0",
     "@capacitor/android": "^8.4.2",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.4.2",
     "clsx": "^2.1.1",
     "jsqr": "^1.4.0",

@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Bell, LogOut, MapPin, Moon, RefreshCw, Send, Sun, WifiOff } from "lucide-react";
+import { Bell, Fingerprint, LogOut, MapPin, Moon, RefreshCw, Send, Sun, WifiOff } from "lucide-react";
 import { apiFetch, API_BASE, getCurrentUser, logout } from "@/lib/api";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { flushOfflineQueue, listQueuedPhotos } from "@/lib/offline-queue";
 import { getPushStatus, subscribeToPush, unsubscribeFromPush, type PushStatus } from "@/lib/push";
+import { authenticateBiometric, isBiometricEnabled, isBiometryAvailable, setBiometricEnabled } from "@/lib/biometric";
 import { Button } from "@/components/ui/button";
 import { APP_VERSION } from "@/lib/version";
 
@@ -117,6 +118,57 @@ function PushSection() {
       </p>
       <Button variant="outline" className="mt-2 w-full" onClick={toggle} disabled={busy}>
         {busy ? "Секунду..." : status.subscribed ? "Отключить" : "Включить"}
+      </Button>
+      {error && <p className="mt-1 text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function BiometricSection() {
+  const [available, setAvailable] = useState<boolean | null>(null);
+  const [enabled, setEnabled] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    isBiometryAvailable().then(setAvailable);
+    setEnabled(isBiometricEnabled());
+  }, []);
+
+  async function toggle() {
+    setBusy(true);
+    setError(null);
+    try {
+      if (enabled) {
+        setBiometricEnabled(false);
+        setEnabled(false);
+      } else {
+        const ok = await authenticateBiometric("Включить вход по биометрии");
+        if (!ok) {
+          setError("Не удалось подтвердить личность");
+          return;
+        }
+        setBiometricEnabled(true);
+        setEnabled(true);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!available) return null;
+
+  return (
+    <div className="rounded-lg border border-border p-4 text-sm">
+      <div className="flex items-center gap-2 font-medium">
+        <Fingerprint size={16} />
+        Вход по биометрии
+      </div>
+      <p className="mt-1 text-muted-foreground">
+        {enabled ? "Приложение блокируется Face ID / отпечатком" : "Требовать Face ID / отпечаток при открытии приложения"}
+      </p>
+      <Button variant="outline" className="mt-2 w-full" onClick={toggle} disabled={busy}>
+        {busy ? "Секунду..." : enabled ? "Отключить" : "Включить"}
       </Button>
       {error && <p className="mt-1 text-red-500">{error}</p>}
     </div>
@@ -264,6 +316,7 @@ export default function ProfilePage() {
       </div>
 
       <PushSection />
+      <BiometricSection />
       <TelegramSection />
 
       {mounted && (
