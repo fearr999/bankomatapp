@@ -25,6 +25,7 @@ function DiagnosticsSection({
   geoError: string | null;
   queuedCount: number;
 }) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [online, setOnline] = useState(true);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,12 +61,12 @@ function DiagnosticsSection({
       </p>
       {open && (
         <div className="w-full rounded-lg border border-border p-3 text-xs text-muted-foreground">
-          <p className="mb-1 font-medium text-foreground">Диагностика</p>
+          <p className="mb-1 font-medium text-foreground">{t.profile.diagnostics}</p>
           <p>API: {API_BASE}</p>
-          <p>Сеть: {online ? "онлайн" : "офлайн"}</p>
+          <p>{t.profile.network}: {online ? t.profile.online : t.profile.offline}</p>
           <p>GPS: {geoStatus}</p>
-          <p>Фото в очереди: {queuedCount}</p>
-          {geoError && <p className="text-red-500">Ошибка GPS: {geoError}</p>}
+          <p>{t.profile.photosQueuedCount}: {queuedCount}</p>
+          {geoError && <p className="text-red-500">{t.profile.gpsError}: {geoError}</p>}
         </div>
       )}
     </div>
@@ -73,6 +74,7 @@ function DiagnosticsSection({
 }
 
 function PushSection() {
+  const { t } = useLocale();
   const native = isNativeApp();
   const [webStatus, setWebStatus] = useState<PushStatus | null>(null);
   const [fcmStatus, setFcmStatus] = useState<FcmStatus | null>(null);
@@ -110,7 +112,7 @@ function PushSection() {
       }
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось изменить подписку");
+      setError(e instanceof Error ? e.message : t.profile.pushError);
     } finally {
       setBusy(false);
     }
@@ -122,13 +124,13 @@ function PushSection() {
     <div className="rounded-lg border border-border p-4 text-sm">
       <div className="flex items-center gap-2 font-medium">
         <Bell size={16} />
-        Push-уведомления
+        {t.profile.pushNotifications}
       </div>
       <p className="mt-1 text-muted-foreground">
-        {subscribed ? "Включены на этом устройстве" : "Получайте уведомления о заявках даже когда приложение закрыто"}
+        {subscribed ? t.profile.pushEnabled : t.profile.pushPromo}
       </p>
       <Button variant="outline" className="mt-2 w-full" onClick={toggle} disabled={busy}>
-        {busy ? "Секунду..." : subscribed ? "Отключить" : "Включить"}
+        {busy ? t.profile.second : subscribed ? t.profile.disable : t.profile.enable}
       </Button>
       {error && <p className="mt-1 text-red-500">{error}</p>}
     </div>
@@ -136,6 +138,7 @@ function PushSection() {
 }
 
 function BiometricSection() {
+  const { t } = useLocale();
   const [available, setAvailable] = useState<boolean | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -154,9 +157,9 @@ function BiometricSection() {
         setBiometricEnabled(false);
         setEnabled(false);
       } else {
-        const ok = await authenticateBiometric("Включить вход по биометрии");
+        const ok = await authenticateBiometric(t.profile.biometricPrompt);
         if (!ok) {
-          setError("Не удалось подтвердить личность");
+          setError(t.profile.biometricError);
           return;
         }
         setBiometricEnabled(true);
@@ -173,13 +176,13 @@ function BiometricSection() {
     <div className="rounded-lg border border-border p-4 text-sm">
       <div className="flex items-center gap-2 font-medium">
         <Fingerprint size={16} />
-        Вход по биометрии
+        {t.profile.biometricLogin}
       </div>
       <p className="mt-1 text-muted-foreground">
-        {enabled ? "Приложение блокируется Face ID / отпечатком" : "Требовать Face ID / отпечаток при открытии приложения"}
+        {enabled ? t.profile.biometricEnabledDesc : t.profile.biometricPromptDesc}
       </p>
       <Button variant="outline" className="mt-2 w-full" onClick={toggle} disabled={busy}>
-        {busy ? "Секунду..." : enabled ? "Отключить" : "Включить"}
+        {busy ? t.profile.second : enabled ? t.profile.disable : t.profile.enable}
       </Button>
       {error && <p className="mt-1 text-red-500">{error}</p>}
     </div>
@@ -192,6 +195,7 @@ interface TelegramStatus {
 }
 
 function TelegramSection() {
+  const { t } = useLocale();
   const [status, setStatus] = useState<TelegramStatus | null>(null);
   const [link, setLink] = useState<{ deepLink: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -214,7 +218,7 @@ function TelegramSection() {
       });
       setLink(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось получить ссылку");
+      setError(e instanceof Error ? e.message : t.profile.linkError);
     } finally {
       setBusy(false);
     }
@@ -234,21 +238,21 @@ function TelegramSection() {
         </a>
       </div>
       {status.linked ? (
-        <p className="mt-1 text-muted-foreground">Подключён — уведомления о заявках приходят туда</p>
+        <p className="mt-1 text-muted-foreground">{t.profile.telegramLinked}</p>
       ) : link ? (
         <div className="mt-2 flex flex-col gap-2">
           <a href={link.deepLink} className="rounded-lg bg-primary px-3 py-2 text-center text-primary-foreground">
-            Открыть бота
+            {t.profile.openBot}
           </a>
           <Button variant="outline" onClick={loadStatus}>
-            Я подключил(а) — обновить
+            {t.profile.confirmUpdate}
           </Button>
         </div>
       ) : (
         <>
-          <p className="mt-1 text-muted-foreground">Получайте уведомления о заявках в Telegram</p>
+          <p className="mt-1 text-muted-foreground">{t.profile.telegramPromo}</p>
           <Button variant="outline" className="mt-2 w-full" onClick={requestLink} disabled={busy}>
-            {busy ? "Готовим ссылку..." : "Подключить"}
+            {busy ? t.profile.preparingLink : t.profile.connect}
           </Button>
           {error && <p className="mt-1 text-red-500">{error}</p>}
         </>
@@ -289,7 +293,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-6 p-4">
       <div>
-        <p className="text-xs text-muted-foreground">Сотрудник</p>
+        <p className="text-xs text-muted-foreground">{t.profile.employee}</p>
         <p className="text-lg font-semibold">{user?.name}</p>
         <p className="text-sm text-muted-foreground">{user?.email}</p>
       </div>
@@ -297,32 +301,32 @@ export default function ProfilePage() {
       <div className="rounded-lg border border-border p-4 text-sm">
         <div className="flex items-center gap-2 font-medium">
           <MapPin size={16} />
-          GPS check-in
+          {t.profile.gpsCheckin}
         </div>
         <p className="mt-1 text-muted-foreground">
           {geo.status === "watching" && geo.lastSyncAt
-            ? `Позиция синхронизирована: ${geo.lastSyncAt.toLocaleTimeString("ru-RU")}`
+            ? `${t.profile.positionSynced}: ${geo.lastSyncAt.toLocaleTimeString(locale === "uz" ? "uz-UZ" : "ru-RU")}`
             : geo.status === "watching"
-              ? "Определяем позицию..."
+              ? t.profile.locating
               : geo.status === "denied"
-                ? "Доступ к геолокации запрещён"
+                ? t.profile.geoDenied
                 : geo.status === "unsupported"
-                  ? "Геолокация не поддерживается устройством"
-                  : "Ожидание..."}
+                  ? t.profile.geoUnsupported
+                  : t.profile.waiting}
         </p>
       </div>
 
       <div className="rounded-lg border border-border p-4 text-sm">
         <div className="flex items-center gap-2 font-medium">
           <WifiOff size={16} />
-          Офлайн-очередь фото
+          {t.profile.offlineQueue}
         </div>
         <p className="mt-1 text-muted-foreground">
-          {queuedCount === 0 ? "Всё отправлено" : `${queuedCount} фото ждут отправки`}
+          {queuedCount === 0 ? t.profile.allSent : `${queuedCount} ${t.profile.photosWaiting}`}
         </p>
         {queuedCount > 0 && (
           <Button variant="outline" className="mt-2 w-full" onClick={syncNow} disabled={busy}>
-            <RefreshCw size={14} className={busy ? "animate-spin" : ""} /> {busy ? "Отправляем..." : "Отправить сейчас"}
+            <RefreshCw size={14} className={busy ? "animate-spin" : ""} /> {busy ? t.profile.sending : t.profile.sendNow}
           </Button>
         )}
       </div>
@@ -344,7 +348,7 @@ export default function ProfilePage() {
 
       {mounted && (
         <div className="flex items-center justify-between rounded-lg border border-border p-4 text-sm">
-          <span className="font-medium">Тема</span>
+          <span className="font-medium">{t.profile.theme}</span>
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="flex h-9 w-9 items-center justify-center rounded-md border border-border transition-all duration-150 active:scale-95"
@@ -361,7 +365,7 @@ export default function ProfilePage() {
           router.replace("/login");
         }}
       >
-        <LogOut size={16} /> Выйти
+        <LogOut size={16} /> {t.profile.logout}
       </Button>
 
       <DiagnosticsSection geoStatus={geo.status} geoError={geo.error} queuedCount={queuedCount} />
