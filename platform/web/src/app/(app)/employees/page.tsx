@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface EmployeeRow {
   id: string;
@@ -27,14 +28,8 @@ interface LeaderboardRow {
   slaPercent: number | null;
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Администратор",
-  DISPATCHER: "Диспетчер",
-  MANAGER: "Руководитель бригады",
-  WORKER: "Полевой сотрудник",
-};
-
 function Leaderboard() {
+  const { t } = useLocale();
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,11 +48,11 @@ function Leaderboard() {
           <thead>
             <tr className="border-b text-left text-xs text-muted-foreground">
               <th className="px-4 py-3 font-medium">#</th>
-              <th className="px-4 py-3 font-medium">Сотрудник</th>
-              <th className="px-4 py-3 font-medium">Бригада</th>
-              <th className="px-4 py-3 font-medium">Выполнено заявок</th>
-              <th className="px-4 py-3 font-medium">SLA%</th>
-              <th className="px-4 py-3 font-medium">Рейтинг</th>
+              <th className="px-4 py-3 font-medium">{t.employees.colEmployee}</th>
+              <th className="px-4 py-3 font-medium">{t.employees.colTeam}</th>
+              <th className="px-4 py-3 font-medium">{t.employees.colCompleted}</th>
+              <th className="px-4 py-3 font-medium">{t.employees.colSla}</th>
+              <th className="px-4 py-3 font-medium">{t.employees.colRating}</th>
             </tr>
           </thead>
           <tbody>
@@ -85,7 +80,7 @@ function Leaderboard() {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-6">
-                  <EmptyState icon={Trophy} title="Пока нет данных" bordered={false} />
+                  <EmptyState icon={Trophy} title={t.employees.noData} bordered={false} />
                 </td>
               </tr>
             )}
@@ -97,6 +92,7 @@ function Leaderboard() {
 }
 
 export default function EmployeesPage() {
+  const { t } = useLocale();
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,18 +108,18 @@ export default function EmployeesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Сотрудники</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.employees.title}</h1>
         <div className="flex gap-2">
-          {(["list", "leaderboard"] as const).map((t) => (
+          {(["list", "leaderboard"] as const).map((tabKey) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabKey}
+              onClick={() => setTab(tabKey)}
               className={`flex h-9 items-center gap-1.5 rounded-full px-4 text-sm transition-all duration-150 active:scale-95 ${
-                tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
+                tab === tabKey ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
               }`}
             >
-              {t === "leaderboard" && <Trophy size={14} />}
-              {t === "list" ? "Список" : "Рейтинг"}
+              {tabKey === "leaderboard" && <Trophy size={14} />}
+              {tabKey === "list" ? t.employees.tabList : t.employees.tabLeaderboard}
             </button>
           ))}
         </div>
@@ -148,7 +144,9 @@ export default function EmployeesPage() {
                       }`}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground">{ROLE_LABELS[e.role] ?? e.role}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t.role[e.role as keyof typeof t.role] ?? e.role}
+                  </span>
                   {e.specialization && (
                     <span className="text-xs text-muted-foreground">{e.specialization}</span>
                   )}
@@ -159,7 +157,7 @@ export default function EmployeesPage() {
                   )}
                   {e.assignedOrders[0] && (
                     <span className="text-xs text-muted-foreground">
-                      Текущая задача: {e.assignedOrders[0].number}
+                      {t.employees.currentTask}: {e.assignedOrders[0].number}
                     </span>
                   )}
                 </CardContent>

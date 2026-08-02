@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { ClipboardList, CheckCircle2, Clock, Star, ShieldOff } from "lucide-react";
 import { apiFetch, getCurrentUser } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface EmployeeDetail {
   id: string;
@@ -37,6 +38,7 @@ interface EmployeeDetail {
 }
 
 export default function EmployeeDetailPage() {
+  const { t, locale } = useLocale();
   const params = useParams<{ id: string }>();
   const [employee, setEmployee] = useState<EmployeeDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export default function EmployeeDetailPage() {
       await apiFetch(`/users/${employee.id}/revoke-sessions`, { method: "POST" });
       setRevoked(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось отозвать доступ");
+      setError(e instanceof Error ? e.message : t.employees.revokeError);
     } finally {
       setRevoking(false);
     }
@@ -75,7 +77,7 @@ export default function EmployeeDetailPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{employee.name}</h1>
           <p className="text-sm text-muted-foreground">
-            {employee.specialization ?? "Специализация не указана"} · {employee.team?.name ?? "Без бригады"}
+            {employee.specialization ?? t.employees.noSpecialization} · {employee.team?.name ?? t.employees.noTeam}
           </p>
         </div>
         <span
@@ -85,45 +87,46 @@ export default function EmployeeDetailPage() {
               : "bg-zinc-500/10 text-zinc-500"
           }`}
         >
-          {employee.status === "online" ? "На линии" : "Офлайн"}
+          {employee.status === "online" ? t.employees.online : t.employees.offline}
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <KpiCard label="Всего заявок" value={employee.stats.totalOrders} icon={ClipboardList} />
-        <KpiCard label="Завершено" value={employee.stats.completed} icon={CheckCircle2} tone="success" />
-        <KpiCard label="В работе" value={employee.stats.active} icon={Clock} />
-        <KpiCard label="Рейтинг" value={employee.rating?.toFixed(1) ?? "—"} icon={Star} />
+        <KpiCard label={t.employees.totalOrders} value={employee.stats.totalOrders} icon={ClipboardList} />
+        <KpiCard label={t.employees.completed} value={employee.stats.completed} icon={CheckCircle2} tone="success" />
+        <KpiCard label={t.employees.active} value={employee.stats.active} icon={Clock} />
+        <KpiCard label={t.employees.rating} value={employee.rating?.toFixed(1) ?? "—"} icon={Star} />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Контакты и данные</CardTitle>
+          <CardTitle>{t.employees.contacts}</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-2 text-sm">
           <span className="text-muted-foreground">Email: {employee.email}</span>
-          <span className="text-muted-foreground">Телефон: {employee.phone ?? "—"}</span>
           <span className="text-muted-foreground">
-            Последняя геопозиция:{" "}
-            {employee.locationUpdatedAt
-              ? new Date(employee.locationUpdatedAt).toLocaleString("ru-RU")
-              : "нет данных"}
+            {t.employees.phone}: {employee.phone ?? "—"}
           </span>
           <span className="text-muted-foreground">
-            В команде с: {new Date(employee.createdAt).toLocaleDateString("ru-RU")}
+            {t.employees.lastLocation}:{" "}
+            {employee.locationUpdatedAt
+              ? new Date(employee.locationUpdatedAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")
+              : t.employees.noLocationData}
+          </span>
+          <span className="text-muted-foreground">
+            {t.employees.memberSince}:{" "}
+            {new Date(employee.createdAt).toLocaleDateString(locale === "uz" ? "uz-UZ" : "ru-RU")}
           </span>
         </CardContent>
         {isAdmin && (
           <CardContent className="flex items-center justify-between gap-3 border-t pt-4">
             <div>
-              <p className="text-sm font-medium">Отозвать доступ</p>
-              <p className="text-xs text-muted-foreground">
-                Все текущие сессии сотрудника (веб и мобильное приложение) сразу перестанут работать —
-                потребуется войти заново.
-              </p>
+              <p className="text-sm font-medium">{t.employees.revokeAccess}</p>
+              <p className="text-xs text-muted-foreground">{t.employees.revokeDescription}</p>
             </div>
             <Button variant="outline" size="sm" disabled={revoking || revoked} onClick={revokeSessions}>
-              <ShieldOff size={14} /> {revoked ? "Отозвано" : revoking ? "Отзываем..." : "Отозвать"}
+              <ShieldOff size={14} />{" "}
+              {revoked ? t.employees.revoked : revoking ? t.employees.revoking : t.employees.revoke}
             </Button>
           </CardContent>
         )}
@@ -131,11 +134,11 @@ export default function EmployeeDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>История заявок</CardTitle>
+          <CardTitle>{t.employees.orderHistory}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {employee.orderHistory.length === 0 && (
-            <EmptyState icon={ClipboardList} title="Пока нет назначенных заявок" size="sm" bordered={false} />
+            <EmptyState icon={ClipboardList} title={t.employees.noOrderHistory} size="sm" bordered={false} />
           )}
           {employee.orderHistory.map((o) => (
             <Link
@@ -150,7 +153,7 @@ export default function EmployeeDetailPage() {
               <div className="flex items-center gap-2">
                 <Badge status={o.status} />
                 <span className="text-xs text-muted-foreground">
-                  {new Date(o.updatedAt).toLocaleDateString("ru-RU")}
+                  {new Date(o.updatedAt).toLocaleDateString(locale === "uz" ? "uz-UZ" : "ru-RU")}
                 </span>
               </div>
             </Link>
