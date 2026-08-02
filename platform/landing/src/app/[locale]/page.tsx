@@ -23,6 +23,7 @@ import { Counter } from "@/components/counter";
 import { DashboardMockup } from "@/components/dashboard-mockup";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { FeatureVisual } from "@/components/feature-visuals";
+import { HeroFlow } from "@/components/hero-flow";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.thecorpi.com";
 
@@ -113,6 +114,7 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="hero-glow relative overflow-hidden">
           <div className="grid-fade pointer-events-none absolute inset-0" />
+          <HeroFlow />
           <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-7 px-5 pb-20 pt-24 text-center sm:pt-36">
             <span className="animate-fade-in inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs text-muted-foreground">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />

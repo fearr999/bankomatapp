@@ -35,11 +35,16 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-8px)" },
         },
+        "flow-dash": {
+          to: { "stroke-dashoffset": "-1000" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.5s ease-out both",
         "slide-up": "slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both",
         float: "float 6s ease-in-out infinite",
+        "flow-dash": "flow-dash 40s linear infinite",
+        "flow-dash-slow": "flow-dash 60s linear infinite",
       },
     },
   },
