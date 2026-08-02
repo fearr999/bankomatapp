@@ -6,6 +6,7 @@ import { authenticate } from "../../middleware/authenticate.js";
 import { getBotInfo, isTelegramConfigured } from "../../lib/telegram.js";
 import { isWebPushConfigured } from "../../lib/webpush.js";
 import { isMailConfigured } from "../../lib/mail.js";
+import { isFcmConfigured } from "../../lib/fcm.js";
 
 export const notificationsRouter = Router();
 notificationsRouter.use(authenticate);
@@ -101,5 +102,25 @@ notificationsRouter.post("/push/subscribe", async (req, res) => {
 
 notificationsRouter.post("/push/unsubscribe", async (req, res) => {
   await prisma.user.update({ where: { id: req.auth!.userId }, data: { pushSubscription: null as never } });
+  res.json({ ok: true });
+});
+
+notificationsRouter.get("/fcm/status", async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.auth!.userId },
+    select: { fcmToken: true },
+  });
+  res.json({ configured: isFcmConfigured(), subscribed: Boolean(user?.fcmToken) });
+});
+
+notificationsRouter.post("/fcm/subscribe", async (req, res) => {
+  const parsed = z.object({ token: z.string().min(1) }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  await prisma.user.update({ where: { id: req.auth!.userId }, data: { fcmToken: parsed.data.token } });
+  res.json({ ok: true });
+});
+
+notificationsRouter.post("/fcm/unsubscribe", async (req, res) => {
+  await prisma.user.update({ where: { id: req.auth!.userId }, data: { fcmToken: null } });
   res.json({ ok: true });
 });

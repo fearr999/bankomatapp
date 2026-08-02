@@ -149,6 +149,7 @@ model User {
   telegramChatId   String? @unique // заполняется после привязки бота
   telegramLinkCode String? @unique // одноразовый код для команды /start в боте
   pushSubscription Json? // Web Push подписка браузера (endpoint + ключи), см. lib/webpush.ts
+  fcmToken         String? // Нативный push-токен Firebase Cloud Messaging (Capacitor-приложение), см. lib/fcm.ts
 
   assignedOrders       WorkOrder[]           @relation("AssignedTo")
   createdOrders        WorkOrder[]           @relation("CreatedBy")

@@ -22,6 +22,7 @@ const CHANNEL_LABELS: Record<string, string> = {
   telegram: "Telegram",
   email: "Email",
   web_push: "Push",
+  push: "Push",
   in_app: "В приложении",
 };
 

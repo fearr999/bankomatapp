@@ -8,7 +8,8 @@ import { apiFetch, API_BASE, getCurrentUser, logout } from "@/lib/api";
 import { useGeoCheckin } from "@/lib/use-geo-checkin";
 import { flushOfflineQueue, listQueuedPhotos } from "@/lib/offline-queue";
 import { getPushStatus, subscribeToPush, unsubscribeFromPush, type PushStatus } from "@/lib/push";
-import { authenticateBiometric, isBiometricEnabled, isBiometryAvailable, setBiometricEnabled } from "@/lib/biometric";
+import { getFcmStatus, subscribeToFcm, unsubscribeFromFcm, type FcmStatus } from "@/lib/fcm-push";
+import { authenticateBiometric, isBiometricEnabled, isBiometryAvailable, isNativeApp, setBiometricEnabled } from "@/lib/biometric";
 import { Button } from "@/components/ui/button";
 import { APP_VERSION } from "@/lib/version";
 
@@ -71,13 +72,16 @@ function DiagnosticsSection({
 }
 
 function PushSection() {
-  const [status, setStatus] = useState<PushStatus | null>(null);
+  const native = isNativeApp();
+  const [webStatus, setWebStatus] = useState<PushStatus | null>(null);
+  const [fcmStatus, setFcmStatus] = useState<FcmStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
     try {
-      setStatus(await getPushStatus());
+      if (native) setFcmStatus(await getFcmStatus());
+      else setWebStatus(await getPushStatus());
     } catch {
       // офлайн — просто не показываем блок
     }
@@ -85,17 +89,23 @@ function PushSection() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const subscribed = native ? fcmStatus?.subscribed : webStatus?.subscribed;
+  const configured = native ? fcmStatus?.configured : webStatus?.configured;
+
   async function toggle() {
-    if (!status?.publicKey) return;
     setBusy(true);
     setError(null);
     try {
-      if (status.subscribed) {
-        await unsubscribeFromPush();
+      if (native) {
+        if (fcmStatus?.subscribed) await unsubscribeFromFcm();
+        else await subscribeToFcm();
       } else {
-        await subscribeToPush(status.publicKey);
+        if (!webStatus?.publicKey) return;
+        if (webStatus.subscribed) await unsubscribeFromPush();
+        else await subscribeToPush(webStatus.publicKey);
       }
       await load();
     } catch (e) {
@@ -105,7 +115,7 @@ function PushSection() {
     }
   }
 
-  if (!status || !status.configured) return null;
+  if (!configured) return null;
 
   return (
     <div className="rounded-lg border border-border p-4 text-sm">
@@ -114,10 +124,10 @@ function PushSection() {
         Push-уведомления
       </div>
       <p className="mt-1 text-muted-foreground">
-        {status.subscribed ? "Включены на этом устройстве" : "Получайте уведомления о заявках даже когда приложение закрыто"}
+        {subscribed ? "Включены на этом устройстве" : "Получайте уведомления о заявках даже когда приложение закрыто"}
       </p>
       <Button variant="outline" className="mt-2 w-full" onClick={toggle} disabled={busy}>
-        {busy ? "Секунду..." : status.subscribed ? "Отключить" : "Включить"}
+        {busy ? "Секунду..." : subscribed ? "Отключить" : "Включить"}
       </Button>
       {error && <p className="mt-1 text-red-500">{error}</p>}
     </div>
