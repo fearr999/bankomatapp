@@ -5,16 +5,17 @@ import { Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
-const TYPES = [
-  { value: "photo_analysis", label: "Анализ фотографий" },
-  { value: "employee_efficiency", label: "Эффективность сотрудника" },
-  { value: "load_forecast", label: "Прогноз загрузки" },
-  { value: "assignment_recommendation", label: "Рекомендация по назначению" },
-  { value: "anomaly_detection", label: "Поиск аномалий" },
-  { value: "equipment_failure_prediction", label: "Прогноз поломки оборудования" },
-  { value: "smart_search", label: "Интеллектуальный поиск" },
-];
+const TYPE_KEYS = [
+  "photo_analysis",
+  "employee_efficiency",
+  "load_forecast",
+  "assignment_recommendation",
+  "anomaly_detection",
+  "equipment_failure_prediction",
+  "smart_search",
+] as const;
 
 interface Insight {
   id: string;
@@ -24,8 +25,9 @@ interface Insight {
 }
 
 export default function AiPage() {
+  const { t, locale } = useLocale();
   const [insights, setInsights] = useState<Insight[]>([]);
-  const [type, setType] = useState(TYPES[0].value);
+  const [type, setType] = useState<(typeof TYPE_KEYS)[number]>(TYPE_KEYS[0]);
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -53,25 +55,19 @@ export default function AiPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-2">
         <Sparkles size={22} />
-        <h1 className="text-2xl font-semibold tracking-tight">AI-модуль</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.ai.title}</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Архитектура</CardTitle>
+          <CardTitle>{t.ai.architecture}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
-          <p>
-            Готова точка подключения: единый эндпоинт <code>POST /ai/analyze</code>, куда позже
-            подключится реальная модель (например, Claude через Anthropic API) — сейчас он возвращает
-            предсказуемую заглушку в том же формате, в котором будет отвечать модель, и сохраняет
-            результат в базу (<code>AiInsight</code>), чтобы фронтенду не пришлось меняться, когда
-            модель подключат по-настоящему.
-          </p>
-          <p>Из ТЗ предусмотрены следующие направления анализа (все уже в контракте API):</p>
+          <p>{t.ai.architectureText}</p>
+          <p>{t.ai.directionsIntro}</p>
           <ul className="ml-4 list-disc">
-            {TYPES.map((t) => (
-              <li key={t.value}>{t.label}</li>
+            {TYPE_KEYS.map((key) => (
+              <li key={key}>{t.ai.types[key]}</li>
             ))}
           </ul>
         </CardContent>
@@ -79,29 +75,29 @@ export default function AiPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Демо-вызов (заглушка)</CardTitle>
+          <CardTitle>{t.ai.demoCall}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <form onSubmit={runDemo} className="flex flex-wrap items-end gap-2">
             <select
               className="h-9 rounded-md border bg-transparent px-2 text-sm"
               value={type}
-              onChange={(e) => setType(e.target.value)}
+              onChange={(e) => setType(e.target.value as (typeof TYPE_KEYS)[number])}
             >
-              {TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              {TYPE_KEYS.map((key) => (
+                <option key={key} value={key}>
+                  {t.ai.types[key]}
                 </option>
               ))}
             </select>
             <input
               className="h-9 min-w-[200px] flex-1 rounded-md border bg-transparent px-3 text-sm outline-none transition-shadow duration-150 placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/40"
-              placeholder="Запрос (для интеллектуального поиска)..."
+              placeholder={t.ai.queryPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             <Button type="submit" disabled={busy}>
-              {busy ? "Выполняем..." : "Запустить"}
+              {busy ? t.ai.running : t.ai.run}
             </Button>
           </form>
 
@@ -110,17 +106,17 @@ export default function AiPage() {
               <div key={i.id} className="rounded-md border p-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">
-                    {TYPES.find((t) => t.value === i.type)?.label ?? i.type}
+                    {t.ai.types[i.type as keyof typeof t.ai.types] ?? i.type}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(i.createdAt).toLocaleString("ru-RU")}
+                    {new Date(i.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
                   </span>
                 </div>
                 <p className="text-muted-foreground">{i.summary}</p>
               </div>
             ))}
             {insights.length === 0 && (
-              <p className="text-sm text-muted-foreground">Запусков пока не было</p>
+              <p className="text-sm text-muted-foreground">{t.ai.noRunsYet}</p>
             )}
           </div>
         </CardContent>

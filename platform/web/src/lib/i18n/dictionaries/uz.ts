@@ -417,6 +417,27 @@ export const uz: typeof ru = {
     hoursShort: "soat",
     avgRating: "O'rtacha reyting",
   },
+  ai: {
+    title: "AI-modul",
+    architecture: "Arxitektura",
+    architectureText:
+      "Ulanish nuqtasi tayyor: yagona POST /ai/analyze endpoint, unga keyinchalik haqiqiy model (masalan, Anthropic API orqali Claude) ulanadi — hozircha u model qanday javob berishi kutilayotgan formatda oldindan belgilangan javob qaytaradi va natijani bazaga (AiInsight) saqlaydi, shunda model haqiqatan ulanganda frontendni o'zgartirish shart bo'lmaydi.",
+    directionsIntro: "TZ bo'yicha quyidagi tahlil yo'nalishlari ko'zda tutilgan (barchasi API kontraktida allaqachon bor):",
+    demoCall: "Demo chaqiruv (maket)",
+    queryPlaceholder: "So'rov (aqlli qidiruv uchun)...",
+    running: "Bajarilmoqda...",
+    run: "Ishga tushirish",
+    noRunsYet: "Hali ishga tushirishlar bo'lmagan",
+    types: {
+      photo_analysis: "Fotosuratlarni tahlil qilish",
+      employee_efficiency: "Xodim samaradorligi",
+      load_forecast: "Yuklama prognozi",
+      assignment_recommendation: "Tayinlash bo'yicha tavsiya",
+      anomaly_detection: "Anomaliyalarni aniqlash",
+      equipment_failure_prediction: "Uskuna buzilishi prognozi",
+      smart_search: "Aqlli qidiruv",
+    },
+  },
   cleaningCycles: {
     title: "Tozalash sikllari",
     description:
