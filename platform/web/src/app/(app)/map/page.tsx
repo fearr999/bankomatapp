@@ -5,17 +5,23 @@ import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 import type { MapEmployee, MapOrder, MapSite } from "@/components/dispatch/map-view";
 
 const MapView = dynamic(() => import("@/components/dispatch/map-view").then((m) => m.MapView), {
   ssr: false,
-  loading: () => (
+  loading: () => <MapLoading />,
+});
+
+function MapLoading() {
+  const { t } = useLocale();
+  return (
     <div className="flex h-full animate-fade-in items-center justify-center gap-2 text-sm text-muted-foreground">
       <Loader2 size={15} className="animate-spin" />
-      Загрузка карты...
+      {t.mapPage.loadingMap}
     </div>
-  ),
-});
+  );
+}
 
 interface EmployeeApi {
   id: string;
@@ -44,14 +50,20 @@ interface SiteApi {
 }
 
 const LAYERS = [
-  { key: "employees", label: "Сотрудники", color: "bg-emerald-500" },
-  { key: "sites", label: "Объекты / клиенты", color: "bg-purple-500" },
-  { key: "orders", label: "Активные заявки", color: "bg-blue-500" },
+  { key: "employees", color: "bg-emerald-500" },
+  { key: "sites", color: "bg-purple-500" },
+  { key: "orders", color: "bg-blue-500" },
 ] as const;
 
 type LayerKey = (typeof LAYERS)[number]["key"];
 
 export default function MapPage() {
+  const { t } = useLocale();
+  const layerLabels: Record<LayerKey, string> = {
+    employees: t.mapPage.employees,
+    sites: t.mapPage.sites,
+    orders: t.mapPage.activeOrders,
+  };
   const [employees, setEmployees] = useState<EmployeeApi[]>([]);
   const [orders, setOrders] = useState<OrderApi[]>([]);
   const [sites, setSites] = useState<SiteApi[]>([]);
@@ -69,7 +81,7 @@ export default function MapPage() {
         setOrders(o);
         setSites(s);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка загрузки"));
+      .catch((err) => setError(err instanceof Error ? err.message : t.mapPage.loadError));
   }, []);
 
   function toggle(key: LayerKey) {
@@ -128,7 +140,7 @@ export default function MapPage() {
   return (
     <div className="flex h-[calc(100vh-6.5rem)] flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Карта</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.mapPage.title}</h1>
         <div className="flex items-center gap-3">
           {LAYERS.map((l) => (
             <label key={l.key} className="flex items-center gap-1.5 text-sm">
@@ -138,7 +150,7 @@ export default function MapPage() {
                 onChange={() => toggle(l.key)}
               />
               <span className={`h-2 w-2 rounded-full ${l.color}`} />
-              {l.label}
+              {layerLabels[l.key]}
             </label>
           ))}
         </div>
@@ -149,10 +161,7 @@ export default function MapPage() {
         <MapView employees={mapEmployees} orders={mapOrders} sites={mapSites} />
       </Card>
 
-      <p className="text-xs text-muted-foreground">
-        Маршруты и история перемещений появятся, когда будет накапливаться журнал геопозиций
-        (сейчас хранится только последняя точка сотрудника) — следующий шаг после мобильного приложения.
-      </p>
+      <p className="text-xs text-muted-foreground">{t.mapPage.routesNote}</p>
     </div>
   );
 }

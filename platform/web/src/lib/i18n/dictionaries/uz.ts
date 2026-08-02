@@ -241,6 +241,16 @@ export const uz: typeof ru = {
     empty: "Hozircha shablonlar yo'q",
     emptyDescription: "Yuqoridagi tugma orqali birinchi cheklistni yarating",
   },
+  mapPage: {
+    title: "Xarita",
+    loadingMap: "Xarita yuklanmoqda...",
+    loadError: "Yuklashda xatolik",
+    employees: "Xodimlar",
+    sites: "Obyektlar / mijozlar",
+    activeOrders: "Faol arizalar",
+    routesNote:
+      "Marshrutlar va harakat tarixi geopozitsiya jurnali to'planishi bilan paydo bo'ladi (hozircha faqat xodimning so'nggi nuqtasi saqlanadi) — mobil ilovadan keyingi qadam.",
+  },
   dashboard: {
     title: "Dashboard",
     newOrders: "Yangi arizalar",
