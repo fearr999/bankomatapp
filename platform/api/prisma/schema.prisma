@@ -108,6 +108,27 @@ model Organization {
   projects           Project[]
   issues             Issue[]
   cleaningCycles     CleaningCycle[]
+
+  googleSheetIntegration GoogleSheetIntegration?
+}
+
+/// Автосгенерированная Google Таблица с отчётами о проделанной работе
+/// (сейчас — фотоотчёты уборки банкоматов). Мы создаём таблицу сами через
+/// сервисный аккаунт и открываем к ней доступ по email клиента — клиенту не
+/// нужно ничего расшаривать или проходить OAuth. См. src/lib/google-sheets.ts.
+model GoogleSheetIntegration {
+  id              String    @id @default(cuid())
+  organizationId  String    @unique
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  spreadsheetId   String
+  spreadsheetUrl  String
+  sharedWithEmail String
+  status          String    @default("active") // active | error
+  lastSyncedAt    DateTime?
+  lastError       String?
+  createdAt       DateTime  @default(now())
+  createdById     String
+  createdBy       User      @relation(fields: [createdById], references: [id])
 }
 
 enum WorkOrderStatus {
@@ -167,6 +188,7 @@ model User {
   collections          CollectionRecord[]
   accessLogs           DeviceAccessLog[]
   notifications        Notification[]
+  createdGoogleSheetIntegrations GoogleSheetIntegration[]
 
   assignedIssues   Issue[]           @relation("IssueAssignee")
   reportedIssues   Issue[]           @relation("IssueReporter")

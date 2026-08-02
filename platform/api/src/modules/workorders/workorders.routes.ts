@@ -9,6 +9,7 @@ import { generateWorkOrderReportPdf } from "../../lib/work-order-report.js";
 import { findNearestDevice } from "../../lib/nearest-device.js";
 import { checkAndAutoCompleteCycle } from "../../lib/cleaning-cycle-helpers.js";
 import { workOrderMessages, notificationMessages } from "../../lib/i18n-messages.js";
+import { syncCleaningReportToSheet } from "../../lib/google-sheets.js";
 
 const TERMINAL_STATUSES = new Set(["COMPLETED", "CLOSED", "CANCELLED"]);
 const AT_RISK_WINDOW_MS = 2 * 60 * 60 * 1000; // «горит» — до срока меньше 2 часов
@@ -272,6 +273,11 @@ workOrdersRouter.patch("/:id/status", async (req, res) => {
       siteId: order.siteId,
       equipmentId: order.equipmentId,
     });
+    if (order.requestType === "CLEANING") {
+      // Не блокируем ответ сотруднику ошибкой Google API — синк лучше
+      // сделать в фоне; сам syncCleaningReportToSheet ошибки не бросает.
+      void syncCleaningReportToSheet(order.id);
+    }
   }
 
   if (order.cleaningCycleId && TERMINAL_STATUSES.has(parsed.data.status)) {
