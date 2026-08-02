@@ -28,7 +28,13 @@
     "teamRanking": "Рейтинг бригад",
     "columnNew": "Новые",
     "columnProgress": "В работе",
-    "columnDone": "Готово"
+    "columnDone": "Готово",
+    "orderTitle": "UZUM1024 — Уборка",
+    "checklistItem1": "Осмотр кассет",
+    "checklistItem2": "Чистка купюроприёмника",
+    "checklistItem3": "Фото отчёта",
+    "statusInProgress": "В работе",
+    "statusDone": "Завершено"
   },
   "stats": {
     "modules": "модулей в системе",

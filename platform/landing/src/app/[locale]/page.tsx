@@ -158,21 +158,21 @@ export default function LandingPage() {
               </a>
             </div>
           </div>
-          <div className="relative animate-slide-up px-5" style={{ animationDelay: "200ms" }}>
+          <div className="relative animate-slide-up px-5 pb-28" style={{ animationDelay: "200ms" }}>
             <DashboardMockup />
           </div>
+        </section>
 
-          <div className="relative mx-auto -mt-5 max-w-4xl px-5 pb-24 sm:-mt-8">
-            <div className="grid grid-cols-2 gap-6 rounded-2xl border bg-card/90 px-6 py-7 shadow-xl shadow-black/[0.04] backdrop-blur sm:grid-cols-4 sm:px-10 sm:py-8">
-              {STAT_KEYS.map((s, i) => (
-                <Reveal key={s.key} delay={i * 80} className="text-center">
-                  <p className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-                    <Counter target={s.value} suffix={s.suffix} />
-                  </p>
-                  <p className="mt-1 text-xs leading-tight text-muted-foreground sm:text-sm">{tStats(s.key)}</p>
-                </Reveal>
-              ))}
-            </div>
+        <section className="border-y bg-muted/20">
+          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 px-5 py-12 sm:grid-cols-4">
+            {STAT_KEYS.map((s, i) => (
+              <Reveal key={s.key} delay={i * 80} className="text-center">
+                <p className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                  <Counter target={s.value} suffix={s.suffix} />
+                </p>
+                <p className="mt-1 text-xs leading-tight text-muted-foreground sm:text-sm">{tStats(s.key)}</p>
+              </Reveal>
+            ))}
           </div>
         </section>
 
