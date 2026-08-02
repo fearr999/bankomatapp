@@ -9,19 +9,25 @@ import { apiFetch } from "@/lib/api";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { teamColor } from "@/lib/team-colors";
+import { useLocale } from "@/lib/i18n/context";
 import type { TerritorySite } from "@/components/territories/territory-map-view";
 
 const TerritoryMapView = dynamic(
   () => import("@/components/territories/territory-map-view").then((m) => m.TerritoryMapView),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        Загрузка карты...
-      </div>
-    ),
+    loading: () => <MapLoading />,
   }
 );
+
+function MapLoading() {
+  const { t } = useLocale();
+  return (
+    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+      {t.territories.loadingMap}
+    </div>
+  );
+}
 
 interface SiteApi {
   id: string;
@@ -40,6 +46,7 @@ interface TeamApi {
 type Tab = "list" | "map";
 
 export default function TerritoriesPage() {
+  const { t } = useLocale();
   const [tab, setTab] = useState<Tab>("list");
   const [sites, setSites] = useState<SiteApi[]>([]);
   const [teams, setTeams] = useState<TeamApi[]>([]);
@@ -61,11 +68,11 @@ export default function TerritoriesPage() {
   function load() {
     setLoading(true);
     Promise.all([apiFetch<SiteApi[]>("/sites"), apiFetch<TeamApi[]>("/teams")])
-      .then(([s, t]) => {
-        setSites(s);
-        setTeams(t);
+      .then(([loadedSites, loadedTeams]) => {
+        setSites(loadedSites);
+        setTeams(loadedTeams);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка загрузки"))
+      .catch((err) => setError(err instanceof Error ? err.message : t.territories.loadError))
       .finally(() => setLoading(false));
   }
 
@@ -100,10 +107,10 @@ export default function TerritoriesPage() {
         body: JSON.stringify({ siteIds: [siteId], teamId: teamId || null }),
       });
       setSites((prev) =>
-        prev.map((s) => (s.id === siteId ? { ...s, team: teams.find((t) => t.id === teamId) ?? null } : s))
+        prev.map((s) => (s.id === siteId ? { ...s, team: teams.find((tm) => tm.id === teamId) ?? null } : s))
       );
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Ошибка назначения");
+      setStatus(err instanceof Error ? err.message : t.territories.assignError);
     }
   }
 
@@ -117,11 +124,11 @@ export default function TerritoriesPage() {
         method: "PATCH",
         body: JSON.stringify({ siteIds: Array.from(selected), teamId }),
       });
-      setStatus(`Назначено объектов: ${result.updated}`);
+      setStatus(`${t.territories.assignedCount}: ${result.updated}`);
       setSelected(new Set());
       load();
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Ошибка назначения");
+      setStatus(err instanceof Error ? err.message : t.territories.assignError);
     } finally {
       setBusy(false);
     }
@@ -144,7 +151,7 @@ export default function TerritoriesPage() {
 
   async function finishDrawing() {
     if (polygon.length < 3) {
-      setStatus("Отметьте на карте минимум 3 точки зоны");
+      setStatus(t.territories.minPointsWarning);
       return;
     }
     setBusy(true);
@@ -155,12 +162,12 @@ export default function TerritoriesPage() {
         method: "PATCH",
         body: JSON.stringify({ polygon, teamId }),
       });
-      setStatus(`В зоне найдено и назначено объектов: ${result.updated}`);
+      setStatus(`${t.territories.zoneAssignedCount}: ${result.updated}`);
       setDrawing(false);
       setPolygon([]);
       load();
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Ошибка назначения по зоне");
+      setStatus(err instanceof Error ? err.message : t.territories.zoneAssignError);
     } finally {
       setBusy(false);
     }
@@ -182,23 +189,21 @@ export default function TerritoriesPage() {
     <div className="flex h-[calc(100vh-6.5rem)] flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Территории</h1>
-          <p className="text-sm text-muted-foreground">
-            Постоянная привязка объектов/устройств к бригадам — списком или зоной на карте.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t.territories.title}</h1>
+          <p className="text-sm text-muted-foreground">{t.territories.subtitle}</p>
         </div>
         <div className="flex gap-2 rounded-md border p-1">
           <button
             onClick={() => setTab("list")}
             className={`rounded px-3 py-1.5 text-sm transition-colors ${tab === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
           >
-            Список
+            {t.territories.tabList}
           </button>
           <button
             onClick={() => setTab("map")}
             className={`rounded px-3 py-1.5 text-sm transition-colors ${tab === "map" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
           >
-            Карта
+            {t.territories.tabMap}
           </button>
         </div>
       </div>
@@ -209,18 +214,20 @@ export default function TerritoriesPage() {
       {tab === "list" && (
         <Card className="flex-1 overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle>Объекты ({filteredSites.length})</CardTitle>
+            <CardTitle>
+              {t.territories.sites} ({filteredSites.length})
+            </CardTitle>
             <div className="flex items-center gap-2">
               <select
                 className="h-9 rounded-md border bg-transparent px-2 text-sm"
                 value={filterTeamId}
                 onChange={(e) => setFilterTeamId(e.target.value)}
               >
-                <option value="all">Все бригады</option>
-                <option value="none">Без бригады</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
+                <option value="all">{t.territories.allTeams}</option>
+                <option value="none">{t.territories.noTeam}</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
                   </option>
                 ))}
               </select>
@@ -229,15 +236,15 @@ export default function TerritoriesPage() {
                 value={bulkTeamId}
                 onChange={(e) => setBulkTeamId(e.target.value)}
               >
-                <option value="">Снять бригаду</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
+                <option value="">{t.territories.unsetTeam}</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
                   </option>
                 ))}
               </select>
               <Button size="sm" disabled={!selected.size || busy} onClick={applyBulkAssign}>
-                Назначить выбранным ({selected.size})
+                {t.territories.assignToSelected} ({selected.size})
               </Button>
             </div>
           </CardHeader>
@@ -255,9 +262,9 @@ export default function TerritoriesPage() {
                         onChange={toggleAll}
                       />
                     </th>
-                    <th className="p-3">Объект</th>
-                    <th className="p-3">Адрес</th>
-                    <th className="p-3">Бригада</th>
+                    <th className="p-3">{t.territories.site}</th>
+                    <th className="p-3">{t.territories.address}</th>
+                    <th className="p-3">{t.territories.team}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -283,10 +290,10 @@ export default function TerritoriesPage() {
                             value={s.team?.id ?? ""}
                             onChange={(e) => quickReassign(s.id, e.target.value)}
                           >
-                            <option value="">без бригады</option>
-                            {teams.map((t) => (
-                              <option key={t.id} value={t.id}>
-                                {t.name}
+                            <option value="">{t.territories.noTeamLower}</option>
+                            {teams.map((team) => (
+                              <option key={team.id} value={team.id}>
+                                {team.name}
                               </option>
                             ))}
                           </select>
@@ -297,7 +304,7 @@ export default function TerritoriesPage() {
                   {filteredSites.length === 0 && (
                     <tr>
                       <td colSpan={4} className="p-5">
-                        <EmptyState icon={MapPin} title="Объектов не найдено" bordered={false} />
+                        <EmptyState icon={MapPin} title={t.territories.noSites} bordered={false} />
                       </td>
                     </tr>
                   )}
@@ -313,43 +320,43 @@ export default function TerritoriesPage() {
           <div className="flex flex-wrap items-center gap-2">
             {!drawing ? (
               <Button size="sm" onClick={startDrawing}>
-                Нарисовать зону
+                {t.territories.drawZone}
               </Button>
             ) : (
               <>
                 <span className="text-sm text-muted-foreground">
-                  Кликайте по карте, чтобы отметить точки зоны ({polygon.length})
+                  {t.territories.clickToMarkPoints} ({polygon.length})
                 </span>
                 <select
                   className="h-9 rounded-md border bg-transparent px-2 text-sm"
                   value={zoneTeamId}
                   onChange={(e) => setZoneTeamId(e.target.value)}
                 >
-                  <option value="">Снять бригаду</option>
-                  {teams.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
+                  <option value="">{t.territories.unsetTeam}</option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
                     </option>
                   ))}
                 </select>
                 <Button size="sm" disabled={busy || polygon.length < 3} onClick={finishDrawing}>
-                  Завершить и назначить
+                  {t.territories.finishAndAssign}
                 </Button>
                 <Button size="sm" variant="outline" disabled={busy} onClick={cancelDrawing}>
-                  Отмена
+                  {t.territories.cancel}
                 </Button>
               </>
             )}
             <div className="ml-auto flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              {teams.map((t) => (
-                <span key={t.id} className="inline-flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: teamColor(t.id) }} />
-                  {t.name}
+              {teams.map((team) => (
+                <span key={team.id} className="inline-flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: teamColor(team.id) }} />
+                  {team.name}
                 </span>
               ))}
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: teamColor(null) }} />
-                без бригады
+                {t.territories.noTeamLower}
               </span>
             </div>
           </div>
