@@ -417,6 +417,16 @@ export const uz: typeof ru = {
     hoursShort: "soat",
     avgRating: "O'rtacha reyting",
   },
+  atmService: {
+    title: "Bankomatlarga xizmat ko'rsatish",
+    description:
+      "Bankomatlar va kartomatlar — holati, kassetalar to'lganligi, inkassatsiya, avariya chaqiruvlari. Qurilma shu yerda ko'rinishi uchun \"Uskunalar\" bo'limidagi kartochkasida turini \"Bankomat\"/\"Kartomat\" deb belgilang.",
+    cassetteLevel: "Kassetalar to'lganligi",
+    collection: "Inkassatsiya",
+    noData: "ma'lumot yo'q",
+    empty: "Hozircha bankomat/kartomatlar kiritilmagan",
+    emptyDescription: "\"Uskunalar\" bo'limidagi kartochkasida turini \"Bankomat\"/\"Kartomat\" deb belgilang",
+  },
   notifications: {
     title: "Bildirishnomalar",
     markAllRead: "Barchasini o'qilgan deb belgilash",
