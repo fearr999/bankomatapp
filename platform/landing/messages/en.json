@@ -9,10 +9,10 @@
     "langAria": "Choose language"
   },
   "hero": {
-    "badge": "Next-generation Field Service Management",
-    "titleLine1": "All your field service —",
-    "titleLine2": "in one system",
-    "subtitle": "Work orders, dispatch, live map, checklists, photo reports, ATM servicing and analytics — for banks, their contractors and field technicians. Works in the browser and on the phone.",
+    "badge": "The operating system for field operations",
+    "titleLine1": "Everything in the field.",
+    "titleLine2": "One platform.",
+    "subtitle": "From work order to site closeout — the full history of every visit, in real time.",
     "createCompany": "Create a company",
     "loginToAccount": "Sign in"
   },

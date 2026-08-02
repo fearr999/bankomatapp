@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Onest, Golos_Text } from "next/font/google";
+import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const display = Onest({
-  subsets: ["latin", "cyrillic"],
-  weight: ["500", "600", "700", "800"],
-  variable: "--font-display",
-});
-
-const body = Golos_Text({
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600", "700"],
+const geist = localFont({
+  src: [
+    { path: "../fonts/Geist-400.ttf", weight: "400", style: "normal" },
+    { path: "../fonts/Geist-500.ttf", weight: "500", style: "normal" },
+    { path: "../fonts/Geist-600.ttf", weight: "600", style: "normal" },
+    { path: "../fonts/Geist-700.ttf", weight: "700", style: "normal" },
+    { path: "../fonts/Geist-800.ttf", weight: "800", style: "normal" },
+  ],
   variable: "--font-body",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
+    <html lang="ru" suppressHydrationWarning className={geist.variable}>
       <body className="antialiased">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
