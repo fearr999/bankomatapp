@@ -1,26 +1,18 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { LayoutGrid, ClipboardList, Map as MapIcon, Landmark, BarChart3, Lock, Clock } from "lucide-react";
+import { LayoutGrid, ClipboardList, Map as MapIcon, Landmark, BarChart3, Lock } from "lucide-react";
 
 const NAV = [LayoutGrid, ClipboardList, MapIcon, Landmark, BarChart3];
 
+const BARS = [38, 55, 46, 70, 58, 82, 64];
+
 const DOTS = [
-  { x: 16, y: 26 }, { x: 32, y: 58 }, { x: 50, y: 20 }, { x: 68, y: 60 },
-  { x: 80, y: 34 }, { x: 44, y: 76 }, { x: 24, y: 66 },
+  { x: 18, y: 30 }, { x: 34, y: 55 }, { x: 52, y: 22 }, { x: 66, y: 62 },
+  { x: 78, y: 38 }, { x: 46, y: 78 }, { x: 24, y: 68 }, { x: 88, y: 20 },
 ];
 
-const STAFF = [
-  { x: 50, y: 20 }, { x: 68, y: 60 }, { x: 24, y: 66 },
-];
-
-const ROUTE = "M16 26 C 30 8, 44 40, 50 20 S 66 78, 68 60 S 30 84, 24 66";
-
-const ORDERS = [
-  { id: "1248", status: "statusEnRoute", live: true },
-  { id: "1247", status: "statusOnSite", live: false },
-  { id: "1245", status: "statusAssigned", live: false },
-];
+const ROUTE = "M18 30 C 30 12, 46 40, 52 22 S 70 66, 88 20";
 
 export function DashboardMockup() {
   const t = useTranslations("mockup");
@@ -62,7 +54,7 @@ export function DashboardMockup() {
             {NAV.map((Icon, i) => (
               <div
                 key={i}
-                className={`flex h-8 w-8 items-center justify-center rounded-md ${i === 2 ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                className={`flex h-8 w-8 items-center justify-center rounded-md ${i === 0 ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
               >
                 <Icon size={15} />
               </div>
@@ -80,54 +72,49 @@ export function DashboardMockup() {
             </div>
 
             <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-5">
-              <div className="relative overflow-hidden rounded-lg border bg-background/60 p-3 sm:col-span-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[11px] text-muted-foreground">{t("dispatchCenter")}</p>
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />3 {t("onlineNow")}
-                  </div>
-                </div>
-
-                <div className="relative h-36 w-full sm:h-40">
-                  <svg viewBox="0 0 100 90" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
-                    <path d={ROUTE} fill="none" stroke="hsl(var(--accent))" strokeWidth="1" strokeDasharray="2.5 2.5" opacity="0.55" />
-                  </svg>
-
-                  {DOTS.map((d, i) => (
-                    <span
+              <div className="rounded-lg border bg-background/60 p-3 sm:col-span-3">
+                <p className="mb-2.5 text-[11px] text-muted-foreground">{t("ordersChart")}</p>
+                <div className="flex h-20 items-end gap-1.5 sm:h-24">
+                  {BARS.map((h, i) => (
+                    <div
                       key={i}
-                      className="absolute h-1.5 w-1.5 rounded-full bg-muted-foreground/50"
-                      style={{ left: `${d.x}%`, top: `${d.y}%` }}
+                      className={`flex-1 rounded-t ${i === BARS.length - 1 ? "bg-accent" : "bg-primary/15"}`}
+                      style={{ height: `${h}%` }}
                     />
                   ))}
-
-                  {STAFF.map((s, i) => (
-                    <span key={i} className="absolute" style={{ left: `${s.x}%`, top: `${s.y}%` }}>
-                      <span className="absolute inset-0 -m-1.5 animate-ping rounded-full bg-emerald-500/40" />
-                      <span className="relative block h-2.5 w-2.5 rounded-full border-2 border-background bg-emerald-500" />
-                    </span>
-                  ))}
-
-                  <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full border bg-background/90 px-2 py-1 text-[10px] font-medium shadow-sm backdrop-blur">
-                    <Clock size={10} className="text-accent" />
-                    {t("slaChip", { min: 42 })}
-                  </div>
                 </div>
               </div>
 
-              <div className="rounded-lg border bg-background/60 p-3 sm:col-span-2">
-                <p className="mb-2.5 text-[11px] text-muted-foreground">{t("recentOrders")}</p>
-                <div className="flex flex-col gap-2.5">
-                  {ORDERS.map((o) => (
-                    <div key={o.id} className="flex items-center gap-2">
-                      <span className="relative h-1.5 w-1.5 shrink-0 rounded-full bg-accent">
-                        {o.live && <span className="absolute inset-0 animate-ping rounded-full bg-accent" />}
+              <div className="relative overflow-hidden rounded-lg border bg-background/60 p-3 sm:col-span-2">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-[11px] text-muted-foreground">{t("dispatchCenter")}</p>
+                  <div className="flex items-center -space-x-1.5">
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className="relative h-3.5 w-3.5 rounded-full border border-background bg-primary/20"
+                      >
+                        {i === 0 && (
+                          <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full border border-background bg-emerald-500" />
+                        )}
                       </span>
-                      <span className="flex-1 truncate text-[11px] font-medium">#{o.id}</span>
-                      <span className="shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] text-muted-foreground">
-                        {t(o.status)}
-                      </span>
-                    </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="relative h-16 w-full sm:h-20">
+                  <svg viewBox="0 0 100 44" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+                    <path d={ROUTE} fill="none" stroke="hsl(var(--accent))" strokeWidth="1" strokeDasharray="2.5 2.5" opacity="0.55" />
+                  </svg>
+                  {DOTS.map((d, i) => (
+                    <span
+                      key={i}
+                      className="absolute h-1.5 w-1.5 rounded-full bg-accent"
+                      style={{ left: `${d.x}%`, top: `${d.y}%` }}
+                    >
+                      {i % 3 === 0 && (
+                        <span className="absolute inset-0 animate-ping rounded-full bg-accent" />
+                      )}
+                    </span>
                   ))}
                 </div>
               </div>

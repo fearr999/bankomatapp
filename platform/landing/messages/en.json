@@ -23,13 +23,7 @@
     "teamsOnline": "Teams online",
     "atms": "ATMs",
     "ordersChart": "Orders, last 7 days",
-    "dispatchCenter": "Dispatch center",
-    "recentOrders": "Orders",
-    "statusEnRoute": "En route",
-    "statusOnSite": "On site",
-    "statusAssigned": "Assigned",
-    "onlineNow": "online",
-    "slaChip": "SLA · {min} min"
+    "dispatchCenter": "Dispatch center"
   },
   "stats": {
     "modules": "modules in the system",
@@ -40,38 +34,14 @@
   "features": {
     "heading": "What's inside",
     "subheading": "Modules that are actually used in the field, not collecting dust in a demo",
-    "orders": {
-      "title": "Orders & SLA",
-      "description": "Full order lifecycle from creation to the completion act — with an SLA timer and automatic escalation of overdue orders."
-    },
-    "dispatch": {
-      "title": "Dispatch center",
-      "description": "Real-time map, drag-and-drop assignment, nearest available technician."
-    },
-    "atm": {
-      "title": "ATM servicing",
-      "description": "Cassette fill levels, cash collection, emergency calls — a dedicated workflow for ATMs and card recyclers."
-    },
-    "cleaning": {
-      "title": "Team cleaning cycles",
-      "description": "Sites are assigned to teams; each cycle auto-creates orders for every site and closes itself once everything is done."
-    },
-    "photo": {
-      "title": "Photo reports & signature",
-      "description": "Geotagged photos, client e-signature, checklists per job type — right from the phone."
-    },
-    "analytics": {
-      "title": "Analytics & ranking",
-      "description": "KPIs by team and contractor, employee ranking, SLA comparison — on one screen."
-    },
-    "multitenancy": {
-      "title": "Multi-tenancy",
-      "description": "The bank and every contractor see only their own data; access is scoped by role down to a single order."
-    },
-    "mobile": {
-      "title": "Mobile app",
-      "description": "Offline photo upload queue, geofence auto-arrival, QR confirmation — works even on poor connectivity."
-    }
+    "orders": { "title": "Orders & SLA", "description": "Full order lifecycle from creation to the completion act — with an SLA timer and automatic escalation of overdue orders." },
+    "dispatch": { "title": "Dispatch center", "description": "Real-time map, drag-and-drop assignment, nearest available technician." },
+    "atm": { "title": "ATM servicing", "description": "Cassette fill levels, cash collection, emergency calls — a dedicated workflow for ATMs and card recyclers." },
+    "cleaning": { "title": "Team cleaning cycles", "description": "Sites are assigned to teams; each cycle auto-creates orders for every site and closes itself once everything is done." },
+    "photo": { "title": "Photo reports & signature", "description": "Geotagged photos, client e-signature, checklists per job type — right from the phone." },
+    "analytics": { "title": "Analytics & ranking", "description": "KPIs by team and contractor, employee ranking, SLA comparison — on one screen." },
+    "multitenancy": { "title": "Multi-tenancy", "description": "The bank and every contractor see only their own data; access is scoped by role down to a single order." },
+    "mobile": { "title": "Mobile app", "description": "Offline photo upload queue, geofence auto-arrival, QR confirmation — works even on poor connectivity." }
   },
   "audience": {
     "heading": "Who it's for",
