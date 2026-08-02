@@ -18,6 +18,17 @@ interface Notification {
   createdAt: string;
 }
 
+const CHANNEL_LABELS: Record<string, string> = {
+  telegram: "Telegram",
+  email: "Email",
+  web_push: "Push",
+  in_app: "В приложении",
+};
+
+function channelLabel(channel: string) {
+  return CHANNEL_LABELS[channel] ?? "В приложении";
+}
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,10 +93,8 @@ export default function NotificationsPage() {
             </div>
             <p className="text-muted-foreground">{n.message}</p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="rounded bg-muted px-1.5 py-0.5">
-                {n.channel === "telegram" ? "Telegram" : "В приложении"}
-              </span>
-              {n.channel === "telegram" && !n.delivered && (
+              <span className="rounded bg-muted px-1.5 py-0.5">{channelLabel(n.channel)}</span>
+              {n.channel !== "in_app" && !n.delivered && (
                 <span className="text-red-500">не доставлено</span>
               )}
             </div>
