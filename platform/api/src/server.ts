@@ -24,6 +24,7 @@ import { issuesRouter } from "./modules/projects/issues.routes.js";
 import { sprintsRouter } from "./modules/projects/sprints.routes.js";
 import { cleaningCyclesRouter } from "./modules/cleaning-cycles/cleaning-cycles.routes.js";
 import { startTelegramPolling, isTelegramConfigured } from "./lib/telegram.js";
+import { startSupportBotPolling, isSupportBotConfigured } from "./lib/support-bot.js";
 import { startBackgroundJobs } from "./lib/background-jobs.js";
 
 // Один необработанный отказ промиса в асинхронном роуте (например, сбой сети
@@ -96,6 +97,12 @@ app.listen(port, () => {
     console.log("Telegram-бот: опрос обновлений запущен");
   } else {
     console.log("Telegram-бот: TELEGRAM_BOT_TOKEN не задан, уведомления в Telegram отключены");
+  }
+  if (isSupportBotConfigured()) {
+    startSupportBotPolling();
+    console.log("Support-бот: опрос обновлений запущен");
+  } else {
+    console.log("Support-бот: TELEGRAM_SUPPORT_BOT_TOKEN не задан, отключён");
   }
   startBackgroundJobs();
   console.log("Фоновые задачи запущены: эскалация SLA, плановое ТО (каждые 5 минут)");

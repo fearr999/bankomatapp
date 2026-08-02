@@ -94,3 +94,17 @@ export interface SubscriptionStatus {
 export function getSubscriptionStatus() {
   return apiFetch<SubscriptionStatus>("/auth/subscription");
 }
+
+const FALLBACK_SUPPORT_LINK = "https://t.me/thecorpi";
+
+// Публичный роут, без токена — узнаём актуальный username support-бота,
+// чтобы не хардкодить его и не привязываться к конкретному боту в коде.
+export async function getSupportLink(): Promise<string> {
+  try {
+    const res = await fetch(`${API_BASE}/public/support-bot`);
+    const data = await res.json();
+    return data.configured && data.username ? `https://t.me/${data.username}` : FALLBACK_SUPPORT_LINK;
+  } catch {
+    return FALLBACK_SUPPORT_LINK;
+  }
+}
