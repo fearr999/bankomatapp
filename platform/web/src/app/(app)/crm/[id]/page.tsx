@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, ClipboardList, FileText } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 
 interface ClientDetail {
   id: string;
@@ -34,14 +35,8 @@ interface ClientDetail {
   }>;
 }
 
-const INTERACTION_LABELS: Record<string, string> = {
-  call: "Звонок",
-  meeting: "Встреча",
-  email: "Письмо",
-  note: "Заметка",
-};
-
 export default function ClientDetailPage() {
+  const { t, locale } = useLocale();
   const params = useParams<{ id: string }>();
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +48,7 @@ export default function ClientDetailPage() {
     try {
       setClient(await apiFetch<ClientDetail>(`/clients/${params.id}`));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.crm.loadError);
     }
   }
 
@@ -94,17 +89,19 @@ export default function ClientDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Контакты</CardTitle>
+            <CardTitle>{t.crm.contacts}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-1 text-sm">
-            <span className="text-muted-foreground">Телефон: {client.phone ?? "—"}</span>
+            <span className="text-muted-foreground">
+              {t.crm.phone}: {client.phone ?? "—"}
+            </span>
             <span className="text-muted-foreground">Email: {client.email ?? "—"}</span>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Объекты и оборудование</CardTitle>
+            <CardTitle>{t.crm.sitesAndEquipment}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {client.sites.map((s) => (
@@ -127,14 +124,14 @@ export default function ClientDetailPage() {
               </div>
             ))}
             {client.sites.length === 0 && (
-              <EmptyState icon={MapPin} title="Объектов пока нет" size="sm" bordered={false} />
+              <EmptyState icon={MapPin} title={t.crm.noSites} size="sm" bordered={false} />
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Заявки</CardTitle>
+            <CardTitle>{t.crm.orderList}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {client.workOrders.map((o) => (
@@ -151,25 +148,27 @@ export default function ClientDetailPage() {
               </Link>
             ))}
             {client.workOrders.length === 0 && (
-              <EmptyState icon={ClipboardList} title="Заявок пока нет" size="sm" bordered={false} />
+              <EmptyState icon={ClipboardList} title={t.crm.noOrders} size="sm" bordered={false} />
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>История взаимодействий</CardTitle>
+            <CardTitle>{t.crm.interactionHistory}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {client.interactions.map((i) => (
               <div key={i.id} className="border-b pb-2 text-sm last:border-0">
                 <div className="flex items-center justify-between">
                   <span>
-                    <span className="font-medium">{INTERACTION_LABELS[i.type] ?? i.type}:</span>{" "}
+                    <span className="font-medium">
+                      {t.interactionType[i.type as keyof typeof t.interactionType] ?? i.type}:
+                    </span>{" "}
                     {i.message}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(i.createdAt).toLocaleString("ru-RU")}
+                    {new Date(i.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
                   </span>
                 </div>
                 <span className="text-xs text-muted-foreground">{i.user?.name ?? "—"}</span>
@@ -181,18 +180,18 @@ export default function ClientDetailPage() {
                 value={interactionType}
                 onChange={(e) => setInteractionType(e.target.value)}
               >
-                {Object.entries(INTERACTION_LABELS).map(([v, l]) => (
+                {(Object.keys(t.interactionType) as Array<keyof typeof t.interactionType>).map((v) => (
                   <option key={v} value={v}>
-                    {l}
+                    {t.interactionType[v]}
                   </option>
                 ))}
               </select>
               <Input
-                placeholder="Что обсудили..."
+                placeholder={t.crm.whatDiscussed}
                 value={interactionMsg}
                 onChange={(e) => setInteractionMsg(e.target.value)}
               />
-              <Button type="submit">Добавить</Button>
+              <Button type="submit">{t.crm.add}</Button>
             </form>
           </CardContent>
         </Card>
@@ -200,24 +199,24 @@ export default function ClientDetailPage() {
 
       <Card className="h-fit">
         <CardHeader>
-          <CardTitle>Договоры</CardTitle>
+          <CardTitle>{t.crm.contracts}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {client.contracts.map((c) => (
             <div key={c.id} className="rounded-md border p-2 text-sm">
               <div className="font-medium">{c.number}</div>
               <div className="text-xs text-muted-foreground">
-                {c.startDate ? new Date(c.startDate).toLocaleDateString("ru-RU") : "—"} —{" "}
-                {c.endDate ? new Date(c.endDate).toLocaleDateString("ru-RU") : "бессрочно"}
+                {c.startDate ? new Date(c.startDate).toLocaleDateString(locale === "uz" ? "uz-UZ" : "ru-RU") : "—"} —{" "}
+                {c.endDate ? new Date(c.endDate).toLocaleDateString(locale === "uz" ? "uz-UZ" : "ru-RU") : t.crm.indefinite}
               </div>
             </div>
           ))}
           {client.contracts.length === 0 && (
-            <EmptyState icon={FileText} title="Договоров пока нет" size="sm" bordered={false} />
+            <EmptyState icon={FileText} title={t.crm.noContracts} size="sm" bordered={false} />
           )}
           <form onSubmit={addContract} className="flex gap-2 pt-2">
             <Input
-              placeholder="№ договора"
+              placeholder={t.crm.contractNumber}
               value={contractNumber}
               onChange={(e) => setContractNumber(e.target.value)}
             />
