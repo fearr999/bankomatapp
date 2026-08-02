@@ -28,6 +28,12 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     },
   });
   if (!res.ok) {
+    // Пробный период истёк и организация ещё не оплатила — блокируем
+    // приложение экраном "свяжитесь с нами" вместо ошибок по каждому запросу.
+    if (res.status === 402 && token && window.location.pathname !== "/trial-expired") {
+      window.location.href = "/trial-expired";
+      return new Promise<T>(() => {});
+    }
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ? JSON.stringify(body.error) : `Ошибка запроса: ${res.status}`);
   }
@@ -53,4 +59,15 @@ export function getCurrentUser(): CurrentUser | null {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem("fsm_mobile_user");
   return raw ? JSON.parse(raw) : null;
+}
+
+export interface SubscriptionStatus {
+  trialEndsAt: string | null;
+  subscriptionActive: boolean;
+  daysLeft: number | null;
+  expired: boolean;
+}
+
+export function getSubscriptionStatus() {
+  return apiFetch<SubscriptionStatus>("/auth/subscription");
 }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { hashPassword, signToken, verifyPassword } from "../../lib/auth.js";
 import { passwordSchema } from "../../lib/password.js";
+import { authenticate } from "../../middleware/authenticate.js";
 
 export const authRouter = Router();
 
@@ -61,8 +62,9 @@ authRouter.post("/register", async (req, res) => {
   if (existing) return res.status(409).json({ error: "Email уже используется" });
 
   const passwordHash = await hashPassword(password);
+  const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
   const { organization, user } = await prisma.$transaction(async (tx) => {
-    const organization = await tx.organization.create({ data: { name: organizationName } });
+    const organization = await tx.organization.create({ data: { name: organizationName, trialEndsAt } });
     const user = await tx.user.create({
       data: {
         name,
@@ -94,5 +96,28 @@ authRouter.post("/register", async (req, res) => {
       executorType: user.executorType,
     },
     organization: { id: organization.id, name: organization.name },
+  });
+});
+
+/// Статус пробного периода/подписки текущей организации — для баннера
+/// "осталось N дней" и экрана блокировки после истечения.
+authRouter.get("/subscription", authenticate, async (req, res) => {
+  const organization = await prisma.organization.findUnique({
+    where: { id: req.auth!.organizationId },
+    select: { trialEndsAt: true, subscriptionActive: true },
+  });
+  if (!organization) return res.status(404).json({ error: "Организация не найдена" });
+
+  const daysLeft = organization.trialEndsAt
+    ? Math.max(0, Math.ceil((organization.trialEndsAt.getTime() - Date.now()) / 86_400_000))
+    : null;
+  const expired =
+    !organization.subscriptionActive && !!organization.trialEndsAt && organization.trialEndsAt < new Date();
+
+  res.json({
+    trialEndsAt: organization.trialEndsAt,
+    subscriptionActive: organization.subscriptionActive,
+    daysLeft,
+    expired,
   });
 });

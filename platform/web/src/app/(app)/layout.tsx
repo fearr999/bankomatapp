@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { TrialBanner } from "@/components/layout/trial-banner";
 import { getCurrentUser, isContractor } from "@/lib/api";
 import { NAV_ITEMS } from "@/components/layout/nav-items";
 import { PageLoader } from "@/components/ui/spinner";
@@ -43,6 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       <Sidebar />
       <div className="flex flex-1 flex-col">
+        <TrialBanner />
         <Topbar />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div key={pathname} className="animate-slide-up">
