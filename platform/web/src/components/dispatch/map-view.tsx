@@ -3,6 +3,7 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useLocale } from "@/lib/i18n/context";
 
 export interface MapEmployee {
   id: string;
@@ -58,6 +59,7 @@ export function MapView({
   orders?: MapOrder[];
   sites?: MapSite[];
 }) {
+  const { t } = useLocale();
   return (
     <MapContainer
       center={TASHKENT_CENTER}
@@ -77,11 +79,11 @@ export function MapView({
           <Popup>
             <b>{e.name}</b>
             <br />
-            {e.status === "online" ? "На линии" : "Офлайн"}
+            {e.status === "online" ? t.mapView.online : t.mapView.offline}
             {e.currentOrder && (
               <>
                 <br />
-                Заявка: {e.currentOrder.number}
+                {t.mapView.order}: {e.currentOrder.number}
               </>
             )}
           </Popup>
