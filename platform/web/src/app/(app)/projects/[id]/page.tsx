@@ -10,15 +10,16 @@ import { PageLoader } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 import {
   ISSUE_TYPES,
-  ISSUE_TYPE_LABELS,
   ISSUE_TYPE_COLORS,
   ISSUE_STATUSES,
-  ISSUE_STATUS_LABELS,
   ISSUE_PRIORITIES,
-  ISSUE_PRIORITY_LABELS,
   ISSUE_PRIORITY_COLORS,
+  useIssueTypeLabels,
+  useIssueStatusLabels,
+  useIssuePriorityLabels,
 } from "@/lib/issue-labels";
 
 interface IssueRow {
@@ -55,6 +56,8 @@ interface UserOption {
 }
 
 function IssueCard({ issue, projectId }: { issue: IssueRow; projectId: string }) {
+  const typeLabels = useIssueTypeLabels();
+  const priorityLabels = useIssuePriorityLabels();
   return (
     <Link
       href={`/projects/${projectId}/issues/${issue.id}`}
@@ -62,7 +65,7 @@ function IssueCard({ issue, projectId }: { issue: IssueRow; projectId: string })
     >
       <div className="flex items-center gap-1.5">
         <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${ISSUE_TYPE_COLORS[issue.type]}`}>
-          {ISSUE_TYPE_LABELS[issue.type]}
+          {typeLabels[issue.type as keyof typeof typeLabels]}
         </span>
         <span className="text-[10px] text-muted-foreground">{issue.number}</span>
       </div>
@@ -78,7 +81,7 @@ function IssueCard({ issue, projectId }: { issue: IssueRow; projectId: string })
       )}
       <div className="flex items-center justify-between pt-0.5">
         <span className={`text-[10px] font-medium ${ISSUE_PRIORITY_COLORS[issue.priority]}`}>
-          {ISSUE_PRIORITY_LABELS[issue.priority]}
+          {priorityLabels[issue.priority as keyof typeof priorityLabels]}
         </span>
         {issue.assignee && (
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[9px] font-medium">
@@ -120,12 +123,15 @@ function FiltersBar({
   users: UserOption[];
   labels: string[];
 }) {
+  const { t } = useLocale();
+  const typeLabels = useIssueTypeLabels();
+  const priorityLabels = useIssuePriorityLabels();
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="relative">
         <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Поиск..."
+          placeholder={t.projects.search}
           value={filters.search}
           onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           className="w-48 pl-7"
@@ -136,10 +142,10 @@ function FiltersBar({
         value={filters.type}
         onChange={(e) => setFilters({ ...filters, type: e.target.value })}
       >
-        <option value="">Все типы</option>
-        {ISSUE_TYPES.map((t) => (
-          <option key={t} value={t}>
-            {ISSUE_TYPE_LABELS[t]}
+        <option value="">{t.projects.allTypes}</option>
+        {ISSUE_TYPES.map((ty) => (
+          <option key={ty} value={ty}>
+            {typeLabels[ty]}
           </option>
         ))}
       </select>
@@ -148,10 +154,10 @@ function FiltersBar({
         value={filters.priority}
         onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
       >
-        <option value="">Все приоритеты</option>
+        <option value="">{t.projects.allPriorities}</option>
         {ISSUE_PRIORITIES.map((p) => (
           <option key={p} value={p}>
-            {ISSUE_PRIORITY_LABELS[p]}
+            {priorityLabels[p]}
           </option>
         ))}
       </select>
@@ -160,7 +166,7 @@ function FiltersBar({
         value={filters.assigneeId}
         onChange={(e) => setFilters({ ...filters, assigneeId: e.target.value })}
       >
-        <option value="">Все исполнители</option>
+        <option value="">{t.projects.allAssignees}</option>
         {users.map((u) => (
           <option key={u.id} value={u.id}>
             {u.name}
@@ -173,7 +179,7 @@ function FiltersBar({
           value={filters.label}
           onChange={(e) => setFilters({ ...filters, label: e.target.value })}
         >
-          <option value="">Все метки</option>
+          <option value="">{t.projects.allLabels}</option>
           {labels.map((l) => (
             <option key={l} value={l}>
               {l}
@@ -194,6 +200,9 @@ function CreateIssueForm({
   users: UserOption[];
   busy: boolean;
 }) {
+  const { t } = useLocale();
+  const typeLabels = useIssueTypeLabels();
+  const priorityLabels = useIssuePriorityLabels();
   const [title, setTitle] = useState("");
   const [type, setType] = useState("TASK");
   const [priority, setPriority] = useState("MEDIUM");
@@ -210,14 +219,14 @@ function CreateIssueForm({
       className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-2"
     >
       <select className="h-8 rounded-md border bg-transparent px-1.5 text-xs" value={type} onChange={(e) => setType(e.target.value)}>
-        {ISSUE_TYPES.filter((t) => t !== "SUBTASK").map((t) => (
-          <option key={t} value={t}>
-            {ISSUE_TYPE_LABELS[t]}
+        {ISSUE_TYPES.filter((ty) => ty !== "SUBTASK").map((ty) => (
+          <option key={ty} value={ty}>
+            {typeLabels[ty]}
           </option>
         ))}
       </select>
       <Input
-        placeholder="Название задачи..."
+        placeholder={t.projects.taskTitlePlaceholder}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         className="h-8 flex-1 text-sm"
@@ -225,7 +234,7 @@ function CreateIssueForm({
       <select className="h-8 rounded-md border bg-transparent px-1.5 text-xs" value={priority} onChange={(e) => setPriority(e.target.value)}>
         {ISSUE_PRIORITIES.map((p) => (
           <option key={p} value={p}>
-            {ISSUE_PRIORITY_LABELS[p]}
+            {priorityLabels[p]}
           </option>
         ))}
       </select>
@@ -234,7 +243,7 @@ function CreateIssueForm({
         value={assigneeId}
         onChange={(e) => setAssigneeId(e.target.value)}
       >
-        <option value="">Без исполнителя</option>
+        <option value="">{t.projects.noAssignee}</option>
         {users.map((u) => (
           <option key={u.id} value={u.id}>
             {u.name}
@@ -242,13 +251,15 @@ function CreateIssueForm({
         ))}
       </select>
       <Button type="submit" size="sm" disabled={busy}>
-        <Plus size={14} /> Добавить
+        <Plus size={14} /> {t.projects.add}
       </Button>
     </form>
   );
 }
 
 export default function ProjectDetailPage() {
+  const { t } = useLocale();
+  const statusLabels = useIssueStatusLabels();
   const params = useParams<{ id: string }>();
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [issues, setIssues] = useState<IssueRow[]>([]);
@@ -272,7 +283,7 @@ export default function ProjectDetailPage() {
       setSprints(s);
       setUsers(u);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.projects.loadError);
     }
   }
 
@@ -296,7 +307,7 @@ export default function ProjectDetailPage() {
       });
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка создания");
+      setError(e instanceof Error ? e.message : t.projects.createError);
     } finally {
       setBusy(false);
     }
@@ -307,7 +318,7 @@ export default function ProjectDetailPage() {
     try {
       await apiFetch(`/projects/${params.id}/sprints`, {
         method: "POST",
-        body: JSON.stringify({ name: `Спринт ${sprints.length + 1}` }),
+        body: JSON.stringify({ name: `${t.projects.sprintName} ${sprints.length + 1}` }),
       });
       await load();
     } finally {
@@ -321,7 +332,7 @@ export default function ProjectDetailPage() {
       await apiFetch(`/sprints/${id}/start`, { method: "POST" });
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось начать спринт");
+      setError(e instanceof Error ? e.message : t.projects.startSprintError);
     }
   }
 
@@ -356,15 +367,15 @@ export default function ProjectDetailPage() {
           <p className="text-xs text-muted-foreground">{project.key}</p>
         </div>
         <div className="flex gap-2">
-          {(["board", "backlog"] as const).map((t) => (
+          {(["board", "backlog"] as const).map((tabKey) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabKey}
+              onClick={() => setTab(tabKey)}
               className={`h-9 rounded-full px-4 text-sm transition-all duration-150 active:scale-95 ${
-                tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
+                tab === tabKey ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
               }`}
             >
-              {t === "board" ? "Доска" : "Бэклог"}
+              {tabKey === "board" ? t.projects.board : t.projects.backlog}
             </button>
           ))}
         </div>
@@ -387,7 +398,7 @@ export default function ProjectDetailPage() {
                     {(provided) => (
                       <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-2">
                         <p className="px-1 text-xs font-medium text-muted-foreground">
-                          {ISSUE_STATUS_LABELS[status]} ({columnIssues.length})
+                          {statusLabels[status]} ({columnIssues.length})
                         </p>
                         <div className="flex min-h-[80px] flex-col gap-2 rounded-lg bg-muted/30 p-2">
                           {columnIssues.map((issue, idx) => (
@@ -410,9 +421,9 @@ export default function ProjectDetailPage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
-                <p className="text-sm text-muted-foreground">Нет активного спринта — начните спринт в бэклоге, чтобы он появился на доске.</p>
+                <p className="text-sm text-muted-foreground">{t.projects.noActiveSprint}</p>
                 <Button variant="outline" onClick={() => setTab("backlog")}>
-                  Перейти в бэклог
+                  {t.projects.goToBacklog}
                 </Button>
               </CardContent>
             </Card>
@@ -431,18 +442,18 @@ export default function ProjectDetailPage() {
                           <span className="font-medium">{sprint.name}</span>
                           {sprint.status === "ACTIVE" && (
                             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-600">
-                              Активен
+                              {t.projects.active}
                             </span>
                           )}
-                          <span className="text-xs text-muted-foreground">{sprintIssues.length} задач</span>
+                          <span className="text-xs text-muted-foreground">{sprintIssues.length} {t.projects.tasksCount}</span>
                         </div>
                         {sprint.status === "PLANNED" ? (
                           <Button size="sm" variant="outline" onClick={() => startSprint(sprint.id)}>
-                            <Play size={14} /> Начать спринт
+                            <Play size={14} /> {t.projects.startSprint}
                           </Button>
                         ) : (
                           <Button size="sm" variant="outline" onClick={() => completeSprint(sprint.id)}>
-                            <Check size={14} /> Завершить спринт
+                            <Check size={14} /> {t.projects.completeSprint}
                           </Button>
                         )}
                       </div>
@@ -471,9 +482,9 @@ export default function ProjectDetailPage() {
             <Card>
               <CardContent className="flex flex-col gap-2 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">Бэклог</span>
+                  <span className="font-medium">{t.projects.backlog}</span>
                   <Button size="sm" variant="outline" onClick={createSprint} disabled={busy}>
-                    <Plus size={14} /> Создать спринт
+                    <Plus size={14} /> {t.projects.createSprint}
                   </Button>
                 </div>
                 <Droppable droppableId="backlog">
@@ -499,7 +510,7 @@ export default function ProjectDetailPage() {
             </Card>
 
             {plannedSprints.length === 0 && sprints.every((s) => s.status === "COMPLETED") && sprints.length > 0 && (
-              <p className="text-xs text-muted-foreground">Все спринты завершены.</p>
+              <p className="text-xs text-muted-foreground">{t.projects.allSprintsCompleted}</p>
             )}
           </div>
         )}

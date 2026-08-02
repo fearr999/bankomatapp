@@ -10,14 +10,15 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch, API_BASE } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 import {
   ISSUE_TYPES,
-  ISSUE_TYPE_LABELS,
   ISSUE_TYPE_COLORS,
   ISSUE_STATUSES,
-  ISSUE_STATUS_LABELS,
   ISSUE_PRIORITIES,
-  ISSUE_PRIORITY_LABELS,
+  useIssueTypeLabels,
+  useIssueStatusLabels,
+  useIssuePriorityLabels,
 } from "@/lib/issue-labels";
 
 interface IssueDetail {
@@ -49,6 +50,10 @@ interface UserOption {
 }
 
 export default function IssueDetailPage() {
+  const { t, locale } = useLocale();
+  const typeLabels = useIssueTypeLabels();
+  const statusLabels = useIssueStatusLabels();
+  const priorityLabels = useIssuePriorityLabels();
   const params = useParams<{ id: string; issueId: string }>();
   const router = useRouter();
   const [issue, setIssue] = useState<IssueDetail | null>(null);
@@ -75,7 +80,7 @@ export default function IssueDetailPage() {
       setEpics(e.filter((ep) => ep.id !== params.issueId));
       setUsers(u);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.projects.loadError);
     }
   }
 
@@ -133,7 +138,7 @@ export default function IssueDetailPage() {
   }
 
   async function deleteIssue() {
-    if (!confirm("Удалить задачу без возможности восстановления?")) return;
+    if (!confirm(t.issue.deleteConfirm)) return;
     await apiFetch(`/issues/${params.issueId}`, { method: "DELETE" });
     router.push(`/projects/${params.id}`);
   }
@@ -149,7 +154,7 @@ export default function IssueDetailPage() {
             <ArrowLeft size={18} />
           </Link>
           <span className={`rounded px-2 py-0.5 text-xs font-medium ${ISSUE_TYPE_COLORS[issue.type]}`}>
-            {ISSUE_TYPE_LABELS[issue.type]}
+            {typeLabels[issue.type as keyof typeof typeLabels]}
           </span>
           <span className="text-sm text-muted-foreground">
             {issue.project.key}-{issue.number}
@@ -163,7 +168,7 @@ export default function IssueDetailPage() {
 
         {issue.parent && (
           <p className="text-sm text-muted-foreground">
-            Подзадача{" "}
+            {t.issue.subtask}{" "}
             <Link href={`/projects/${params.id}/issues/${issue.parent.id}`} className="underline">
               {issue.project.key}-{issue.parent.number} {issue.parent.title}
             </Link>
@@ -171,7 +176,7 @@ export default function IssueDetailPage() {
         )}
         {issue.epic && (
           <p className="text-sm text-muted-foreground">
-            Эпик:{" "}
+            {t.issue.epic}:{" "}
             <Link href={`/projects/${params.id}/issues/${issue.epic.id}`} className="underline">
               {issue.project.key}-{issue.epic.number} {issue.epic.title}
             </Link>
@@ -180,7 +185,7 @@ export default function IssueDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Описание</CardTitle>
+            <CardTitle>{t.issue.description}</CardTitle>
           </CardHeader>
           <CardContent>
             {editingDesc ? (
@@ -198,10 +203,10 @@ export default function IssueDetailPage() {
                       setEditingDesc(false);
                     }}
                   >
-                    Сохранить
+                    {t.issue.save}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setEditingDesc(false)}>
-                    Отмена
+                    {t.issue.cancel}
                   </Button>
                 </div>
               </div>
@@ -210,7 +215,7 @@ export default function IssueDetailPage() {
                 className="cursor-text whitespace-pre-wrap text-sm text-muted-foreground"
                 onClick={() => setEditingDesc(true)}
               >
-                {issue.description || "Нажмите, чтобы добавить описание..."}
+                {issue.description || t.issue.descriptionPlaceholder}
               </p>
             )}
           </CardContent>
@@ -219,7 +224,7 @@ export default function IssueDetailPage() {
         {issue.type === "EPIC" && (
           <Card>
             <CardHeader>
-              <CardTitle>Задачи эпика ({issue.epicChildren.length})</CardTitle>
+              <CardTitle>{t.issue.epicTasks} ({issue.epicChildren.length})</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-1.5">
               {issue.epicChildren.map((c) => (
@@ -231,10 +236,10 @@ export default function IssueDetailPage() {
                   <span>
                     {issue.project.key}-{c.number} {c.title}
                   </span>
-                  <span className="text-xs text-muted-foreground">{ISSUE_STATUS_LABELS[c.status]}</span>
+                  <span className="text-xs text-muted-foreground">{statusLabels[c.status as keyof typeof statusLabels]}</span>
                 </Link>
               ))}
-              {issue.epicChildren.length === 0 && <EmptyState icon={ListChecks} title="Пока нет задач" size="sm" bordered={false} />}
+              {issue.epicChildren.length === 0 && <EmptyState icon={ListChecks} title={t.issue.noTasks} size="sm" bordered={false} />}
             </CardContent>
           </Card>
         )}
@@ -242,7 +247,7 @@ export default function IssueDetailPage() {
         {issue.type !== "SUBTASK" && (
           <Card>
             <CardHeader>
-              <CardTitle>Подзадачи ({issue.subtasks.length})</CardTitle>
+              <CardTitle>{t.issue.subtasks} ({issue.subtasks.length})</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {issue.subtasks.map((s) => (
@@ -255,17 +260,17 @@ export default function IssueDetailPage() {
                     {issue.project.key}-{s.number} {s.title}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {s.assignee?.name ?? "—"} · {ISSUE_STATUS_LABELS[s.status]}
+                    {s.assignee?.name ?? "—"} · {statusLabels[s.status as keyof typeof statusLabels]}
                   </span>
                 </Link>
               ))}
               <form onSubmit={addSubtask} className="flex gap-2 pt-1">
                 <Input
-                  placeholder="Новая подзадача..."
+                  placeholder={t.issue.newSubtaskPlaceholder}
                   value={subtaskTitle}
                   onChange={(e) => setSubtaskTitle(e.target.value)}
                 />
-                <Button type="submit">Добавить</Button>
+                <Button type="submit">{t.issue.add}</Button>
               </form>
             </CardContent>
           </Card>
@@ -274,9 +279,9 @@ export default function IssueDetailPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Вложения</CardTitle>
+              <CardTitle>{t.issue.attachments}</CardTitle>
               <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                <Paperclip size={16} /> {uploading ? "Загружаем..." : "Прикрепить"}
+                <Paperclip size={16} /> {uploading ? t.issue.uploading : t.issue.attach}
               </Button>
               <input
                 ref={fileInputRef}
@@ -303,27 +308,29 @@ export default function IssueDetailPage() {
                 <span className="text-xs text-muted-foreground">{a.uploadedBy?.name ?? "—"}</span>
               </a>
             ))}
-            {issue.attachments.length === 0 && <p className="text-sm text-muted-foreground">Вложений нет</p>}
+            {issue.attachments.length === 0 && <p className="text-sm text-muted-foreground">{t.issue.noAttachments}</p>}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Комментарии и история</CardTitle>
+            <CardTitle>{t.issue.commentsAndHistory}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {issue.events.map((e) => (
               <div key={e.id} className="border-b pb-2 text-sm last:border-0">
                 <div className="flex items-center justify-between">
                   <span>{e.message}</span>
-                  <span className="text-xs text-muted-foreground">{new Date(e.createdAt).toLocaleString("ru-RU")}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(e.createdAt).toLocaleString(locale === "uz" ? "uz-UZ" : "ru-RU")}
+                  </span>
                 </div>
-                <span className="text-xs text-muted-foreground">{e.user?.name ?? "система"}</span>
+                <span className="text-xs text-muted-foreground">{e.user?.name ?? t.issue.system}</span>
               </div>
             ))}
             <form onSubmit={addComment} className="flex gap-2 pt-2">
-              <Input placeholder="Добавить комментарий..." value={comment} onChange={(e) => setComment(e.target.value)} />
-              <Button type="submit">Отправить</Button>
+              <Input placeholder={t.issue.addCommentPlaceholder} value={comment} onChange={(e) => setComment(e.target.value)} />
+              <Button type="submit">{t.issue.send}</Button>
             </form>
           </CardContent>
         </Card>
@@ -331,11 +338,11 @@ export default function IssueDetailPage() {
 
       <Card className="h-fit">
         <CardHeader>
-          <CardTitle>Детали</CardTitle>
+          <CardTitle>{t.issue.details}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm">
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Статус</label>
+            <label className="mb-1 block text-xs text-muted-foreground">{t.issue.status}</label>
             <select
               className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
               value={issue.status}
@@ -343,27 +350,27 @@ export default function IssueDetailPage() {
             >
               {ISSUE_STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {ISSUE_STATUS_LABELS[s]}
+                  {statusLabels[s]}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Тип</label>
+            <label className="mb-1 block text-xs text-muted-foreground">{t.issue.type}</label>
             <select
               className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
               value={issue.type}
               onChange={(e) => patch({ type: e.target.value })}
             >
-              {ISSUE_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {ISSUE_TYPE_LABELS[t]}
+              {ISSUE_TYPES.map((ty) => (
+                <option key={ty} value={ty}>
+                  {typeLabels[ty]}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Приоритет</label>
+            <label className="mb-1 block text-xs text-muted-foreground">{t.issue.priority}</label>
             <select
               className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
               value={issue.priority}
@@ -371,19 +378,19 @@ export default function IssueDetailPage() {
             >
               {ISSUE_PRIORITIES.map((p) => (
                 <option key={p} value={p}>
-                  {ISSUE_PRIORITY_LABELS[p]}
+                  {priorityLabels[p]}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Исполнитель</label>
+            <label className="mb-1 block text-xs text-muted-foreground">{t.issue.assignee}</label>
             <select
               className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
               value={issue.assignee?.id ?? ""}
               onChange={(e) => patch({ assigneeId: e.target.value || null })}
             >
-              <option value="">Без исполнителя</option>
+              <option value="">{t.issue.noAssignee}</option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.name}
@@ -393,13 +400,13 @@ export default function IssueDetailPage() {
           </div>
           {issue.type !== "EPIC" && issue.type !== "SUBTASK" && (
             <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Эпик</label>
+              <label className="mb-1 block text-xs text-muted-foreground">{t.issue.epicField}</label>
               <select
                 className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
                 value={issue.epic?.id ?? ""}
                 onChange={(e) => patch({ epicId: e.target.value || null })}
               >
-                <option value="">Без эпика</option>
+                <option value="">{t.issue.noEpic}</option>
                 {epics.map((ep) => (
                   <option key={ep.id} value={ep.id}>
                     {ep.title}
@@ -409,7 +416,7 @@ export default function IssueDetailPage() {
             </div>
           )}
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Story points</label>
+            <label className="mb-1 block text-xs text-muted-foreground">{t.issue.storyPoints}</label>
             <Input
               type="number"
               defaultValue={issue.storyPoints ?? ""}
@@ -417,7 +424,7 @@ export default function IssueDetailPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Срок</label>
+            <label className="mb-1 block text-xs text-muted-foreground">{t.issue.dueDate}</label>
             <Input
               type="date"
               defaultValue={issue.dueDate ? issue.dueDate.slice(0, 10) : ""}
@@ -425,14 +432,14 @@ export default function IssueDetailPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">Метки</label>
+            <label className="mb-1 block text-xs text-muted-foreground">{t.issue.labels}</label>
             <div className="mb-1.5 flex flex-wrap gap-1">
               {issue.labels.map((l) => (
                 <span key={l} className="flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs">
                   {l}
                   <button
                     onClick={() => removeLabel(l)}
-                    aria-label="Удалить метку"
+                    aria-label={t.issue.removeLabel}
                     className="transition-colors hover:text-red-500"
                   >
                     <X size={10} />
@@ -442,7 +449,7 @@ export default function IssueDetailPage() {
             </div>
             <form onSubmit={addLabel} className="flex gap-1.5">
               <Input
-                placeholder="Новая метка..."
+                placeholder={t.issue.newLabelPlaceholder}
                 value={labelInput}
                 onChange={(e) => setLabelInput(e.target.value)}
                 className="h-8 text-xs"
@@ -453,8 +460,8 @@ export default function IssueDetailPage() {
             </form>
           </div>
           <div className="border-t pt-2 text-xs text-muted-foreground">
-            <p>Автор: {issue.reporter.name}</p>
-            {issue.sprint && <p>Спринт: {issue.sprint.name}</p>}
+            <p>{t.issue.reporter}: {issue.reporter.name}</p>
+            {issue.sprint && <p>{t.issue.sprint}: {issue.sprint.name}</p>}
           </div>
         </CardContent>
       </Card>
