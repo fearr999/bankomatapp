@@ -4,10 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isContractor } from "@/lib/api";
+import { useLocale } from "@/lib/i18n/context";
 import { NAV_ITEMS } from "./nav-items";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { t } = useLocale();
   // AppLayout defers rendering children until after its auth-check effect
   // has run, so by the time Sidebar mounts localStorage is already settled —
   // safe to read synchronously and avoid a full-nav flash for contractors.
@@ -35,11 +37,11 @@ export function Sidebar() {
             >
               <span className="flex items-center gap-2">
                 <item.icon size={16} />
-                {item.label}
+                {t.nav[item.labelKey]}
               </span>
               {!item.live && (
                 <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                  скоро
+                  {t.nav.comingSoon}
                 </span>
               )}
             </Link>

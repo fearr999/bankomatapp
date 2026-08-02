@@ -12,6 +12,7 @@ import { getFcmStatus, subscribeToFcm, unsubscribeFromFcm, type FcmStatus } from
 import { authenticateBiometric, isBiometricEnabled, isBiometryAvailable, isNativeApp, setBiometricEnabled } from "@/lib/biometric";
 import { Button } from "@/components/ui/button";
 import { APP_VERSION } from "@/lib/version";
+import { useLocale } from "@/lib/i18n/context";
 
 const LONG_PRESS_MS = 600;
 
@@ -259,6 +260,7 @@ function TelegramSection() {
 export default function ProfilePage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { locale, setLocale, t } = useLocale();
   const user = getCurrentUser();
   const geo = useGeoCheckin(true);
   const [queuedCount, setQueuedCount] = useState(0);
@@ -328,6 +330,17 @@ export default function ProfilePage() {
       <PushSection />
       <BiometricSection />
       <TelegramSection />
+
+      <div className="flex items-center justify-between rounded-lg border border-border p-4 text-sm">
+        <span className="font-medium">{t.shell.language}</span>
+        <button
+          aria-label={t.shell.language}
+          onClick={() => setLocale(locale === "ru" ? "uz" : "ru")}
+          className="flex h-9 min-w-9 items-center justify-center rounded-md border border-border px-2 text-xs font-medium uppercase transition-all duration-150 active:scale-95"
+        >
+          {locale}
+        </button>
+      </div>
 
       {mounted && (
         <div className="flex items-center justify-between rounded-lg border border-border p-4 text-sm">
