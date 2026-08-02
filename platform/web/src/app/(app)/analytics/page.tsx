@@ -5,7 +5,7 @@ import { ClipboardList, Clock, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/spinner";
 import { KpiCard } from "@/components/ui/kpi-card";
-import { STATUS_LABELS } from "@/components/ui/badge";
+import { useStatusLabels } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api";
 
 interface Summary {
@@ -19,6 +19,7 @@ interface Summary {
 }
 
 export default function AnalyticsPage() {
+  const statusLabels = useStatusLabels();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,7 +81,7 @@ export default function AnalyticsPage() {
           <CardContent className="flex flex-col gap-1.5">
             {Object.entries(summary.byStatus).map(([status, count]) => (
               <div key={status} className="flex items-center justify-between text-sm">
-                <span>{STATUS_LABELS[status] ?? status}</span>
+                <span>{statusLabels[status as keyof typeof statusLabels] ?? status}</span>
                 <span className="text-muted-foreground">{count}</span>
               </div>
             ))}

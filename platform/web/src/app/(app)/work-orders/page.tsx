@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { PageLoader } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
-import { REQUEST_TYPE_LABELS, REQUEST_TYPES } from "@/lib/request-types";
+import { REQUEST_TYPES, useRequestTypeLabels } from "@/lib/request-types";
+import { useLocale } from "@/lib/i18n/context";
 
 interface WorkOrder {
   id: string;
@@ -27,6 +28,8 @@ interface WorkOrder {
 }
 
 export default function WorkOrdersPage() {
+  const { t, locale } = useLocale();
+  const requestTypeLabels = useRequestTypeLabels();
   const [orders, setOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export default function WorkOrdersPage() {
       const data = await apiFetch<WorkOrder[]>("/work-orders");
       setOrders(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      setError(e instanceof Error ? e.message : t.workOrders.loadError);
     } finally {
       setLoading(false);
     }
@@ -65,7 +68,7 @@ export default function WorkOrdersPage() {
       setShowCreate(false);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка создания");
+      setError(e instanceof Error ? e.message : t.workOrders.createError);
     } finally {
       setBusy(false);
     }
@@ -74,9 +77,9 @@ export default function WorkOrdersPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Заявки</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.workOrders.title}</h1>
         <Button onClick={() => setShowCreate((v) => !v)}>
-          <Plus size={16} /> Новая заявка
+          <Plus size={16} /> {t.workOrders.newOrder}
         </Button>
       </div>
 
@@ -85,29 +88,29 @@ export default function WorkOrdersPage() {
           <CardContent className="pt-5">
             <form onSubmit={createOrder} className="flex flex-col gap-3 md:flex-row md:items-end">
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Название</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.workOrders.name}</label>
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
               </div>
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">Описание</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.workOrders.description}</label>
                 <Input value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">Тип заявки</label>
+                <label className="mb-1 block text-xs text-muted-foreground">{t.workOrders.type}</label>
                 <select
                   className="h-9 rounded-md border bg-transparent px-2 text-sm"
                   value={requestType}
                   onChange={(e) => setRequestType(e.target.value)}
                 >
-                  {REQUEST_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {REQUEST_TYPE_LABELS[t]}
+                  {REQUEST_TYPES.map((rt) => (
+                    <option key={rt} value={rt}>
+                      {requestTypeLabels[rt as keyof typeof requestTypeLabels]}
                     </option>
                   ))}
                 </select>
               </div>
               <Button type="submit" disabled={busy}>
-                {busy ? "Создаём..." : "Создать"}
+                {busy ? t.workOrders.creating : t.workOrders.create}
               </Button>
             </form>
           </CardContent>
@@ -121,13 +124,13 @@ export default function WorkOrdersPage() {
           <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="px-4 py-3 font-medium">Номер</th>
-                <th className="px-4 py-3 font-medium">Название</th>
-                <th className="px-4 py-3 font-medium">Тип</th>
-                <th className="px-4 py-3 font-medium">Клиент / Объект</th>
-                <th className="px-4 py-3 font-medium">Исполнитель</th>
-                <th className="px-4 py-3 font-medium">Статус</th>
-                <th className="px-4 py-3 font-medium">Создана</th>
+                <th className="px-4 py-3 font-medium">{t.workOrders.colNumber}</th>
+                <th className="px-4 py-3 font-medium">{t.workOrders.colTitle}</th>
+                <th className="px-4 py-3 font-medium">{t.workOrders.colType}</th>
+                <th className="px-4 py-3 font-medium">{t.workOrders.colClientSite}</th>
+                <th className="px-4 py-3 font-medium">{t.workOrders.colAssignee}</th>
+                <th className="px-4 py-3 font-medium">{t.workOrders.colStatus}</th>
+                <th className="px-4 py-3 font-medium">{t.workOrders.colCreated}</th>
               </tr>
             </thead>
             <tbody>
@@ -147,7 +150,7 @@ export default function WorkOrdersPage() {
                   </td>
                   <td className="px-4 py-3">{o.title}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {REQUEST_TYPE_LABELS[o.requestType] ?? o.requestType}
+                    {requestTypeLabels[o.requestType as keyof typeof requestTypeLabels] ?? o.requestType}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {o.client?.name ?? "—"} {o.site ? `/ ${o.site.name}` : ""}
@@ -160,14 +163,14 @@ export default function WorkOrdersPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {new Date(o.createdAt).toLocaleDateString("ru-RU")}
+                    {new Date(o.createdAt).toLocaleDateString(locale === "uz" ? "uz-UZ" : "ru-RU")}
                   </td>
                 </tr>
               ))}
               {!loading && orders.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-6">
-                    <EmptyState icon={ClipboardList} title="Заявок пока нет" bordered={false} />
+                    <EmptyState icon={ClipboardList} title={t.workOrders.empty} bordered={false} />
                   </td>
                 </tr>
               )}

@@ -1,4 +1,7 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/context";
 import type { HTMLAttributes } from "react";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -14,24 +17,20 @@ const STATUS_STYLES: Record<string, string> = {
   CANCELLED: "bg-zinc-500/10 text-zinc-500 dark:text-zinc-400",
 };
 
-export const STATUS_LABELS: Record<string, string> = {
-  NEW: "Новая",
-  ASSIGNED: "Назначена",
-  EN_ROUTE: "В пути",
-  ARRIVED: "Прибыл",
-  IN_PROGRESS: "В работе",
-  WAITING_MATERIALS: "Ожидает материалы",
-  WAITING_APPROVAL: "Требуется согласование",
-  COMPLETED: "Завершена",
-  CLOSED: "Закрыта",
-  CANCELLED: "Отменена",
-};
+// Порядок статусов заявки — независим от локали, значения-подписи берутся
+// из словаря через useStatusLabels().
+export const STATUS_KEYS = Object.keys(STATUS_STYLES);
+
+export function useStatusLabels() {
+  return useLocale().t.status;
+}
 
 export function Badge({
   status,
   className,
   ...props
 }: HTMLAttributes<HTMLSpanElement> & { status?: string }) {
+  const statusLabels = useStatusLabels();
   return (
     <span
       className={cn(
@@ -41,7 +40,7 @@ export function Badge({
       )}
       {...props}
     >
-      {status ? STATUS_LABELS[status] ?? status : props.children}
+      {status ? statusLabels[status as keyof typeof statusLabels] ?? status : props.children}
     </span>
   );
 }

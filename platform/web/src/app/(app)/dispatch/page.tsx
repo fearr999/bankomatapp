@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api";
-import { REQUEST_TYPE_LABELS } from "@/lib/request-types";
+import { useRequestTypeLabels } from "@/lib/request-types";
 import type { MapEmployee, MapOrder } from "@/components/dispatch/map-view";
 
 // react-leaflet использует window/document — рендерим только на клиенте.
@@ -44,6 +44,7 @@ interface OrderApi {
 const POLL_MS = 8000;
 
 export default function DispatchPage() {
+  const requestTypeLabels = useRequestTypeLabels();
   const [employees, setEmployees] = useState<EmployeeApi[]>([]);
   const [orders, setOrders] = useState<OrderApi[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -211,7 +212,7 @@ export default function DispatchPage() {
                     <Badge status={o.status} />
                   </div>
                   <p className="text-xs text-muted-foreground">{o.title}</p>
-                  <p className="text-xs text-muted-foreground">{REQUEST_TYPE_LABELS[o.requestType] ?? o.requestType}</p>
+                  <p className="text-xs text-muted-foreground">{requestTypeLabels[o.requestType as keyof typeof requestTypeLabels] ?? o.requestType}</p>
                 </div>
               ))}
               {unassigned.length === 0 && (
