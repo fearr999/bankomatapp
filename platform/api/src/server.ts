@@ -23,6 +23,7 @@ import { projectsRouter } from "./modules/projects/projects.routes.js";
 import { issuesRouter } from "./modules/projects/issues.routes.js";
 import { sprintsRouter } from "./modules/projects/sprints.routes.js";
 import { cleaningCyclesRouter } from "./modules/cleaning-cycles/cleaning-cycles.routes.js";
+import { ownerAdminRouter } from "./modules/owner-admin/owner-admin.routes.js";
 import { startTelegramPolling, isTelegramConfigured } from "./lib/telegram.js";
 import { startSupportBotPolling, isSupportBotConfigured } from "./lib/support-bot.js";
 import { startBackgroundJobs } from "./lib/background-jobs.js";
@@ -67,6 +68,9 @@ const authLimiter = rateLimit({
 });
 app.use("/auth/login", authLimiter);
 app.use("/auth/register", authLimiter);
+// Тот же лимит на /owner-admin — единственная защита от подбора общего
+// секрета панели владельца, кроме самого секрета.
+app.use("/owner-admin", authLimiter);
 
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
@@ -88,6 +92,7 @@ app.use("/projects", projectsRouter);
 app.use("/issues", issuesRouter);
 app.use("/sprints", sprintsRouter);
 app.use("/cleaning-cycles", cleaningCyclesRouter);
+app.use("/owner-admin", ownerAdminRouter);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => {
