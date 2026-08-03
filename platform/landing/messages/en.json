@@ -1,6 +1,7 @@
 {
   "nav": {
     "features": "Features",
+    "why": "Why us",
     "audience": "Who it's for",
     "login": "Sign in",
     "cta": "Start for free",
@@ -38,7 +39,7 @@
   },
   "stats": {
     "modules": "modules in the system",
-    "atms": "ATMs on the map",
+    "setup": "minutes to launch a company",
     "monitoring": "monitoring and SLA timer",
     "isolation": "data isolation between companies"
   },
@@ -54,19 +55,56 @@
     "multitenancy": { "title": "Multi-tenancy", "description": "The bank and every contractor see only their own data; access is scoped by role down to a single order." },
     "mobile": { "title": "Mobile app", "description": "Offline photo upload queue, geofence auto-arrival, QR confirmation — works even on poor connectivity." }
   },
+  "why": {
+    "heading": "Why teams choose Corpi",
+    "subheading": "Not a generic CRM with a field-service module bolted on — a system designed from day one for on-site work and distributed assets.",
+    "items": {
+      "allInOne": { "title": "Everything in one system", "description": "Dispatch, orders, SLA, photo reports, analytics and client reconciliation — instead of a dozen scattered spreadsheets, chats, and phone calls." },
+      "fastSetup": { "title": "Ready in minutes", "description": "Create a company, add sites, and invite employees right away — no months-long rollout, no integrators." },
+      "mobileFirst": { "title": "Built for field crews", "description": "A mobile app with an offline photo upload queue and geotagging — works even where the signal is poor." },
+      "slaControl": { "title": "SLA that's actually enforced", "description": "A timer and automatic escalation for overdue orders, plus a public tracking link for clients with no login required." },
+      "multiOrg": { "title": "Client and contractors in one system", "description": "Multi-tenancy: each side keeps its own data, while the client sees everything and each contractor sees only their own." },
+      "reporting": { "title": "Reporting in one click", "description": "Excel, PDF, and Google Sheets for client reconciliation — no manual spreadsheet wrangling at month end." }
+    }
+  },
   "audience": {
-    "heading": "Who it's for",
+    "heading": "Who Corpi is for",
+    "subheading": "Any business that services distributed sites and equipment through field crews or contractors — not just ATMs.",
     "banks": {
-      "title": "Banks & networks",
+      "title": "Banks & payment networks",
       "point1": "One unified view across all contractors and teams",
       "point2": "SLA breaches are visible instantly, no phone calls needed",
       "point3": "Public tracking link for clients — no login required"
     },
     "contractors": {
-      "title": "Contractors",
+      "title": "Contractors & service companies",
       "point1": "Your own cabinet — see only your orders and sites",
       "point2": "Cleaning cycles and territories close themselves",
       "point3": "Photo reports and checklists never get lost in chats"
+    },
+    "retail": {
+      "title": "Retail chains & franchises",
+      "point1": "Servicing checkout and store equipment across every location",
+      "point2": "One SLA for all branches instead of scattered contractors",
+      "point3": "Photo report and sign-off right on site"
+    },
+    "facilities": {
+      "title": "Cleaning & facility management companies",
+      "point1": "Cleaning cycles by site and team that auto-create orders",
+      "point2": "Quality control through photos and checklists, not promises",
+      "point3": "Monthly client reconciliation — visit count and dates per site"
+    },
+    "vending": {
+      "title": "Self-service terminal operators",
+      "point1": "Cash collection, refills, emergency calls — just like for ATMs",
+      "point2": "A device map with fill levels and online status",
+      "point3": "One service history per device"
+    },
+    "telecom": {
+      "title": "Telecom & infrastructure companies",
+      "point1": "Servicing distributed sites by territory-assigned crews",
+      "point2": "Automatic assignment of the nearest available technician",
+      "point3": "Full event history for every site"
     }
   },
   "trust": {
