@@ -22,6 +22,15 @@ import {
   History,
   Database,
   Activity,
+  Layers,
+  Zap,
+  Timer,
+  Building2,
+  FileSpreadsheet,
+  Users,
+  Store,
+  CreditCard,
+  Radio,
 } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { Counter } from "@/components/counter";
@@ -45,7 +54,7 @@ const FEATURE_ICONS = [
 
 const STAT_KEYS = [
   { key: "modules", value: 15, suffix: "" },
-  { key: "atms", value: 623, suffix: "" },
+  { key: "setup", value: 5, suffix: "" },
   { key: "monitoring", value: 24, suffix: "/7" },
   { key: "isolation", value: 100, suffix: "%" },
 ] as const;
@@ -57,6 +66,24 @@ const TRUST_ICONS = [
   { key: "audit", icon: History },
   { key: "backups", icon: Database },
   { key: "monitoring", icon: Activity },
+] as const;
+
+const WHY_ICONS = [
+  { key: "allInOne", icon: Layers },
+  { key: "fastSetup", icon: Zap },
+  { key: "mobileFirst", icon: Smartphone },
+  { key: "slaControl", icon: Timer },
+  { key: "multiOrg", icon: Building2 },
+  { key: "reporting", icon: FileSpreadsheet },
+] as const;
+
+const AUDIENCE_ICONS = [
+  { key: "banks", icon: Landmark },
+  { key: "contractors", icon: Users },
+  { key: "retail", icon: Store },
+  { key: "facilities", icon: SprayCan },
+  { key: "vending", icon: CreditCard },
+  { key: "telecom", icon: Radio },
 ] as const;
 
 function ThemeToggle() {
@@ -81,6 +108,7 @@ export default function LandingPage() {
   const tHero = useTranslations("hero");
   const tStats = useTranslations("stats");
   const tFeatures = useTranslations("features");
+  const tWhy = useTranslations("why");
   const tAudience = useTranslations("audience");
   const tTrust = useTranslations("trust");
   const tCta = useTranslations("cta");
@@ -96,6 +124,7 @@ export default function LandingPage() {
           </div>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground sm:flex">
             <a href="#features" className="transition-colors hover:text-accent">{tNav("features")}</a>
+            <a href="#why" className="transition-colors hover:text-accent">{tNav("why")}</a>
             <a href="#audience" className="transition-colors hover:text-accent">{tNav("audience")}</a>
           </nav>
           <div className="flex items-center gap-1.5 sm:gap-2">
@@ -197,22 +226,48 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="audience" className="border-t bg-muted/20">
+        <section id="why" className="border-t bg-muted/20">
+          <div className="mx-auto max-w-6xl px-5 py-32 sm:py-44">
+            <Reveal className="mb-16 text-center">
+              <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">{tWhy("heading")}</h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">{tWhy("subheading")}</p>
+            </Reveal>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {WHY_ICONS.map((item, i) => (
+                <Reveal key={item.key} delay={(i % 3) * 70}>
+                  <div className="group flex h-full flex-col gap-3 rounded-xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors duration-300 group-hover:bg-accent/15">
+                      <item.icon size={18} />
+                    </div>
+                    <h3 className="text-sm font-semibold">{tWhy(`items.${item.key}.title`)}</h3>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{tWhy(`items.${item.key}.description`)}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="audience" className="border-t">
           <div className="mx-auto max-w-6xl px-5 py-32 sm:py-44">
             <Reveal className="mb-16 text-center">
               <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">{tAudience("heading")}</h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">{tAudience("subheading")}</p>
             </Reveal>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {(["banks", "contractors"] as const).map((key, i) => (
-                <Reveal key={key} delay={i * 100}>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {AUDIENCE_ICONS.map((item, i) => (
+                <Reveal key={item.key} delay={(i % 3) * 100}>
                   <div className="relative overflow-hidden rounded-xl border bg-card p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                     <div className="absolute inset-y-0 left-0 w-1 bg-accent/60" />
-                    <h3 className="mb-4 text-lg font-semibold">{tAudience(`${key}.title`)}</h3>
+                    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                      <item.icon size={16} />
+                    </div>
+                    <h3 className="mb-4 text-base font-semibold">{tAudience(`${item.key}.title`)}</h3>
                     <ul className="flex flex-col gap-3">
                       {[1, 2, 3].map((n) => (
                         <li key={n} className="flex items-start gap-2.5 text-sm text-muted-foreground">
                           <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" />
-                          {tAudience(`${key}.point${n}`)}
+                          {tAudience(`${item.key}.point${n}`)}
                         </li>
                       ))}
                     </ul>

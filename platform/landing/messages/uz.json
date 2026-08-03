@@ -1,6 +1,7 @@
 {
   "nav": {
     "features": "Imkoniyatlar",
+    "why": "Nega biz",
     "audience": "Kimlar uchun",
     "login": "Kirish",
     "cta": "Bepul boshlash",
@@ -38,7 +39,7 @@
   },
   "stats": {
     "modules": "tizimdagi modullar",
-    "atms": "xaritadagi bankomatlar",
+    "setup": "kompaniyani ishga tushirish daqiqasi",
     "monitoring": "monitoring va SLA-taymer",
     "isolation": "kompaniyalar orasida ma'lumotlar izolyatsiyasi"
   },
@@ -54,19 +55,56 @@
     "multitenancy": { "title": "Ko'p tashkilotli tizim", "description": "Bank va har bir pudratchi faqat o'z ma'lumotlarini ko'radi; kirish huquqi rollar bo'yicha aniq bitta arizagacha cheklangan." },
     "mobile": { "title": "Mobil ilova", "description": "Fotosuratlar uchun oflayn navbat, geozona orqali avtomatik yetib kelish, QR-tasdiqlash — aloqa yomon bo'lganda ham ishlaydi." }
   },
+  "why": {
+    "heading": "Nega Corpi tanlanadi",
+    "subheading": "Bu \"galochka uchun\" modul qo'shilgan universal CRM emas — aynan dala xizmati va tarqoq obyektlar uchun mo'ljallangan tizim.",
+    "items": {
+      "allInOne": { "title": "Hammasi bitta tizimda", "description": "Dispetcherlik, arizalar, SLA, foto-hisobotlar, analitika va mijoz bilan sverka — o'nlab tarqoq jadval, chat va qo'ng'iroqlar o'rniga." },
+      "fastSetup": { "title": "Bir necha daqiqada tayyor", "description": "Kompaniya yaratish, obyektlarni qo'shish va xodimlarni taklif qilish darhol mumkin — oylab davom etadigan joriy etish va integratorlarsiz." },
+      "mobileFirst": { "title": "Dala xodimlari uchun mo'ljallangan", "description": "Fotosuratlar uchun oflayn navbat va geobelgili mobil ilova — aloqa yomon bo'lgan joyda ham ishlaydi." },
+      "slaControl": { "title": "SLA so'zda emas", "description": "Muddat taymeri va muddati o'tganlarni avtomatik eskalatsiya qilish, mijoz uchun tizimga kirmasdan kuzatish havolasi." },
+      "multiOrg": { "title": "Buyurtmachi va pudratchilar — bitta tizimda", "description": "Ko'p tashkilotlilik: har bir tomonning o'z ma'lumotlari bor, shu bilan birga buyurtmachi hammasini, pudratchi esa faqat o'zinikini ko'radi." },
+      "reporting": { "title": "Bir bosishda hisobot", "description": "Mijoz bilan sverka uchun Excel, PDF va Google Jadvallar — oy oxirida ma'lumotlarni qo'lda yig'ishsiz." }
+    }
+  },
   "audience": {
-    "heading": "Kimlar uchun",
+    "heading": "Corpi kimlar uchun mos",
+    "subheading": "Tarqoq obyektlar va uskunalarga dala brigadalari yoki pudratchilar kuchi bilan xizmat ko'rsatadigan har qanday biznes uchun — nafaqat bankomatlar.",
     "banks": {
-      "title": "Banklar va tarmoqlar uchun",
+      "title": "Banklar va to'lov tarmoqlari uchun",
       "point1": "Barcha pudratchilar va brigadalar bo'yicha yagona manzara",
       "point2": "SLA va muddati o'tgan arizalar qo'ng'iroqsiz darhol ko'rinadi",
       "point3": "Mijoz uchun tizimga kirmasdan kuzatish havolasi"
     },
     "contractors": {
-      "title": "Pudratchilar uchun",
+      "title": "Pudratchi va servis tashkilotlari uchun",
       "point1": "Shaxsiy kabinet — faqat o'z arizalari va obyektlari ko'rinadi",
       "point2": "Tozalash sikllari va hududlar o'zi yopiladi",
       "point3": "Foto-hisobotlar va cheklistlar chatlarda yo'qolib qolmaydi"
+    },
+    "retail": {
+      "title": "Chakana savdo tarmoqlari va franshizalar uchun",
+      "point1": "Barcha nuqtalarda kassa va savdo uskunalariga xizmat ko'rsatish",
+      "point2": "Tarqoq pudratchilar o'rniga barcha filiallar uchun yagona SLA",
+      "point3": "Joyning o'zida foto-hisobot va mas'ul shaxs imzosi"
+    },
+    "facilities": {
+      "title": "Klining kompaniyalari va facility management uchun",
+      "point1": "Obyektlar va brigadalar bo'yicha avtomatik ariza yaratuvchi tozalash sikllari",
+      "point2": "So'zda emas, foto va cheklistlar orqali sifat nazorati",
+      "point3": "Oylik sverka — har bir obyekt bo'yicha son va sanalar"
+    },
+    "vending": {
+      "title": "O'z-o'ziga xizmat ko'rsatish terminallari operatorlari uchun",
+      "point1": "Bankomatlardagidek inkassatsiya, to'ldirish, favqulodda chaqiruvlar",
+      "point2": "To'lganlik darajasi va holati ko'rsatilgan qurilmalar xaritasi",
+      "point3": "Har bir qurilma bo'yicha yagona xizmat ko'rsatish tarixi"
+    },
+    "telecom": {
+      "title": "Telekom va infratuzilma kompaniyalari uchun",
+      "point1": "Hududlar bo'yicha brigadalar orqali tarqoq obyektlarga xizmat ko'rsatish",
+      "point2": "Eng yaqin bo'sh xodimni avtomatik tayinlash",
+      "point3": "Har bir obyekt bo'yicha to'liq voqealar tarixi"
     }
   },
   "trust": {
