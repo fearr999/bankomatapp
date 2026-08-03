@@ -30,6 +30,7 @@ import { sprintsRouter } from "./modules/projects/sprints.routes.js";
 import { cleaningCyclesRouter } from "./modules/cleaning-cycles/cleaning-cycles.routes.js";
 import { ownerAdminRouter } from "./modules/owner-admin/owner-admin.routes.js";
 import { googleSheetsRouter } from "./modules/integrations/google-sheets.routes.js";
+import { reportsRouter } from "./modules/reports/reports.routes.js";
 import { startTelegramPolling, isTelegramConfigured } from "./lib/telegram.js";
 import { startSupportBotPolling, isSupportBotConfigured } from "./lib/support-bot.js";
 import { startBackgroundJobs } from "./lib/background-jobs.js";
@@ -100,6 +101,7 @@ app.use("/sprints", sprintsRouter);
 app.use("/cleaning-cycles", cleaningCyclesRouter);
 app.use("/owner-admin", ownerAdminRouter);
 app.use("/integrations/google-sheets", googleSheetsRouter);
+app.use("/reports", reportsRouter);
 
 // Последний обработчик — подстраховка на случай ошибки, до которой не
 // дотянулся try/catch в самом роуте (в т.ч. отклонённые промисы благодаря
