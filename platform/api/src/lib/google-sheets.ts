@@ -7,6 +7,13 @@ import { prisma } from "./prisma.js";
 // строкой, тот же формат, что и FIREBASE_SERVICE_ACCOUNT (см. lib/fcm.ts).
 // Сервисному аккаунту нужны включённые Google Sheets API и Google Drive API
 // в проекте GCP.
+//
+// GOOGLE_SHARED_DRIVE_ID обязателен: у голого сервисного аккаунта (без
+// Google Workspace domain-wide delegation) нет ни байта собственного места
+// на Диске — create() в "My Drive" всегда падает с permission-ошибкой,
+// сколько бы прав/API ни было включено. Таблицы поэтому создаются внутри
+// Общего диска (Shared Drive) Workspace-аккаунта, куда сервисный аккаунт
+// добавлен участником (Content Manager) — там есть настоящее хранилище.
 let auth: InstanceType<typeof google.auth.GoogleAuth> | null | undefined;
 
 function getAuth() {
@@ -29,8 +36,12 @@ function getAuth() {
   return auth;
 }
 
+function getSharedDriveId(): string | null {
+  return process.env.GOOGLE_SHARED_DRIVE_ID || null;
+}
+
 export function isGoogleSheetsConfigured(): boolean {
-  return Boolean(getAuth());
+  return Boolean(getAuth()) && Boolean(getSharedDriveId());
 }
 
 // googleapis/gaxios обрезают текст ошибки до общей фразы вроде "The caller
@@ -79,6 +90,8 @@ function formatDateColumn(date: Date): string {
 export async function createAtmTrackingSheet(organizationId: string, orgName: string, shareWithEmail: string) {
   const authClient = getAuth();
   if (!authClient) throw new Error("Google Sheets не настроен (нет GOOGLE_SERVICE_ACCOUNT)");
+  const driveId = getSharedDriveId();
+  if (!driveId) throw new Error("Google Sheets не настроен (нет GOOGLE_SHARED_DRIVE_ID)");
 
   const equipment = await prisma.equipment.findMany({
     where: { organizationId, deviceType: { in: ["atm", "cardomat"] } },
@@ -89,23 +102,48 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
   const sheets = google.sheets({ version: "v4", auth: authClient });
   const drive = google.drive({ version: "v3", auth: authClient });
 
+  // Создаём файл через Drive API внутри Общего диска (не sheets.spreadsheets.create,
+  // у которого нет параметра для целевой папки/диска) — тогда файл сразу
+  // физически лежит в хранилище Общего диска, а не в несуществующем личном
+  // месте сервисного аккаунта.
   let spreadsheetId: string | null | undefined;
-  let spreadsheetUrl: string | null | undefined;
+  let spreadsheetUrl: string;
+  try {
+    const created = await drive.files.create({
+      requestBody: { name: `Corpi — Банкоматы — ${orgName}`, mimeType: "application/vnd.google-apps.spreadsheet", parents: [driveId] },
+      supportsAllDrives: true,
+      fields: "id, webViewLink",
+    });
+    spreadsheetId = created.data.id;
+    spreadsheetUrl = created.data.webViewLink ?? `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+  } catch (err) {
+    throw new Error(`drive.files.create: ${describeGoogleError(err)}`);
+  }
+  if (!spreadsheetId) throw new Error("Google не вернул id созданной таблицы");
+
+  // Новый файл рождается с одним листом ("Sheet1", gid обычно 0) — переименовываем
+  // его в наш SHEET_TITLE и настраиваем закреплённые строку/столбец, вместо
+  // того чтобы задавать это при создании (как раньше через sheets.spreadsheets.create).
   let sheetId = 0;
   try {
-    const created = await sheets.spreadsheets.create({
+    const meta = await sheets.spreadsheets.get({ spreadsheetId, fields: "sheets.properties" });
+    sheetId = meta.data.sheets?.[0]?.properties?.sheetId ?? 0;
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
       requestBody: {
-        properties: { title: `Corpi — Банкоматы — ${orgName}` },
-        sheets: [{ properties: { title: SHEET_TITLE, gridProperties: { frozenRowCount: 2, frozenColumnCount: 1 } } }],
+        requests: [
+          {
+            updateSheetProperties: {
+              properties: { sheetId, title: SHEET_TITLE, gridProperties: { frozenRowCount: 2, frozenColumnCount: 1 } },
+              fields: "title,gridProperties(frozenRowCount,frozenColumnCount)",
+            },
+          },
+        ],
       },
     });
-    spreadsheetId = created.data.spreadsheetId;
-    spreadsheetUrl = created.data.spreadsheetUrl;
-    sheetId = created.data.sheets?.[0]?.properties?.sheetId ?? 0;
   } catch (err) {
-    throw new Error(`spreadsheets.create: ${describeGoogleError(err)}`);
+    throw new Error(`configure sheet: ${describeGoogleError(err)}`);
   }
-  if (!spreadsheetId || !spreadsheetUrl) throw new Error("Google не вернул id/url созданной таблицы");
 
   // Строка 1 — заголовок столбца A, строка 2 — пусто в столбце A (там, правее,
   // будут дни недели над датами), с 3-й строки — уже сами банкоматы, все
@@ -144,10 +182,12 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
   // sendNotificationEmail — клиент получает от Google письмо "с вами
   // поделились таблицей", без единого технического шага с его стороны.
   // Роль "reader" — это авто-генерируемая доска, редактировать её руками
-  // не должны, чтобы не сломать структуру синка.
+  // не должны, чтобы не сломать структуру синка. supportsAllDrives обязателен —
+  // файл живёт в Общем диске, а не в личном пространстве.
   try {
     await drive.permissions.create({
       fileId: spreadsheetId,
+      supportsAllDrives: true,
       sendNotificationEmail: true,
       requestBody: { type: "user", role: "reader", emailAddress: shareWithEmail },
     });
