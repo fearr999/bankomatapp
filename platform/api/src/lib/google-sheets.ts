@@ -33,6 +33,24 @@ export function isGoogleSheetsConfigured(): boolean {
   return Boolean(getAuth());
 }
 
+// googleapis/gaxios обрезают текст ошибки до общей фразы вроде "The caller
+// does not have permission" — реальная причина (reason/domain/status) лежит
+// глубже, в теле HTTP-ответа Google. Достаём её, если она есть.
+function describeGoogleError(err: unknown): string {
+  const base = err instanceof Error ? err.message : String(err);
+  const data = (err as { response?: { data?: unknown } })?.response?.data as
+    | { error?: { message?: string; status?: string; errors?: Array<{ reason?: string; domain?: string; message?: string }> } }
+    | undefined;
+  const apiError = data?.error;
+  if (!apiError) return base;
+  const parts = [apiError.message ?? base];
+  if (apiError.status) parts.push(`status=${apiError.status}`);
+  const detail = apiError.errors?.[0];
+  if (detail?.reason) parts.push(`reason=${detail.reason}`);
+  if (detail?.domain) parts.push(`domain=${detail.domain}`);
+  return parts.join(" | ");
+}
+
 // Формат таблицы — не наш собственный лог, а сетка «банкомат × дата»,
 // повторяющая рабочий шаблон, которым клиент уже пользуется вручную:
 // столбец A — банкомат, дальше по столбцу на каждый день уборки; в ячейке —
@@ -85,7 +103,7 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
     spreadsheetUrl = created.data.spreadsheetUrl;
     sheetId = created.data.sheets?.[0]?.properties?.sheetId ?? 0;
   } catch (err) {
-    throw new Error(`spreadsheets.create: ${(err as Error).message}`);
+    throw new Error(`spreadsheets.create: ${describeGoogleError(err)}`);
   }
   if (!spreadsheetId || !spreadsheetUrl) throw new Error("Google не вернул id/url созданной таблицы");
 
@@ -101,7 +119,7 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
       requestBody: { values: rows },
     });
   } catch (err) {
-    throw new Error(`values.update: ${(err as Error).message}`);
+    throw new Error(`values.update: ${describeGoogleError(err)}`);
   }
 
   try {
@@ -120,7 +138,7 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
       },
     });
   } catch (err) {
-    throw new Error(`batchUpdate (header format): ${(err as Error).message}`);
+    throw new Error(`batchUpdate (header format): ${describeGoogleError(err)}`);
   }
 
   // sendNotificationEmail — клиент получает от Google письмо "с вами
@@ -134,7 +152,7 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
       requestBody: { type: "user", role: "reader", emailAddress: shareWithEmail },
     });
   } catch (err) {
-    throw new Error(`drive.permissions.create (share): ${(err as Error).message}`);
+    throw new Error(`drive.permissions.create (share): ${describeGoogleError(err)}`);
   }
 
   return { spreadsheetId, spreadsheetUrl };
