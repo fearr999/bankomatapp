@@ -1,0 +1,740 @@
+[
+  {
+    "code": "1034",
+    "deviceType": "atm",
+    "address": "г. Самарканд, улица Нарпайская, 8 \"Б\" дом",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1044",
+    "deviceType": "atm",
+    "address": "г. Самарканд, квартал Сат-Тепо, дом 20 К",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1040",
+    "deviceType": "atm",
+    "address": "г. Самарканд, микрорайон Сагдиана, дом 58А",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1061",
+    "deviceType": "atm",
+    "address": "г. Самарканд, улица Гагарина, дом 57",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1100",
+    "deviceType": "atm",
+    "address": "г. Самарканд , улица Рудакий, 10",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1106",
+    "deviceType": "atm",
+    "address": "г. Самарканд, улица Юксалиш, дом 8",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1109",
+    "deviceType": "atm",
+    "address": "г. Самарканд, улица Термез, дом 203",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1083",
+    "deviceType": "atm",
+    "address": "г. Самарканд, улица Беруни, дом 25 М",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1172",
+    "deviceType": "atm",
+    "address": "Ташкентская область, г. Бекабад, улица Туран",
+    "place": "Единое окно"
+  },
+  {
+    "code": "1176",
+    "deviceType": "atm",
+    "address": "Фергана, ул. Комус, 47",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1178",
+    "deviceType": "atm",
+    "address": "Фергана, улица Бурхониддин Аль-Маргинони, 65A",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1181",
+    "deviceType": "atm",
+    "address": "Фергана, улица Бурхониддин Аль-Маргинони, дом 18/10",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1221",
+    "deviceType": "atm",
+    "address": "г. Фергана.махаллинский сход граждан Машъал, ул. Фаробий, 34/2",
+    "place": "Korzinka Фергана Фарабий 22"
+  },
+  {
+    "code": "1224",
+    "deviceType": "atm",
+    "address": "г. Фергана ул.Мустакилли 13",
+    "place": "Asia Moll"
+  },
+  {
+    "code": "1222",
+    "deviceType": "atm",
+    "address": "г. Фергана, ул. Аль-Фергани, 122А",
+    "place": "Тантана мехмонхона Фаргона.Ш. Аль-Фаргони 122А"
+  },
+  {
+    "code": "1216",
+    "deviceType": "atm",
+    "address": "Ургенч, улица Хонка, дом 29",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1217",
+    "deviceType": "atm",
+    "address": "Ургенч, проспект Аль-Хорезми, дом 66/1",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1218",
+    "deviceType": "atm",
+    "address": "Ургенч, улица Абульгази Бахадырхана, дом 214",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1260",
+    "deviceType": "atm",
+    "address": "г. Ташкент, Сергилийский район,улица Азима Умарова, 21",
+    "place": "VIVA MED"
+  },
+  {
+    "code": "1273",
+    "deviceType": "atm",
+    "address": "Ташкент, 6-й пр. Карвонсарой, 2",
+    "place": "Pharmacosmos C-37 ОЛИМ ПОЛВОН"
+  },
+  {
+    "code": "1256",
+    "deviceType": "atm",
+    "address": "Ташкентская обл., г. Нурафшон, Янгиабад МСГ, ул. Янгиабад, дом 39",
+    "place": "OLMA A-31"
+  },
+  {
+    "code": "1272",
+    "deviceType": "atm",
+    "address": "Ташкент,  городской посёлок Куксарай, ул. Шифобахш сувлар, 21",
+    "place": "Pharmacosmos C-22 КУКСАРОЙ-2"
+  },
+  {
+    "code": "1308",
+    "deviceType": "atm",
+    "address": "Бухара, улица Бахауддина Накшбанда, 5",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1322",
+    "deviceType": "atm",
+    "address": "Бухара, махаллинский сход граждан Кукалдош, улица Самарканд, 78",
+    "place": "Нодира маркет"
+  },
+  {
+    "code": "1323",
+    "deviceType": "atm",
+    "address": "г. Бухара, махаллинский сход граждан Жуйбор",
+    "place": "Miral Market"
+  },
+  {
+    "code": "1324",
+    "deviceType": "atm",
+    "address": "Бухара, ул. Алпамыша, 3",
+    "place": "Тц Chinar Mall"
+  },
+  {
+    "code": "1329",
+    "deviceType": "atm",
+    "address": "Самарканд, населённый пункт Пулимугаб, Пенджикентская ул., 77",
+    "place": "Garmoniya Pharm 11 3 Роддом"
+  },
+  {
+    "code": "1381",
+    "deviceType": "atm",
+    "address": "г. Чирчик, проспект Амира Темура, дом 134",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1383",
+    "deviceType": "atm",
+    "address": "г. Чирчик, улица Заковат, дом 81",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1382",
+    "deviceType": "atm",
+    "address": "г. Чирчик, улица Амира Темура, дом 141",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1258",
+    "deviceType": "atm",
+    "address": "Ташкентская обл.,г. Бекабад, Бирдамлик МСГ, ул. Истиклол, дом 316",
+    "place": "OLMA В-7"
+  },
+  {
+    "code": "1354",
+    "deviceType": "atm",
+    "address": "г.Коканд , 1 тупик Истиклол, дом 1",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1355",
+    "deviceType": "atm",
+    "address": "г.Коканд, А.Т.Хукандий МФЙ, дом 108-В",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1356",
+    "deviceType": "atm",
+    "address": "г.Коканд, улица Фуркат, дом 102Г",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1357",
+    "deviceType": "atm",
+    "address": "г.Коканд, улица Туркистан, дом 138/2А",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1358",
+    "deviceType": "atm",
+    "address": "г.Коканд, квартал Туркистан, дом 2, квартира 12",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1359",
+    "deviceType": "atm",
+    "address": "Маргилан, ул. Бурхануддина Маргинани, дом 69",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1370",
+    "deviceType": "atm",
+    "address": "г. Наманган, улица Бабуршах, дом 3,4",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1371",
+    "deviceType": "atm",
+    "address": "г. Наманган, улица Уйчи, дом 243, магазин 6,6а",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1372",
+    "deviceType": "atm",
+    "address": "г. Наманган, улица Саноат, дом 56",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1387",
+    "deviceType": "atm",
+    "address": "г. Кибрай, Ифтихор МФЙ, улица Укитувчи, дом 6",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1389",
+    "deviceType": "atm",
+    "address": "г. Янгиюль, Проспект Ташкент, 40 дом",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1391",
+    "deviceType": "atm",
+    "address": "г. Бекабад, улица Буюк Ипак Йули, дом 337",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1394",
+    "deviceType": "atm",
+    "address": "г. Бекабад, улица Сабира Рахимова, дом 251",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1395",
+    "deviceType": "atm",
+    "address": "г. Келес, Ташкентский район, Хувайдо МФЙ, улица Келес Йули, дом 2/2",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1396",
+    "deviceType": "atm",
+    "address": "г. Янгибазар, улица Мустакиллик",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1398",
+    "deviceType": "atm",
+    "address": "г. Ахангаран, Янгиабад МФЙ, улица Амира Темура, дом 92",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1406",
+    "deviceType": "atm",
+    "address": "г. Нукус, улица П. Сеитова, дом 6",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1407",
+    "deviceType": "atm",
+    "address": "г. Коканд, ул. Янги хаёт, 62А",
+    "place": "Asmalt Hotel Kokand"
+  },
+  {
+    "code": "1413",
+    "deviceType": "atm",
+    "address": "г. Наманган, махаллинский сход граждан Оби Хаёт, ул. Хамрох, 96",
+    "place": "БЦ Grand Biznes"
+  },
+  {
+    "code": "1414",
+    "deviceType": "atm",
+    "address": "г. Нукус, улица Досназарова Аллаяра, дом 9/5",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1417",
+    "deviceType": "atm",
+    "address": "г. Наманган, ул. Нодира Кориева, 1",
+    "place": "Saydana Медцентр"
+  },
+  {
+    "code": "1420",
+    "deviceType": "atm",
+    "address": "г. Наманган, 2-й тупик 6-проезда Мисгар",
+    "place": "Medilife boburshoh kocha"
+  },
+  {
+    "code": "1421",
+    "deviceType": "atm",
+    "address": "г. Нукус,  улица Аллаяра Досназарова, дом 35",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1422",
+    "deviceType": "atm",
+    "address": "г. Нукус, улица Николая Сараева, дом 14",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1428",
+    "deviceType": "atm",
+    "address": "г. Карши, ул. Хонобод",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1430",
+    "deviceType": "atm",
+    "address": "г. Карши, улица Алчин, дом 1Б",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1432",
+    "deviceType": "atm",
+    "address": "г. Карши, улица Насаф, дом 298, квартира 2-Н",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1433",
+    "deviceType": "atm",
+    "address": "г. Термез, улица Ибн Сино, дом 21",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1435",
+    "deviceType": "atm",
+    "address": "Термез, махаллинский сход граждан Жайхун, улица Ал Хаким Ат-Термизий, 23G",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1436",
+    "deviceType": "atm",
+    "address": "г. Термез, улица Баркамол Авлод, дом 12/5",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1437",
+    "deviceType": "atm",
+    "address": "г. Термез, улица Фидокорлар, дом 52",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1442",
+    "deviceType": "atm",
+    "address": "г. Навои, улица Махмуда Тароби, дом 111",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1452",
+    "deviceType": "atm",
+    "address": "г. Нукус, Гарезсизлик МФЙ, улица Сабира Камалова, 12 дом",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1455",
+    "deviceType": "atm",
+    "address": "Навои, улица Махмуд Тараби, 122",
+    "place": "Korzinka \"Навои\""
+  },
+  {
+    "code": "1462",
+    "deviceType": "atm",
+    "address": "Каршинская область улица Карши-Шахрисабз Йули, 4/248",
+    "place": "Uzum Market Франшиза"
+  },
+  {
+    "code": "1463",
+    "deviceType": "atm",
+    "address": "г. Самарканд, микрорайон Согдиана-А, 16.",
+    "place": "OXY Med (Самарканд 4 роддом)"
+  },
+  {
+    "code": "1465",
+    "deviceType": "atm",
+    "address": "г. Самарканд, ул. Мухаммада Аль-Хорезми, 115А",
+    "place": "БЦ Эл Xoldıng( Кинап)"
+  },
+  {
+    "code": "1243",
+    "deviceType": "atm",
+    "address": "Ташкентская обл., г. Бекабад, МФЙ Узбекистан, ул. Сырдарья, дом 609",
+    "place": "ISHONCH(Bekobod)"
+  },
+  {
+    "code": "1343",
+    "deviceType": "atm",
+    "address": "г. Нурафшан, ул. Ташкент Йули, 84",
+    "place": "Белорусская косметика"
+  },
+  {
+    "code": "1362",
+    "deviceType": "atm",
+    "address": "Асака, улица Нажмиддина Кубро, дом 35",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1373",
+    "deviceType": "atm",
+    "address": "г. Наманган, улица Афрасияб, дом 38",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1374",
+    "deviceType": "atm",
+    "address": "г. Андижан, Узбегим МФЙ, улица Амир Темур Шох, дом 9/A",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1375",
+    "deviceType": "atm",
+    "address": "г. Андижан , улица Бобур шох, дом 116",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1376",
+    "deviceType": "atm",
+    "address": "г. Андижан, улица Алишер Навои, дом 33",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1378",
+    "deviceType": "atm",
+    "address": "г. Андижан, улица Пирмухамедова, дом 2-а",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1379",
+    "deviceType": "atm",
+    "address": "г. Андижан, улица Чаманзор, дом 12-а",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1384",
+    "deviceType": "atm",
+    "address": "г. Ангрен, улица Узбекистон Мустакиллиги, дом 110",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1385",
+    "deviceType": "atm",
+    "address": "г. Ангрен, МСГ Карвон, квартал 3/2",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1388",
+    "deviceType": "atm",
+    "address": "г. Алмалык, улица Фахрийлар, дом 26",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1390",
+    "deviceType": "atm",
+    "address": "г. Алмалык, улица Амира Темура, дом 61",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1392",
+    "deviceType": "atm",
+    "address": "г. Бекабад, улица Саломатлик, дом 29",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1423",
+    "deviceType": "atm",
+    "address": "г. Гулистан, ул. Сайхун, 69 дом",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1425",
+    "deviceType": "atm",
+    "address": "г. Гулистан, улица Ислам Каримов, дом 118",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1438",
+    "deviceType": "atm",
+    "address": "г. Джизак, Зилол махаля, улица Мустакиллик, дом 26 (Базар Ором)",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1439",
+    "deviceType": "atm",
+    "address": "г. Джизак , Заргарлик МФЙ, улица Заргарлик, дом 14",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1440",
+    "deviceType": "atm",
+    "address": "г. Навои, улица Амира Темура, 28",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1443",
+    "deviceType": "atm",
+    "address": "г. Навои, улица Садриддина Айни, 105А дом",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1444",
+    "deviceType": "atm",
+    "address": "г. Навои, улица Жанубий, 29 дом",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1446",
+    "deviceType": "atm",
+    "address": "г. Навои, улица Махмуда Тароби, дом 75",
+    "place": "Пункт выдачи Uzum Market"
+  },
+  {
+    "code": "1471",
+    "deviceType": "atm",
+    "address": "г. Ургенч, ул. Ханка, 102",
+    "place": "Maxidom"
+  },
+  {
+    "code": "1507",
+    "deviceType": "atm",
+    "address": "г. Карши улица Куроллий Кучлар, 2A",
+    "place": "X5 супермаркет (Marka)"
+  },
+  {
+    "code": "1509",
+    "deviceType": "atm",
+    "address": "г. Карши ул. Нурчилар, 48",
+    "place": "Uzum Market Франшиза УВД"
+  },
+  {
+    "code": "1475",
+    "deviceType": "atm",
+    "address": "г. Джизак, махаллинский сход граждан Зилол, ул. Мустакиллик, 33B",
+    "place": "MEDUZA MARKET"
+  },
+  {
+    "code": "1494",
+    "deviceType": "atm",
+    "address": "Ташкентская область г. Ангрен, ул. Тулица Узбекистон Мустакиллиги, 76.",
+    "place": "OXY Med (Ангрен)"
+  },
+  {
+    "code": "1506",
+    "deviceType": "atm",
+    "address": "г. Карши проспект Алишера Навои, 5А",
+    "place": "MARKA super market 2"
+  },
+  {
+    "code": "1517",
+    "deviceType": "atm",
+    "address": "г. Бухара, ул. Мухаммада Икбала, 1",
+    "place": "Himchan диагностический центр"
+  },
+  {
+    "code": "1518",
+    "deviceType": "atm",
+    "address": "Маргиланская обл.,г. Маргилан, улица Бурхануддина Маргинани, 111",
+    "place": "ТЦ Ansor"
+  },
+  {
+    "code": "1519",
+    "deviceType": "atm",
+    "address": "г. Наманган, махаллинский сход граждан Тукувчи, ул. Дустлик, 9",
+    "place": "Buyuk Ipak Yo'li Mehmonxonasi"
+  },
+  {
+    "code": "1522",
+    "deviceType": "atm",
+    "address": "г. Самарканд, Фархадская улица, 57А.",
+    "place": "ТЦ Festival mall"
+  },
+  {
+    "code": "1523",
+    "deviceType": "atm",
+    "address": "г. Сырдарья, ул. Узбекистан (бывшее здание универмага)",
+    "place": "ISHONCH(Sirdaryo)"
+  },
+  {
+    "code": "1524",
+    "deviceType": "atm",
+    "address": "г. Гулистон, МСГ Манавият, ул. Эзгулик,д-6",
+    "place": "OLMA D-25"
+  },
+  {
+    "code": "1528",
+    "deviceType": "atm",
+    "address": "г. Ургенч, махаллинский сход граждан Навбахор",
+    "place": "ЦУМ ТЦ Урганч"
+  },
+  {
+    "code": "1530",
+    "deviceType": "atm",
+    "address": "г. Чирчик, ул.Ш.Рашидова 21",
+    "place": "Белорусская косметика"
+  },
+  {
+    "code": "1533",
+    "deviceType": "atm",
+    "address": "г. Бухара, пересечение улиц Афросиаб и Ибн Сино.",
+    "place": "Корзинка Бухара-2"
+  },
+  {
+    "code": "1534",
+    "deviceType": "atm",
+    "address": "г. Бухара, ул. Бахауддина Накшбанда, 149",
+    "place": "Korzinka Бухара 1"
+  },
+  {
+    "code": "1536",
+    "deviceType": "atm",
+    "address": "г. Коканд, махаллинский сход граждан Ялангочота, ул. Туркистон, 28D",
+    "place": "Reikarst hotel Qo`qon"
+  },
+  {
+    "code": "1537",
+    "deviceType": "atm",
+    "address": "г. Наманган, махаллинский сход граждан Шодлик, улица Алишера Навоий, 76",
+    "place": "Texno park"
+  },
+  {
+    "code": "1538",
+    "deviceType": "atm",
+    "address": "г. Наманган, МСГ Юкори Гирвон, ул. Хамид Олимжон, 153",
+    "place": "Korzinka Наманган Афсона"
+  },
+  {
+    "code": "1542",
+    "deviceType": "atm",
+    "address": "г. Самарканд, ул. Рудакий, дом 54.",
+    "place": "Корзинка Самарканд вокзал"
+  },
+  {
+    "code": "1567",
+    "deviceType": "atm",
+    "address": "г. Ургенч, махаллинский сход граждан Навбахор, ул. Ёгду, 40",
+    "place": "Urgench city mall"
+  },
+  {
+    "code": "1571",
+    "deviceType": "atm",
+    "address": "Ташкентская область, г. Ахангаран, улица Алишера Навои, 5",
+    "place": "Франшиза ПВЗ маркет"
+  },
+  {
+    "code": "1584",
+    "deviceType": "atm",
+    "address": "Ташкенская обл., Ташкентский район, город Келес, улица Келес Йули, дом 4",
+    "place": "Единое окно"
+  },
+  {
+    "code": "1587",
+    "deviceType": "atm",
+    "address": "Ташкентская область г. Ангрен,  4-й квартал, 12",
+    "place": "Единое окно"
+  },
+  {
+    "code": "1593",
+    "deviceType": "atm",
+    "address": "Ташкентская обл., Город Янгиюль, Ш.Ул. Рашидова, 1А",
+    "place": "Единое окно"
+  },
+  {
+    "code": "1594",
+    "deviceType": "atm",
+    "address": "Ташкентская обл., Янгиюльский район Гулбахор г.Улица Рашидова",
+    "place": "Единое окно"
+  },
+  {
+    "code": "1600",
+    "deviceType": "atm",
+    "address": "Ташкентская обл., г. Ахангаран, Улица А.Тимура, дом 15",
+    "place": "Единое окно"
+  },
+  {
+    "code": "1601",
+    "deviceType": "atm",
+    "address": "Ташкентская область г. Алмалык микрорайон 5/3",
+    "place": "Единое окно"
+  },
+  {
+    "code": "1604",
+    "deviceType": "atm",
+    "address": "Ташкентская обл., город Нурафшон, улица Ташкент Йули, 58",
+    "place": "Единое окно"
+  },
+  {
+    "code": "1613",
+    "deviceType": "atm",
+    "address": "г. Ташкент,  Юнисабадский район. ул. Ахмада Дониша, 47В",
+    "place": "ТЦ Универсам"
+  },
+  {
+    "code": "1614",
+    "deviceType": "atm",
+    "address": "г. Коканд, ул.Фуркат 75",
+    "place": "Korzinka Коканд Гузаль"
+  },
+  {
+    "code": "1638",
+    "deviceType": "atm",
+    "address": "ул.Матбуотчилар, Зарафшан (Ата-Турк) и Сайилгох",
+    "place": "Bellissimo Poytaxt"
+  },
+  {
+    "code": "1712",
+    "deviceType": "atm",
+    "address": "г. Ташкент, Учтепинский район. махаллинский сход граждан Хамдуст",
+    "place": "Korzinka Depo"
+  }
+]
