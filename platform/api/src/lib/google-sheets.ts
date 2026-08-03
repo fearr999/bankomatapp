@@ -71,52 +71,71 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
   const sheets = google.sheets({ version: "v4", auth: authClient });
   const drive = google.drive({ version: "v3", auth: authClient });
 
-  const created = await sheets.spreadsheets.create({
-    requestBody: {
-      properties: { title: `Corpi — Банкоматы — ${orgName}` },
-      sheets: [{ properties: { title: SHEET_TITLE, gridProperties: { frozenRowCount: 2, frozenColumnCount: 1 } } }],
-    },
-  });
-  const spreadsheetId = created.data.spreadsheetId;
-  const spreadsheetUrl = created.data.spreadsheetUrl;
+  let spreadsheetId: string | null | undefined;
+  let spreadsheetUrl: string | null | undefined;
+  let sheetId = 0;
+  try {
+    const created = await sheets.spreadsheets.create({
+      requestBody: {
+        properties: { title: `Corpi — Банкоматы — ${orgName}` },
+        sheets: [{ properties: { title: SHEET_TITLE, gridProperties: { frozenRowCount: 2, frozenColumnCount: 1 } } }],
+      },
+    });
+    spreadsheetId = created.data.spreadsheetId;
+    spreadsheetUrl = created.data.spreadsheetUrl;
+    sheetId = created.data.sheets?.[0]?.properties?.sheetId ?? 0;
+  } catch (err) {
+    throw new Error(`spreadsheets.create: ${(err as Error).message}`);
+  }
   if (!spreadsheetId || !spreadsheetUrl) throw new Error("Google не вернул id/url созданной таблицы");
-  const sheetId = created.data.sheets?.[0]?.properties?.sheetId ?? 0;
 
   // Строка 1 — заголовок столбца A, строка 2 — пусто в столбце A (там, правее,
   // будут дни недели над датами), с 3-й строки — уже сами банкоматы, все
   // текущие точки организации подставляются сразу при создании таблицы.
   const rows: string[][] = [["Банкомат"], [""], ...equipment.map((e) => [e.name])];
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range: `${SHEET_TITLE}!A1`,
-    valueInputOption: "RAW",
-    requestBody: { values: rows },
-  });
+  try {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${SHEET_TITLE}!A1`,
+      valueInputOption: "RAW",
+      requestBody: { values: rows },
+    });
+  } catch (err) {
+    throw new Error(`values.update: ${(err as Error).message}`);
+  }
 
-  await sheets.spreadsheets.batchUpdate({
-    spreadsheetId,
-    requestBody: {
-      requests: [
-        {
-          repeatCell: {
-            range: { sheetId, startRowIndex: 0, endRowIndex: 2 },
-            cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColor: { red: 0.93, green: 0.93, blue: 0.95 } } },
-            fields: "userEnteredFormat(textFormat,backgroundColor)",
+  try {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            repeatCell: {
+              range: { sheetId, startRowIndex: 0, endRowIndex: 2 },
+              cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColor: { red: 0.93, green: 0.93, blue: 0.95 } } },
+              fields: "userEnteredFormat(textFormat,backgroundColor)",
+            },
           },
-        },
-      ],
-    },
-  });
+        ],
+      },
+    });
+  } catch (err) {
+    throw new Error(`batchUpdate (header format): ${(err as Error).message}`);
+  }
 
   // sendNotificationEmail — клиент получает от Google письмо "с вами
   // поделились таблицей", без единого технического шага с его стороны.
   // Роль "reader" — это авто-генерируемая доска, редактировать её руками
   // не должны, чтобы не сломать структуру синка.
-  await drive.permissions.create({
-    fileId: spreadsheetId,
-    sendNotificationEmail: true,
-    requestBody: { type: "user", role: "reader", emailAddress: shareWithEmail },
-  });
+  try {
+    await drive.permissions.create({
+      fileId: spreadsheetId,
+      sendNotificationEmail: true,
+      requestBody: { type: "user", role: "reader", emailAddress: shareWithEmail },
+    });
+  } catch (err) {
+    throw new Error(`drive.permissions.create (share): ${(err as Error).message}`);
+  }
 
   return { spreadsheetId, spreadsheetUrl };
 }
