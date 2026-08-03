@@ -1,0 +1,92 @@
+[
+  {
+    "code": "1034",
+    "deviceType": "atm",
+    "address": "г. Самарканд, улица Нарпайская, 8 \"Б\" дом",
+    "place": "Пункт выдачи Uzum Market",
+    "lat": 39.6635227,
+    "lng": 66.9137201,
+    "precision": "street",
+    "matchedQuery": "г. Самарканд, улица Нарпайская"
+  },
+  {
+    "code": "1273",
+    "deviceType": "atm",
+    "address": "Ташкент, 6-й пр. Карвонсарой, 2",
+    "place": "Pharmacosmos C-37 ОЛИМ ПОЛВОН",
+    "lat": 41.3305732,
+    "lng": 69.197221,
+    "precision": "photon",
+    "matchedQuery": "Ташкент, 6-й пр. Карвонсарой, 2"
+  },
+  {
+    "code": "1324",
+    "deviceType": "atm",
+    "address": "Бухара, ул. Алпамыша, 3",
+    "place": "Тц Chinar Mall",
+    "lat": 41.4591501,
+    "lng": 69.2018091,
+    "precision": "photon",
+    "matchedQuery": "Бухара, улица Алпамыша, 3"
+  },
+  {
+    "code": "1354",
+    "deviceType": "atm",
+    "address": "г.Коканд , 1 тупик Истиклол, дом 1",
+    "place": "Пункт выдачи Uzum Market",
+    "lat": 40.9781331,
+    "lng": 71.6634011,
+    "precision": "photon",
+    "matchedQuery": "г.Коканд , 1 тупик Истиклол, дом 1"
+  },
+  {
+    "code": "1428",
+    "deviceType": "atm",
+    "address": "г. Карши, ул. Хонобод",
+    "place": "Пункт выдачи Uzum Market",
+    "lat": 41.3576349,
+    "lng": 69.177363,
+    "precision": "photon",
+    "matchedQuery": "г. Карши, улица Хонобод"
+  },
+  {
+    "code": "1455",
+    "deviceType": "atm",
+    "address": "Навои, улица Махмуд Тараби, 122",
+    "place": "Korzinka \"Навои\"",
+    "lat": 40.1074488,
+    "lng": 65.3730227,
+    "precision": "poi",
+    "matchedQuery": "Korzinka \"Навои\", Навои, Узбекистан"
+  },
+  {
+    "code": "1519",
+    "deviceType": "atm",
+    "address": "г. Наманган, махаллинский сход граждан Тукувчи, ул. Дустлик, 9",
+    "place": "Buyuk Ipak Yo'li Mehmonxonasi",
+    "lat": 41.3267745,
+    "lng": 69.3340529,
+    "precision": "photon",
+    "matchedQuery": "Buyuk Ipak Yo'li Mehmonxonasi, Наманган, Узбекистан"
+  },
+  {
+    "code": "1533",
+    "deviceType": "atm",
+    "address": "г. Бухара, пересечение улиц Афросиаб и Ибн Сино.",
+    "place": "Корзинка Бухара-2",
+    "lat": 39.7067204,
+    "lng": 66.6732286,
+    "precision": "photon",
+    "matchedQuery": "г. Бухара, пересечение улиц Афросиаб и Ибн Сино."
+  },
+  {
+    "code": "1712",
+    "deviceType": "atm",
+    "address": "г. Ташкент, Учтепинский район. махаллинский сход граждан Хамдуст",
+    "place": "Korzinka Depo",
+    "lat": 41.2912326,
+    "lng": 69.2238265,
+    "precision": "photon",
+    "matchedQuery": "Korzinka Depo, Ташкент, Узбекистан"
+  }
+]
