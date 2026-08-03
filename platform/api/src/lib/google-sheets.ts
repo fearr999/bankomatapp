@@ -62,15 +62,24 @@ function describeGoogleError(err: unknown): string {
   return parts.join(" | ");
 }
 
-// Формат таблицы — не наш собственный лог, а сетка «банкомат × дата»,
+// Формат таблицы — не наш собственный лог, а сетка «объект × дата»,
 // повторяющая рабочий шаблон, которым клиент уже пользуется вручную:
-// столбец A — банкомат, дальше по столбцу на каждый день уборки; в ячейке —
+// столбец A — объект, дальше по столбцу на каждый день уборки; в ячейке —
 // ссылка на фото за этот день; строка целиком подсвечивается красным, если
-// заявка на уборку этого банкомата закрыта с просрочкой SLA.
-const SHEET_TITLE = "Банкоматы";
+// заявка на уборку этого объекта закрыта с просрочкой SLA. Банкоматы и
+// картоматы ведутся раздельно — двумя вкладками одного файла, чтобы у
+// клиента была одна ссылка на шаринг, а не два документа.
+type DeviceType = "atm" | "cardomat";
+const SHEET_TITLES: Record<DeviceType, string> = { atm: "Банкоматы", cardomat: "Картоматы" };
+const ROW_LABELS: Record<DeviceType, string> = { atm: "Банкомат", cardomat: "Картомат" };
+const DEVICE_TYPES: DeviceType[] = ["atm", "cardomat"];
 const DATA_START_ROW = 3; // строки 1-2 — заголовок (дата/день недели)
-const DATA_START_COL = 2; // столбец A — банкомат, даты с B
+const DATA_START_COL = 2; // столбец A — объект, даты с B
 const WEEKDAY_RU = ["ВС", "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ"];
+
+function sheetTitleForDeviceType(deviceType: string): string {
+  return SHEET_TITLES[deviceType as DeviceType] ?? SHEET_TITLES.atm;
+}
 
 function columnToLetter(col: number): string {
   let letter = "";
@@ -94,10 +103,14 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
   if (!driveId) throw new Error("Google Sheets не настроен (нет GOOGLE_SHARED_DRIVE_ID)");
 
   const equipment = await prisma.equipment.findMany({
-    where: { organizationId, deviceType: { in: ["atm", "cardomat"] } },
-    select: { name: true },
+    where: { organizationId, deviceType: { in: DEVICE_TYPES } },
+    select: { name: true, deviceType: true },
     orderBy: { name: "asc" },
   });
+  const namesByType: Record<DeviceType, string[]> = { atm: [], cardomat: [] };
+  for (const e of equipment) {
+    if (e.deviceType === "atm" || e.deviceType === "cardomat") namesByType[e.deviceType].push(e.name);
+  }
 
   const sheets = google.sheets({ version: "v4", auth: authClient });
   const drive = google.drive({ version: "v3", auth: authClient });
@@ -121,62 +134,72 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
   }
   if (!spreadsheetId) throw new Error("Google не вернул id созданной таблицы");
 
-  // Новый файл рождается с одним листом ("Sheet1", gid обычно 0) — переименовываем
-  // его в наш SHEET_TITLE и настраиваем закреплённые строку/столбец, вместо
-  // того чтобы задавать это при создании (как раньше через sheets.spreadsheets.create).
-  let sheetId = 0;
+  // Новый файл рождается с одним листом ("Sheet1") — переименовываем его в
+  // "Банкоматы" и добавляем вторую вкладку "Картоматы", у обеих одинаковая
+  // структура (закреплённые строка/столбец).
+  const sheetIds: Record<DeviceType, number> = { atm: 0, cardomat: 0 };
   try {
     const meta = await sheets.spreadsheets.get({ spreadsheetId, fields: "sheets.properties" });
-    sheetId = meta.data.sheets?.[0]?.properties?.sheetId ?? 0;
-    await sheets.spreadsheets.batchUpdate({
+    sheetIds.atm = meta.data.sheets?.[0]?.properties?.sheetId ?? 0;
+    const batchRes = await sheets.spreadsheets.batchUpdate({
       spreadsheetId,
       requestBody: {
         requests: [
           {
             updateSheetProperties: {
-              properties: { sheetId, title: SHEET_TITLE, gridProperties: { frozenRowCount: 2, frozenColumnCount: 1 } },
+              properties: { sheetId: sheetIds.atm, title: SHEET_TITLES.atm, gridProperties: { frozenRowCount: 2, frozenColumnCount: 1 } },
               fields: "title,gridProperties(frozenRowCount,frozenColumnCount)",
             },
           },
-        ],
-      },
-    });
-  } catch (err) {
-    throw new Error(`configure sheet: ${describeGoogleError(err)}`);
-  }
-
-  // Строка 1 — заголовок столбца A, строка 2 — пусто в столбце A (там, правее,
-  // будут дни недели над датами), с 3-й строки — уже сами банкоматы, все
-  // текущие точки организации подставляются сразу при создании таблицы.
-  const rows: string[][] = [["Банкомат"], [""], ...equipment.map((e) => [e.name])];
-  try {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${SHEET_TITLE}!A1`,
-      valueInputOption: "RAW",
-      requestBody: { values: rows },
-    });
-  } catch (err) {
-    throw new Error(`values.update: ${describeGoogleError(err)}`);
-  }
-
-  try {
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      requestBody: {
-        requests: [
           {
-            repeatCell: {
-              range: { sheetId, startRowIndex: 0, endRowIndex: 2 },
-              cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColor: { red: 0.93, green: 0.93, blue: 0.95 } } },
-              fields: "userEnteredFormat(textFormat,backgroundColor)",
+            addSheet: {
+              properties: { title: SHEET_TITLES.cardomat, gridProperties: { frozenRowCount: 2, frozenColumnCount: 1 } },
             },
           },
         ],
       },
     });
+    sheetIds.cardomat = batchRes.data.replies?.[1]?.addSheet?.properties?.sheetId ?? 0;
   } catch (err) {
-    throw new Error(`batchUpdate (header format): ${describeGoogleError(err)}`);
+    throw new Error(`configure sheets: ${describeGoogleError(err)}`);
+  }
+
+  // Строка 1 — заголовок столбца A, строка 2 — пусто в столбце A (там, правее,
+  // будут дни недели над датами), с 3-й строки — сами объекты, все текущие
+  // точки организации подставляются сразу при создании таблицы — отдельно
+  // на каждой вкладке.
+  for (const type of DEVICE_TYPES) {
+    const title = SHEET_TITLES[type];
+    const rows: string[][] = [[ROW_LABELS[type]], [""], ...namesByType[type].map((n) => [n])];
+    try {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${title}!A1`,
+        valueInputOption: "RAW",
+        requestBody: { values: rows },
+      });
+    } catch (err) {
+      throw new Error(`values.update (${title}): ${describeGoogleError(err)}`);
+    }
+
+    try {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [
+            {
+              repeatCell: {
+                range: { sheetId: sheetIds[type], startRowIndex: 0, endRowIndex: 2 },
+                cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColor: { red: 0.93, green: 0.93, blue: 0.95 } } },
+                fields: "userEnteredFormat(textFormat,backgroundColor)",
+              },
+            },
+          ],
+        },
+      });
+    } catch (err) {
+      throw new Error(`batchUpdate (header format ${title}): ${describeGoogleError(err)}`);
+    }
   }
 
   // sendNotificationEmail — клиент получает от Google письмо "с вами
@@ -204,9 +227,9 @@ async function getSheetGid(sheets: sheets_v4.Sheets, spreadsheetId: string, shee
   return sheet?.properties?.sheetId ?? 0;
 }
 
-async function findOrCreateDateColumn(sheets: sheets_v4.Sheets, spreadsheetId: string, date: Date) {
+async function findOrCreateDateColumn(sheets: sheets_v4.Sheets, spreadsheetId: string, sheetTitle: string, date: Date) {
   const dateStr = formatDateColumn(date);
-  const header = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${SHEET_TITLE}!B1:ZZ1` });
+  const header = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${sheetTitle}!B1:ZZ1` });
   const existing = header.data.values?.[0] ?? [];
   const foundIdx = existing.findIndex((v) => v === dateStr);
   if (foundIdx !== -1) return { col: foundIdx + DATA_START_COL, dateStr };
@@ -215,15 +238,15 @@ async function findOrCreateDateColumn(sheets: sheets_v4.Sheets, spreadsheetId: s
   const letter = columnToLetter(col);
   await sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `${SHEET_TITLE}!${letter}1:${letter}2`,
+    range: `${sheetTitle}!${letter}1:${letter}2`,
     valueInputOption: "RAW",
     requestBody: { values: [[dateStr], [WEEKDAY_RU[date.getDay()]]] },
   });
   return { col, dateStr };
 }
 
-async function findOrCreateEquipmentRow(sheets: sheets_v4.Sheets, spreadsheetId: string, equipmentName: string) {
-  const colA = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${SHEET_TITLE}!A${DATA_START_ROW}:A` });
+async function findOrCreateEquipmentRow(sheets: sheets_v4.Sheets, spreadsheetId: string, sheetTitle: string, equipmentName: string) {
+  const colA = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${sheetTitle}!A${DATA_START_ROW}:A` });
   const existing = (colA.data.values ?? []).map((r) => r[0]);
   const foundIdx = existing.findIndex((v) => v === equipmentName);
   if (foundIdx !== -1) return foundIdx + DATA_START_ROW;
@@ -231,7 +254,7 @@ async function findOrCreateEquipmentRow(sheets: sheets_v4.Sheets, spreadsheetId:
   const row = existing.length + DATA_START_ROW;
   await sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `${SHEET_TITLE}!A${row}`,
+    range: `${sheetTitle}!A${row}`,
     valueInputOption: "RAW",
     requestBody: { values: [[equipmentName]] },
   });
@@ -240,14 +263,15 @@ async function findOrCreateEquipmentRow(sheets: sheets_v4.Sheets, spreadsheetId:
 
 async function markAtmCleaned(
   spreadsheetId: string,
-  params: { equipmentName: string; date: Date; photoUrl?: string; overdue: boolean }
+  params: { equipmentName: string; deviceType: string; date: Date; photoUrl?: string; overdue: boolean }
 ) {
   const authClient = getAuth();
   if (!authClient) return;
   const sheets = google.sheets({ version: "v4", auth: authClient });
+  const sheetTitle = sheetTitleForDeviceType(params.deviceType);
 
-  const { col, dateStr } = await findOrCreateDateColumn(sheets, spreadsheetId, params.date);
-  const row = await findOrCreateEquipmentRow(sheets, spreadsheetId, params.equipmentName);
+  const { col, dateStr } = await findOrCreateDateColumn(sheets, spreadsheetId, sheetTitle, params.date);
+  const row = await findOrCreateEquipmentRow(sheets, spreadsheetId, sheetTitle, params.equipmentName);
   const letter = columnToLetter(col);
 
   // "UZUM1001" → "1001 28.07" — короткая метка как в референс-таблице клиента.
@@ -257,15 +281,15 @@ async function markAtmCleaned(
 
   await sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `${SHEET_TITLE}!${letter}${row}`,
+    range: `${sheetTitle}!${letter}${row}`,
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [[cellValue]] },
   });
 
   // Подсветка строки целиком красным при просрочке SLA — аналог красной
-  // строки-флага "проблемного" банкомата в референс-таблице клиента; при
+  // строки-флага "проблемного" объекта в референс-таблице клиента; при
   // своевременной уборке подсветка снимается (фон сбрасывается на белый).
-  const sheetId = await getSheetGid(sheets, spreadsheetId, SHEET_TITLE);
+  const sheetId = await getSheetGid(sheets, spreadsheetId, sheetTitle);
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId,
     requestBody: {
@@ -297,12 +321,12 @@ export async function syncCleaningReportToSheet(workOrderId: string) {
     .findUnique({
       where: { id: workOrderId },
       include: {
-        equipment: { select: { name: true } },
+        equipment: { select: { name: true, deviceType: true } },
         attachments: { where: { kind: "photo" }, select: { url: true }, orderBy: { createdAt: "asc" } },
       },
     })
     .catch(() => null);
-  // Заявка не привязана к конкретному банкомату — некуда положить отметку в сетке.
+  // Заявка не привязана к конкретному объекту — некуда положить отметку в сетке.
   if (!order || !order.equipment) return;
 
   const integration = await prisma.googleSheetIntegration.findUnique({ where: { organizationId: order.organizationId } }).catch(() => null);
@@ -315,6 +339,7 @@ export async function syncCleaningReportToSheet(workOrderId: string) {
 
     await markAtmCleaned(integration.spreadsheetId, {
       equipmentName: order.equipment.name,
+      deviceType: order.equipment.deviceType,
       date: order.updatedAt,
       photoUrl,
       overdue,
