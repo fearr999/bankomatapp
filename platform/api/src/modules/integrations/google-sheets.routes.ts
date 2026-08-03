@@ -35,6 +35,7 @@ googleSheetsRouter.post("/connect", requireRole("ADMIN"), async (req, res) => {
   try {
     sheet = await createAtmTrackingSheet(organization.id, organization.name, parsed.data.email);
   } catch (err) {
+    console.error("Не удалось создать Google-таблицу через сервисный аккаунт:", (err as Error).message);
     return res.status(502).json({ error: "Не удалось создать таблицу в Google", details: (err as Error).message });
   }
 
