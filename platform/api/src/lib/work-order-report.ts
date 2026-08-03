@@ -1,4 +1,5 @@
 import PDFDocument from "pdfkit";
+import { registerCyrillicFonts } from "./pdf-fonts.js";
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: "Новая",
@@ -37,8 +38,10 @@ interface ReportOrder {
 /// сам PDFDocument — вызывающий код сам решает, .pipe() в response или в файл.
 export function generateWorkOrderReportPdf(order: ReportOrder): PDFKit.PDFDocument {
   const doc = new PDFDocument({ margin: 50 });
+  registerCyrillicFonts(doc);
 
-  doc.fontSize(18).text(`Акт по заявке ${order.number}`, { underline: true });
+  doc.font("Bold").fontSize(18).text(`Акт по заявке ${order.number}`, { underline: true });
+  doc.font("Regular");
   doc.moveDown(0.5);
   doc.fontSize(11).fillColor("#555").text(`Сформировано: ${new Date().toLocaleString("ru-RU")}`);
   doc.moveDown();

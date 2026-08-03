@@ -19,6 +19,7 @@ import {
   Kanban,
   Route,
   SprayCan,
+  FileSpreadsheet,
 } from "lucide-react";
 
 import type { Dictionary } from "@/lib/i18n/context";
@@ -55,5 +56,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/integrations", labelKey: "integrations", icon: Plug, live: false },
   { href: "/atm-service", labelKey: "atmService", icon: Landmark, live: true },
   { href: "/cleaning-cycles", labelKey: "cleaningCycles", icon: SprayCan, live: true },
+  { href: "/reports", labelKey: "reports", icon: FileSpreadsheet, live: true },
   { href: "/ai", labelKey: "ai", icon: Sparkles, live: true },
 ];
