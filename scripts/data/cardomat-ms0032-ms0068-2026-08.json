@@ -1,0 +1,18 @@
+[
+  {
+    "code": "MS0068",
+    "deviceType": "cardomat",
+    "address": null,
+    "place": null,
+    "lat": 41.15814,
+    "lng": 69.0461
+  },
+  {
+    "code": "MS0032",
+    "deviceType": "cardomat",
+    "address": null,
+    "place": null,
+    "lat": 41.337986,
+    "lng": 69.166894
+  }
+]
