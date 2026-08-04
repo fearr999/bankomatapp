@@ -66,19 +66,27 @@ function describeGoogleError(err: unknown): string {
 // повторяющая рабочий шаблон, которым клиент уже пользуется вручную:
 // столбец A — объект, дальше по столбцу на каждый день уборки; в ячейке —
 // ссылка на фото за этот день; строка целиком подсвечивается красным, если
-// заявка на уборку этого объекта закрыта с просрочкой SLA. Банкоматы и
-// картоматы ведутся раздельно — двумя вкладками одного файла, чтобы у
-// клиента была одна ссылка на шаринг, а не два документа.
-type DeviceType = "atm" | "cardomat";
-const SHEET_TITLES: Record<DeviceType, string> = { atm: "Банкоматы", cardomat: "Картоматы" };
-const ROW_LABELS: Record<DeviceType, string> = { atm: "Банкомат", cardomat: "Картомат" };
-const DEVICE_TYPES: DeviceType[] = ["atm", "cardomat"];
+// заявка на уборку этого объекта закрыта с просрочкой SLA. Банкоматы,
+// картоматы и будки ведутся раздельно — тремя вкладками одного файла,
+// чтобы у клиента была одна ссылка на шаринг, а не несколько документов.
+type SheetSection = "atm" | "cardomat" | "booth";
+const SHEET_TITLES: Record<SheetSection, string> = { atm: "Банкоматы", cardomat: "Картоматы", booth: "Будки" };
+const ROW_LABELS: Record<SheetSection, string> = { atm: "Банкомат", cardomat: "Картомат", booth: "Будка" };
+const SHEET_SECTIONS: SheetSection[] = ["atm", "cardomat", "booth"];
 const DATA_START_ROW = 3; // строки 1-2 — заголовок (дата/день недели)
 const DATA_START_COL = 2; // столбец A — объект, даты с B
 const WEEKDAY_RU = ["ВС", "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ"];
 
-function sheetTitleForDeviceType(deviceType: string): string {
-  return SHEET_TITLES[deviceType as DeviceType] ?? SHEET_TITLES.atm;
+// Будки — уличные киоски с одним-двумя банкоматами внутри, отдельная от
+// отделений банка точка обслуживания. В базе это обычное Equipment с
+// deviceType='atm' (чтобы не выпасть из общих счётчиков/фильтров по
+// банкоматам) — для таблицы отличаем по serialNumber. Список известных
+// будок сейчас короткий и фиксированный; новые добавляются сюда вручную.
+const BOOTH_SERIAL_NUMBERS = new Set(["1251", "1252", "1514", "1543"]);
+
+function sectionForEquipment(deviceType: string, serialNumber: string | null): SheetSection {
+  if (deviceType === "atm" && serialNumber && BOOTH_SERIAL_NUMBERS.has(serialNumber)) return "booth";
+  return deviceType === "cardomat" ? "cardomat" : "atm";
 }
 
 function columnToLetter(col: number): string {
@@ -103,13 +111,13 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
   if (!driveId) throw new Error("Google Sheets не настроен (нет GOOGLE_SHARED_DRIVE_ID)");
 
   const equipment = await prisma.equipment.findMany({
-    where: { organizationId, deviceType: { in: DEVICE_TYPES } },
-    select: { name: true, deviceType: true },
+    where: { organizationId, deviceType: { in: ["atm", "cardomat"] } },
+    select: { name: true, deviceType: true, serialNumber: true },
     orderBy: { name: "asc" },
   });
-  const namesByType: Record<DeviceType, string[]> = { atm: [], cardomat: [] };
+  const namesBySection: Record<SheetSection, string[]> = { atm: [], cardomat: [], booth: [] };
   for (const e of equipment) {
-    if (e.deviceType === "atm" || e.deviceType === "cardomat") namesByType[e.deviceType].push(e.name);
+    namesBySection[sectionForEquipment(e.deviceType, e.serialNumber)].push(e.name);
   }
 
   const sheets = google.sheets({ version: "v4", auth: authClient });
@@ -135,9 +143,9 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
   if (!spreadsheetId) throw new Error("Google не вернул id созданной таблицы");
 
   // Новый файл рождается с одним листом ("Sheet1") — переименовываем его в
-  // "Банкоматы" и добавляем вторую вкладку "Картоматы", у обеих одинаковая
+  // "Банкоматы" и добавляем вкладки "Картоматы" и "Будки", у всех одинаковая
   // структура (закреплённые строка/столбец).
-  const sheetIds: Record<DeviceType, number> = { atm: 0, cardomat: 0 };
+  const sheetIds: Record<SheetSection, number> = { atm: 0, cardomat: 0, booth: 0 };
   try {
     const meta = await sheets.spreadsheets.get({ spreadsheetId, fields: "sheets.properties" });
     sheetIds.atm = meta.data.sheets?.[0]?.properties?.sheetId ?? 0;
@@ -156,10 +164,16 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
               properties: { title: SHEET_TITLES.cardomat, gridProperties: { frozenRowCount: 2, frozenColumnCount: 1 } },
             },
           },
+          {
+            addSheet: {
+              properties: { title: SHEET_TITLES.booth, gridProperties: { frozenRowCount: 2, frozenColumnCount: 1 } },
+            },
+          },
         ],
       },
     });
     sheetIds.cardomat = batchRes.data.replies?.[1]?.addSheet?.properties?.sheetId ?? 0;
+    sheetIds.booth = batchRes.data.replies?.[2]?.addSheet?.properties?.sheetId ?? 0;
   } catch (err) {
     throw new Error(`configure sheets: ${describeGoogleError(err)}`);
   }
@@ -168,9 +182,9 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
   // будут дни недели над датами), с 3-й строки — сами объекты, все текущие
   // точки организации подставляются сразу при создании таблицы — отдельно
   // на каждой вкладке.
-  for (const type of DEVICE_TYPES) {
-    const title = SHEET_TITLES[type];
-    const rows: string[][] = [[ROW_LABELS[type]], [""], ...namesByType[type].map((n) => [n])];
+  for (const section of SHEET_SECTIONS) {
+    const title = SHEET_TITLES[section];
+    const rows: string[][] = [[ROW_LABELS[section]], [""], ...namesBySection[section].map((n) => [n])];
     try {
       await sheets.spreadsheets.values.update({
         spreadsheetId,
@@ -189,7 +203,7 @@ export async function createAtmTrackingSheet(organizationId: string, orgName: st
           requests: [
             {
               repeatCell: {
-                range: { sheetId: sheetIds[type], startRowIndex: 0, endRowIndex: 2 },
+                range: { sheetId: sheetIds[section], startRowIndex: 0, endRowIndex: 2 },
                 cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColor: { red: 0.93, green: 0.93, blue: 0.95 } } },
                 fields: "userEnteredFormat(textFormat,backgroundColor)",
               },
@@ -263,12 +277,12 @@ async function findOrCreateEquipmentRow(sheets: sheets_v4.Sheets, spreadsheetId:
 
 async function markAtmCleaned(
   spreadsheetId: string,
-  params: { equipmentName: string; deviceType: string; date: Date; photoUrl?: string; overdue: boolean }
+  params: { equipmentName: string; deviceType: string; serialNumber: string | null; date: Date; photoUrl?: string; overdue: boolean }
 ) {
   const authClient = getAuth();
   if (!authClient) return;
   const sheets = google.sheets({ version: "v4", auth: authClient });
-  const sheetTitle = sheetTitleForDeviceType(params.deviceType);
+  const sheetTitle = SHEET_TITLES[sectionForEquipment(params.deviceType, params.serialNumber)];
 
   const { col, dateStr } = await findOrCreateDateColumn(sheets, spreadsheetId, sheetTitle, params.date);
   const row = await findOrCreateEquipmentRow(sheets, spreadsheetId, sheetTitle, params.equipmentName);
@@ -321,7 +335,7 @@ export async function syncCleaningReportToSheet(workOrderId: string) {
     .findUnique({
       where: { id: workOrderId },
       include: {
-        equipment: { select: { name: true, deviceType: true } },
+        equipment: { select: { name: true, deviceType: true, serialNumber: true } },
         attachments: { where: { kind: "photo" }, select: { url: true }, orderBy: { createdAt: "asc" } },
       },
     })
@@ -340,6 +354,7 @@ export async function syncCleaningReportToSheet(workOrderId: string) {
     await markAtmCleaned(integration.spreadsheetId, {
       equipmentName: order.equipment.name,
       deviceType: order.equipment.deviceType,
+      serialNumber: order.equipment.serialNumber,
       date: order.updatedAt,
       photoUrl,
       overdue,
