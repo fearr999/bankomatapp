@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SwRegister } from "@/components/sw-register";
+import { AppSplash } from "@/components/app-splash";
 import { LocaleProvider } from "@/lib/i18n/context";
 import "./globals.css";
 
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <LocaleProvider>
             <SwRegister />
+            <AppSplash />
             <div className="mx-auto min-h-screen max-w-md">{children}</div>
           </LocaleProvider>
         </ThemeProvider>
