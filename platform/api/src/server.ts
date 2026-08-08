@@ -45,7 +45,16 @@ process.on("unhandledRejection", (err) => {
 // (например "https://app.corpi.example,https://admin.corpi.example"). Если
 // не задан — поведение как раньше (открыто для всех origin), чтобы ничего
 // не сломать до того, как в проде явно пропишут реальные домены фронтендов.
-const corsOrigins = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean);
+//
+// Нативное мобильное приложение (Capacitor, androidScheme: "https") всегда
+// шлёт запросы с фиксированного origin "https://localhost" (Android) —
+// он не совпадает ни с одним доменом сайта, поэтому если CORS_ORIGINS
+// ограничен только веб-доменами, приложение на телефоне ловит "Failed to
+// fetch" на каждом запросе. Разрешаем origin нативного приложения всегда,
+// независимо от того, что задано в CORS_ORIGINS.
+const MOBILE_APP_ORIGINS = ["https://localhost", "capacitor://localhost"];
+const configuredCorsOrigins = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean);
+const corsOrigins = configuredCorsOrigins ? [...configuredCorsOrigins, ...MOBILE_APP_ORIGINS] : undefined;
 
 const app = express();
 app.use(
